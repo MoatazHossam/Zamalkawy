@@ -1,0 +1,1010 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><style>[hidden]{display:none!important}html,body{margin:0}img{max-width:100%}</style></head><body><title>زملكاوي</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Lalezar&family=Readex+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Changa:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one-screen game app. Setup panel -> board of enamel street-sign plates -> full-screen question plate.
+   Deliberately a single dark "night" look: it is played on a TV or laptop at night. */
+:root{
+  --night:#0d1423;
+  --panel:#151f35;
+  --line:rgba(240,231,212,.14);
+  --line-strong:rgba(240,231,212,.38);
+  --glow:rgba(43,84,184,.22);
+  --enamel:#1e3f94;
+  --enamel-hi:#2952b5;
+  --enamel-edge:#ece4d2;
+  --rivet:#b9b2a3;
+  --cream:#f0e7d4;
+  --muted:#97a3bd;
+  --brass:#e6b04a;
+  --brass-deep:#a2741f;
+  --brass-ink:#241904;
+  --team-ink:#15110a;
+  --bad:#e8705f;
+  --on-bad:#1a0905;
+  --good:#5cc98f;
+  --scrim:rgba(7,11,20,.9);
+  --shadow:rgba(0,0,0,.38);
+  --ring-track:rgba(240,231,212,.2);
+  --f-display:"Lalezar","Readex Pro",system-ui,Tahoma,sans-serif;
+  --f-sign:"Aref Ruqaa","Lalezar",Tahoma,serif;
+  --f-body:"Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;min-height:100%;
+  background:radial-gradient(1100px 520px at 50% -8%,var(--glow),transparent 70%),var(--night);
+  background-color:var(--night);
+  color:var(--cream);font-family:var(--f-body);font-size:16px;line-height:1.6;direction:rtl;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+
+.app{
+  max-width:1500px;margin:0 auto;
+  padding-block:18px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:22px;
+}
+
+/* ---------- header ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.logo{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(2.2rem,4.8vw,3.2rem);line-height:1.05;color:var(--brass)}
+.tag{margin:0;color:var(--muted);font-family:var(--f-sign);font-size:1.15rem}
+.modes{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.mode{font-size:.92rem;padding:6px 14px;border-radius:12px;border:0;background:transparent;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.mode.is-on{background:var(--enamel);color:var(--cream);box-shadow:inset 0 0 0 2px var(--enamel),inset 0 0 0 3px var(--enamel-edge)}
+.mode.is-soon{opacity:.7;cursor:default}
+.mode small{font-size:.7rem;padding:0 7px;border-radius:999px;border:1px solid var(--line);line-height:1.6}
+
+/* ---------- shared controls ---------- */
+.primary{
+  font-family:var(--f-display);font-size:1.4rem;line-height:1;padding:15px 30px 13px;border-radius:12px;border:0;
+  background:var(--brass);color:var(--brass-ink);cursor:pointer;box-shadow:0 3px 0 var(--brass-deep);
+}
+.primary:hover{filter:brightness(1.06)}
+.primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--brass-deep)}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.secondary{font-weight:600;padding:12px 20px;border-radius:12px;border:1.5px solid var(--enamel-edge);background:transparent;color:var(--enamel-edge);cursor:pointer}
+.ghost{font-size:.92rem;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--cream);cursor:pointer}
+.ghost:hover{border-color:var(--line-strong)}
+.ghost:disabled{opacity:.5;cursor:default}
+.linkish{border:0;background:none;padding:4px 2px;color:var(--enamel-edge);opacity:.8;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.9rem}
+.linkish:hover{opacity:1}
+.msg{margin:0;color:var(--muted);min-height:1.6em}
+.msg.is-err{color:var(--bad)}
+#board-msg:empty{display:none}
+
+/* ---------- setup ---------- */
+.setup{display:flex;flex-direction:column;gap:18px;max-width:1120px;width:100%;margin:0 auto}
+.resume{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:14px;
+  background:var(--enamel);box-shadow:inset 0 0 0 3px var(--enamel),inset 0 0 0 4px var(--enamel-edge)}
+.resume p{margin:0;font-weight:500}
+.setup-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:18px}
+@media (max-width:820px){.setup-grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:1.55rem;line-height:1.2;text-wrap:balance}
+.card h2.gap{margin-top:10px}
+.row-between{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.count{color:var(--muted);font-variant-numeric:tabular-nums}
+.hint{margin:0;color:var(--muted);font-size:.92rem;max-width:62ch}
+
+.teams{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.team-row{display:flex;align-items:center;gap:10px}
+.swatch{width:14px;height:14px;border-radius:50%;background:var(--tc);flex:none}
+.team-row input{flex:1;min-width:0;background:var(--night);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.team-row input:focus{border-color:var(--brass);outline:none}
+.x{font-size:.85rem;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;cursor:pointer}
+.x:hover{color:var(--cream);border-color:var(--line-strong)}
+
+.field{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.lbl{color:var(--muted);font-size:.92rem}
+.seg{display:inline-flex;flex-wrap:wrap;gap:3px;padding:3px;background:var(--night);border:1px solid var(--line);border-radius:12px}
+.seg button{font-size:.92rem;padding:6px 13px;border-radius:9px;border:0;background:transparent;cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button:hover{background:var(--panel)}
+.seg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink);font-weight:600}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--brass);margin:0}
+
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.catpick{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:transparent;text-align:start;min-width:0;
+}
+.catpick .nm{font-family:var(--f-sign);font-size:1.2rem;line-height:1.3;overflow-wrap:anywhere}
+.catpick .fresh{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.catpick:hover{border-color:var(--line-strong)}
+.catpick[aria-pressed="true"]{background:var(--enamel);border-color:var(--enamel);box-shadow:inset 0 0 0 2px var(--enamel),inset 0 0 0 3px var(--enamel-edge);color:var(--enamel-edge)}
+.catpick[aria-pressed="true"] .fresh{color:var(--enamel-edge);opacity:.8}
+.catpick:disabled{opacity:.38;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.bank-note{margin:0;color:var(--muted);font-size:.88rem}
+.brand-foot{margin:8px 0 0;color:var(--muted);font-size:.82rem;text-align:center}
+.brand-foot:empty{display:none}
+
+/* ---------- board ---------- */
+.boardscr{display:flex;flex-direction:column;gap:14px}
+.board-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.turn{margin:0;font-size:1.15rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.turn b{color:var(--tc);font-weight:700}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--tc);flex:none;display:inline-block}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.board-wrap{overflow-x:auto;padding:4px 2px 6px}
+.board{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:clamp(6px,1vw,12px);min-width:calc(var(--cols) * 96px)}
+.plate{
+  background:linear-gradient(180deg,var(--enamel-hi),var(--enamel));
+  box-shadow:inset 0 0 0 4px var(--enamel),inset 0 0 0 6px var(--enamel-edge),0 3px 0 var(--shadow);
+  border-radius:10px;color:var(--enamel-edge);
+}
+.cat{
+  min-height:clamp(70px,11vh,104px);display:flex;align-items:center;justify-content:center;
+  padding:14px 12px;text-align:center;
+  background:
+    radial-gradient(circle at 11px 11px,var(--rivet) 0 2.2px,transparent 2.9px),
+    radial-gradient(circle at calc(100% - 11px) 11px,var(--rivet) 0 2.2px,transparent 2.9px),
+    radial-gradient(circle at 11px calc(100% - 11px),var(--rivet) 0 2.2px,transparent 2.9px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px),var(--rivet) 0 2.2px,transparent 2.9px),
+    linear-gradient(180deg,var(--enamel-hi),var(--enamel));
+}
+.cat-name{font-family:var(--f-sign);font-size:clamp(1.05rem,1.75vw,1.6rem);line-height:1.3;text-wrap:balance;overflow-wrap:anywhere}
+.cell{
+  position:relative;display:grid;place-items:center;width:100%;height:clamp(60px,11vh,120px);border:0;padding:0;
+  font-family:var(--f-display);font-size:clamp(1.55rem,3.3vw,3.1rem);line-height:1;color:var(--brass);
+  font-variant-numeric:tabular-nums;
+}
+button.cell{cursor:pointer;transition:transform .15s ease,filter .15s ease}
+button.cell:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.cell.used{background:transparent;box-shadow:inset 0 0 0 1px var(--line);border-radius:10px;color:var(--muted)}
+.cell.used .v{opacity:.32;text-decoration:line-through;text-decoration-thickness:2px}
+.cell .mark{position:absolute;inset-block-start:9px;inset-inline-start:9px;width:12px;height:12px;border-radius:50%;background:var(--tc)}
+.cell .mark.none{background:transparent;box-shadow:inset 0 0 0 2px var(--muted)}
+
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.score{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.score.is-turn{border-color:var(--tc);box-shadow:0 0 0 1px var(--tc)}
+.score .nm{font-weight:600;color:var(--tc);background:none;border:0;padding:0;text-align:start;cursor:pointer;display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
+.score .pts{font-family:var(--f-display);font-size:clamp(1.9rem,3vw,2.7rem);line-height:1.15;font-variant-numeric:tabular-nums}
+.adj{display:flex;gap:6px}
+.adj button{font-size:.8rem;padding:2px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-variant-numeric:tabular-nums}
+.adj button:hover{color:var(--cream);border-color:var(--line-strong)}
+
+/* ---------- question + end overlays ---------- */
+.over{
+  position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;overflow-y:auto;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+}
+.qcard{
+  width:min(1060px,100%);margin:auto;border-radius:22px;padding:clamp(26px,4.5vw,56px) clamp(20px,4vw,52px) clamp(18px,3vw,28px);
+  display:flex;flex-direction:column;align-items:center;gap:clamp(16px,2.6vw,26px);text-align:center;
+  box-shadow:inset 0 0 0 9px var(--enamel),inset 0 0 0 11px var(--enamel-edge),0 24px 70px var(--shadow);
+}
+.qmeta{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 18px}
+.qc{font-family:var(--f-sign);font-size:clamp(1.25rem,2.2vw,1.9rem);line-height:1.3}
+.qv{font-family:var(--f-display);font-size:clamp(1.4rem,2.6vw,2.2rem);color:var(--brass);line-height:1}
+.dd{font-family:var(--f-display);background:var(--brass);color:var(--brass-ink);padding:6px 16px 4px;border-radius:999px;font-size:1.15rem;line-height:1.2}
+.qtext{margin:0;font-weight:600;font-size:clamp(1.5rem,3.8vw,3.1rem);line-height:1.5;text-wrap:balance;max-width:22em;color:var(--cream)}
+.qtimer{position:relative;width:100px;height:100px;border:0;padding:0;background:transparent;cursor:pointer;border-radius:50%}
+.qtimer svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.qtimer .trk{stroke:var(--ring-track)}
+.qtimer .prg{stroke:var(--brass);transition:stroke-dashoffset .1s linear,stroke .3s}
+.qtimer.warn .prg{stroke:var(--bad)}
+.qtimer .n{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-display);font-size:2.1rem;line-height:1;color:var(--cream);font-variant-numeric:tabular-nums}
+.qtimer .n small{font-family:var(--f-body);font-size:.72rem;color:var(--enamel-edge);opacity:.85;margin-top:4px}
+.qtimer.out .n{font-size:1.1rem;color:var(--bad)}
+.qanswer{background:var(--brass);color:var(--brass-ink);border-radius:14px;padding:12px 30px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;max-width:min(100%,46em)}
+.qanswer .lbl{color:var(--brass-ink);opacity:.72;font-size:.85rem}
+.qanswer strong{font-size:clamp(1.45rem,3.3vw,2.7rem);line-height:1.35;overflow-wrap:anywhere}
+.qnote{font-size:.98rem;line-height:1.6;opacity:.85;max-width:40em}
+.qnote:empty{display:none}
+.qactions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+.qcard .ghost{border-color:var(--line-strong);color:var(--enamel-edge)}
+.qjudge{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.qjudge .lbl{margin:0;color:var(--enamel-edge);opacity:.85}
+.judge-teams{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.jt{display:inline-flex;border-radius:12px;overflow:hidden;border:2px solid var(--tc);background:var(--night)}
+.jt-ok{font-weight:700;padding:10px 16px;background:var(--tc);color:var(--team-ink);border:0;cursor:pointer;display:flex;align-items:center;gap:10px}
+.jt-ok small{font-weight:500;opacity:.8;font-variant-numeric:tabular-nums}
+.jt-ok:hover{filter:brightness(1.08)}
+.jt-bad{padding:10px 14px;background:transparent;color:var(--cream);border:0;cursor:pointer;font-size:.92rem;font-variant-numeric:tabular-nums}
+.jt-bad:hover{background:var(--panel)}
+.jt-bad:disabled{background:var(--bad);color:var(--on-bad);cursor:default}
+
+.qflag{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.qflag form{display:flex;flex-direction:column;gap:8px;width:min(100%,520px);text-align:start}
+.qflag label{font-size:.9rem;color:var(--enamel-edge)}
+.qflag textarea{width:100%;resize:vertical;background:var(--night);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;min-height:64px}
+.qflag textarea:focus{outline:none;border-color:var(--brass)}
+.flag-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.flag-done{margin:0;font-size:.92rem;color:var(--enamel-edge);background:var(--night);padding:6px 14px;border-radius:8px}
+
+.endcard{width:min(640px,100%);margin:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,4vw,40px);display:flex;flex-direction:column;gap:18px;text-align:center}
+.end-k{margin:0;color:var(--muted);font-size:1rem}
+.end-w{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,5.6vw,3.4rem);line-height:1.15;text-wrap:balance}
+.end-w span{color:var(--tc)}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rank li{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:12px;background:var(--night)}
+.rank .pos{font-family:var(--f-display);color:var(--muted);min-width:1.4em;font-size:1.2rem}
+.rank .nm{flex:1;min-width:0;text-align:start;font-weight:600;color:var(--tc);overflow-wrap:anywhere}
+.rank .p{font-family:var(--f-display);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
+.end-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+
+@media (max-width:520px){
+  .primary{font-size:1.25rem;padding:13px 22px 11px}
+  .card{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+/* brand theme */
+:root{
+  --zr:#c8102e; --zr-deep:#9a0b22; --ink:#1b1214;
+  --night:#f6f4f3; --panel:#ffffff;
+  --line:rgba(27,18,20,.12); --line-strong:rgba(27,18,20,.3);
+  --glow:rgba(200,16,46,.09);
+  --enamel:#ffffff; --enamel-hi:#ffffff; --enamel-edge:#e2dada; --rivet:#ffffff;
+  --cream:#1b1214; --muted:#6c5f62;
+  --brass:#c8102e; --brass-deep:#8a0a1f; --brass-ink:#ffffff;
+  --team-ink:#ffffff; --bad:#b4232f; --on-bad:#ffffff;
+  --scrim:rgba(246,244,243,.95); --shadow:rgba(80,10,24,.14); --ring-track:rgba(27,18,20,.12);
+  --f-display:"Changa","Lalezar",system-ui,Tahoma,sans-serif;
+  --f-sign:"Changa","Readex Pro",Tahoma,sans-serif;
+  color-scheme:light;
+}
+/* the shirt: white with two red stripes */
+.brand::after{content:"";display:block;width:136px;height:12px;margin-top:10px;background:linear-gradient(180deg,var(--zr) 0 4px,transparent 4px 8px,var(--zr) 8px 12px)}
+.logo{font-weight:800;color:var(--ink);letter-spacing:0}
+.tag{font-family:var(--f-body);font-size:1rem;color:var(--muted)}
+.card h2,.primary,.dd,.qv,.score .pts,.rank .p,.rank .pos,.qtimer .n,.load-title{font-weight:700}
+.end-w{font-weight:800}
+.card{box-shadow:0 1px 0 var(--line)}
+.mode.is-on{background:var(--zr);color:#fff;box-shadow:none}
+.resume{background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.secondary{border-color:var(--zr);color:var(--zr)}
+.catpick .nm{font-weight:600;font-size:1.08rem}
+.catpick[aria-pressed="true"]{background:var(--zr);border-color:var(--zr);box-shadow:none;color:#fff}
+.catpick[aria-pressed="true"] .fresh{color:#fff;opacity:.85}
+.plate{color:var(--ink);box-shadow:inset 0 0 0 1px var(--enamel-edge),0 2px 0 var(--shadow)}
+.cat{
+  background:
+    linear-gradient(180deg,transparent 0 9px,rgba(255,255,255,.92) 9px 13px,transparent 13px 17px,rgba(255,255,255,.92) 17px 21px,transparent 21px),
+    linear-gradient(180deg,#d3142f,var(--zr-deep));
+  color:#fff;box-shadow:0 2px 0 var(--shadow);padding-top:28px;
+}
+.cat-name{font-weight:700}
+button.cell.plate{
+  background:
+    linear-gradient(180deg,transparent 0 8px,var(--zr) 8px 12px,transparent 12px 16px,var(--zr) 16px 20px,transparent 20px),
+    #fff;
+  padding-top:16px;font-weight:700;
+}
+button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0 var(--shadow)}
+.qcard{
+  background:
+    linear-gradient(180deg,transparent 0 24px,var(--zr) 24px 34px,transparent 34px 42px,var(--zr) 42px 52px,transparent 52px),
+    #fff;
+  box-shadow:0 0 0 1px var(--line),0 24px 70px var(--shadow);
+  padding-top:clamp(70px,8vw,92px);
+}
+.qc{font-weight:600}
+.qcard .ghost{color:var(--ink);border-color:var(--line-strong)}
+.qtimer .n small,.qjudge .lbl,.qflag label,.linkish{color:var(--muted)}
+.qanswer .lbl{color:#fff;opacity:.85}
+.qflag textarea{background:#fff}
+.flag-done{background:var(--night);color:var(--ink)}
+.jt{background:#fff}
+.jt-bad{color:var(--ink)}
+.jt-bad:hover{background:var(--night)}
+.team-row input{background:#fff}
+.seg{background:#fff}
+.adj button{background:#fff}
+</style>
+
+<div class="app" dir="rtl" lang="ar">
+  <header class="top">
+    <div class="brand">
+      <h1 class="logo">زملكاوي</h1>
+      <p class="tag">لعشاق الفارس الأبيض</p>
+    </div>
+    <nav class="modes" aria-label="أوضاع اللعب">
+      <span class="mode is-on" aria-current="true">لوحة الفئات</span>
+      <span class="mode is-soon" aria-disabled="true">سباق السرعة <small>قريبًا</small></span>
+      <span class="mode is-soon" aria-disabled="true">أشهر إجابة <small>قريبًا</small></span>
+    </nav>
+  </header>
+
+  <!-- SETUP -->
+  <main id="scr-setup" class="setup">
+    <section class="resume" id="resume" hidden>
+      <p id="resume-text"></p>
+      <button class="secondary" id="resume-go" type="button">أكملوا اللعب</button>
+    </section>
+
+    <div class="setup-grid">
+      <section class="card" aria-labelledby="h-teams">
+        <h2 id="h-teams">الفرق</h2>
+        <ol class="teams" id="teams"></ol>
+        <div><button class="ghost" id="add-team" type="button">+ فريق آخر</button></div>
+
+        <h2 class="gap">القواعد</h2>
+        <div class="field"><span class="lbl" id="l-cols">عدد الفئات</span><div class="seg" id="seg-cols" role="group" aria-labelledby="l-cols"></div></div>
+        <div class="field"><span class="lbl" id="l-time">وقت الإجابة</span><div class="seg" id="seg-time" role="group" aria-labelledby="l-time"></div></div>
+        <label class="switch" for="opt-deduct"><input type="checkbox" id="opt-deduct"><span>الإجابة الخاطئة تخصم النقاط</span></label>
+      </section>
+
+      <section class="card" aria-labelledby="h-cats">
+        <div class="row-between"><h2 id="h-cats">الفئات</h2><span class="count" id="cat-count"></span></div>
+        <p class="hint">اختاروا الفئات التي تحبونها، وتُكمَل الفئات الباقية عشوائيًا. الرقم بجانب كل فئة هو عدد أسئلتها التي لم تُلعب بعد.</p>
+        <div class="cats" id="cats"></div>
+        <p class="hint" id="fill-hint"></p>
+      </section>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="go" type="button">ابدأوا اللعب</button>
+      <p class="msg" id="setup-msg" role="status"></p>
+    </div>
+    <p class="bank-note" id="bank-note"></p>
+  </main>
+
+  <!-- BOARD -->
+  <main id="scr-board" class="boardscr" hidden>
+    <div class="board-bar">
+      <p class="turn" id="turn"></p>
+      <div class="tools">
+        <button class="ghost" id="b-sound" type="button"></button>
+        <button class="ghost" id="b-full" type="button">ملء الشاشة</button>
+        <button class="ghost" id="b-setup" type="button">الإعداد</button>
+        <button class="ghost" id="b-end" type="button">إنهاء اللعبة</button>
+      </div>
+    </div>
+    <p class="msg" id="board-msg" role="status"></p>
+    <div class="board-wrap"><div class="board" id="board"></div></div>
+    <div class="scores" id="scores"></div>
+  </main>
+  <p class="brand-foot">تطبيق من الجمهور للجمهور، غير تابع رسميًا لنادي الزمالك.</p>
+</div>
+
+<!-- QUESTION -->
+<div class="over" id="qover" hidden role="dialog" aria-modal="true" aria-labelledby="q-text" dir="rtl" lang="ar">
+  <div class="qcard plate">
+    <div class="qmeta">
+      <span class="qc" id="q-cat"></span>
+      <span class="qv" id="q-val"></span>
+      <span class="dd" id="q-dd" hidden>سؤال مضاعف</span>
+    </div>
+    <p class="qtext" id="q-text"></p>
+    <button class="qtimer" id="q-timer" type="button">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="trk" cx="50" cy="50" r="44" fill="none" stroke-width="7"></circle>
+        <circle class="prg" id="ring" cx="50" cy="50" r="44" fill="none" stroke-width="7" stroke-linecap="round"></circle>
+      </svg>
+      <span class="n" aria-hidden="true"><span id="t-num"></span><small id="t-state"></small></span>
+    </button>
+    <div class="qanswer" id="q-answer" hidden>
+      <span class="lbl">الإجابة</span>
+      <strong id="q-a"></strong>
+      <span class="qnote" id="q-note"></span>
+    </div>
+    <div class="qactions" id="q-pre">
+      <button class="primary" id="q-reveal" type="button">أظهِر الإجابة</button>
+      <button class="ghost" id="q-swap" type="button" hidden>سؤال آخر</button>
+      <button class="ghost" id="q-cancel" type="button">العودة إلى اللوحة</button>
+    </div>
+    <div class="qjudge" id="q-post" hidden>
+      <p class="lbl">من أجاب إجابة صحيحة؟</p>
+      <div class="judge-teams" id="judge"></div>
+      <button class="ghost" id="q-none" type="button">لم يُجب أحد</button>
+    </div>
+    <div class="qflag">
+      <button class="linkish" id="flag-open" type="button">في السؤال خطأ؟</button>
+      <form id="flag-form" hidden>
+        <label for="flag-note">ما الخطأ؟ (اختياري)</label>
+        <textarea id="flag-note" maxlength="300" placeholder="مثلًا: الإجابة غير دقيقة، أو هناك إجابة صحيحة أخرى"></textarea>
+        <div class="flag-actions">
+          <button class="ghost" type="submit">أرسل البلاغ</button>
+          <button class="linkish" type="button" id="flag-cancel">إلغاء</button>
+        </div>
+      </form>
+      <p class="flag-done" id="flag-done" hidden></p>
+    </div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="over" id="endover" hidden role="dialog" aria-modal="true" aria-labelledby="end-w" dir="rtl" lang="ar">
+  <div class="endcard">
+    <p class="end-k" id="end-k"></p>
+    <h2 class="end-w" id="end-w"></h2>
+    <ol class="rank" id="rank"></ol>
+    <div class="end-actions">
+      <button class="primary" id="end-new" type="button">لوحة جديدة</button>
+      <button class="ghost" id="end-back" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Brand settings and its verified question bank, exported from Supabase. Each question id is its id in the database. */
+const BRAND = {"storageKey": "zamalkawy:v1", "brandId": "5c46f102-194d-45c4-b482-5345b06d35cf", "bankLabel": "zamalek-pilot-1", "teamColors": ["#c8102e", "#0e6f8a", "#b45309", "#6d28d9", "#15803d", "#1d4ed8"]};
+const BANK = [{"slug": "club-history", "name": "تاريخ النادي", "qs": [{"id": "67a9a616-bf40-4e99-a988-3cced9385187", "l": 1, "q": "الزمالك اتأسس سنة كام؟", "a": "1911", "alt": ["سنة 1911"], "opts": ["1907", "1915", "1921"], "note": "النادي اتأسس في القاهرة."}, {"id": "7aa3df13-2c36-4bf1-9c66-92b9df5f9147", "l": 1, "q": "الخطين اللي على صدر قميص الزمالك الأبيض لونهم إيه؟", "a": "أحمر", "alt": ["الأحمر"], "opts": ["أزرق", "أسود", "أخضر"], "note": "الأبيض بيرمز للسلام والخطين الحمر بيرمزوا للسعي للفوز."}, {"id": "f0eb2568-d05f-48d5-8e40-e5cee3d2662d", "l": 2, "q": "الزمالك في الأربعينات اتسمى على اسم أنهي حاكم لمصر؟", "a": "الملك فاروق", "alt": ["فاروق", "فاروق الأول", "نادي فاروق"], "opts": ["الملك فؤاد", "الخديوي إسماعيل", "الخديوي عباس حلمي"], "note": "المصادر مختلفة في سنة التغيير بالظبط، بس كلها بتحطها في الأربعينات."}, {"id": "0ad62612-3f0e-497e-89e5-bdb879600dc4", "l": 2, "q": "الزمالك أخد اسمه الرسمي الحالي سنة كام؟", "a": "1952", "alt": ["سنة 1952"], "opts": ["1941", "1956", "1961"], "note": "الاسم اتغير بعد ثورة 23 يوليو 1952 وخروج الملك فاروق."}, {"id": "743c3dcc-0a4c-4702-a854-fa0e204b33af", "l": 3, "q": "الزمالك بيحتفل بذكرى تأسيسه كل سنة يوم كام؟", "a": "5 يناير", "alt": ["يوم 5 يناير", "5/1"], "opts": ["1 مارس", "15 أكتوبر", "20 ديسمبر"], "note": "ده يوم تأسيس النادي في القاهرة سنة 1911."}, {"id": "a8951a48-d0eb-494b-acce-660d23f26091", "l": 3, "q": "أول اسم اتسمى بيه الزمالك وقت تأسيسه كان إيه؟", "a": "قصر النيل", "alt": ["نادي قصر النيل"], "opts": ["نادي الجزيرة", "نادي الروضة", "نادي المنيل"], "note": "ده كان اسم النادي وقت تأسيسه سنة 1911."}, {"id": "c5ab961a-0fdf-4a32-aaeb-e6f8f69ebc18", "l": 4, "q": "تاني اسم أخده الزمالك في تاريخه كان إيه؟", "a": "المختلط", "alt": ["مختلط", "النادي المختلط", "نادي المختلط", "نادي القاهرة المختلط", "نادي القاهرة الدولي الرياضي"], "opts": ["نادي الوطني", "نادي الهلال", "نادي العاصمة"], "note": null}, {"id": "a49e4db1-cf03-4049-82e2-d14a82c71743", "l": 4, "q": "الزمالك احتفل بعيده الخمسين سنة 1961 بماتش ودي قدام أنهي نادي أوروبي؟", "a": "ريال مدريد", "alt": ["الريال"], "opts": ["برشلونة", "بنفيكا", "ميلان"], "note": "الماتش اتلعب في القاهرة يوم 10 مارس 1961 وريال مدريد كسب 4-1."}, {"id": "94a2fd4e-b3f2-475f-b709-400d98be2cc6", "l": 5, "q": "جورج مرزباخ، اللي بيتنسب له تأسيس الزمالك، جنسيته كانت إيه؟", "a": "بلجيكي", "alt": ["البلجيكي", "بلجيكا"], "opts": ["فرنسي", "إنجليزي", "إيطالي"], "note": "مرزباخ كان محامي بلجيكي عايش في مصر."}, {"id": "90ba9c85-b6da-41ea-845f-43d4db306dfd", "l": 5, "q": "الزمالك اتأهل لكأس العالم للأندية 2001 بس البطولة اتلغت، كانت هتتلعب في أنهي بلد؟", "a": "إسبانيا", "alt": ["اسبانيا", "أسبانيا"], "opts": ["البرازيل", "اليابان", "الإمارات"], "note": "الزمالك اتأهل كبطل لكأس الكؤوس الأفريقية 2000، والبطولة اتلغت بسبب مشاكل في التمويل."}]}, {"slug": "titles", "name": "البطولات", "qs": [{"id": "c71ebe73-74ec-40aa-9e75-4bc3b22d499d", "l": 1, "q": "الزمالك قابل مين في نهائي الكونفدرالية سنة 2019 وفي نهائي 2024؟", "a": "نهضة بركان", "alt": ["بركان", "نهضة بركان المغربي", "آر إس بركان"], "opts": ["الوداد البيضاوي", "اتحاد العاصمة", "الصفاقسي"], "note": "في 2024 الزمالك كسب بقاعدة الهدف خارج الأرض بعد التعادل 2-2 في مجموع المباراتين."}, {"id": "a0d38662-bec6-4ae5-a389-84b80af58ab4", "l": 2, "q": "الزمالك كسب بطولة أفريقيا للأندية أبطال الدوري لأول مرة سنة كام؟", "a": "1984", "alt": ["سنة 1984"], "opts": ["1980", "1982", "1988"], "note": "كسب النهائي على شوتينج ستارز النيجيري 3-0 في مجموع المباراتين."}, {"id": "6236ae21-7b4f-4b02-92e1-ef2404be57ed", "l": 3, "q": "مين سجل هدفين للزمالك في السوبر الأفريقي قدام الترجي في الدوحة سنة 2020؟", "a": "أشرف بن شرقي", "alt": ["بن شرقي", "أشرف بنشرقي"], "opts": ["مصطفى محمد", "فرجاني ساسي", "شيكابالا"], "note": "الزمالك كسب 3-1 على استاد ثاني بن جاسم في قطر."}, {"id": "e18e9d78-f1ca-48cc-ad69-696650b5803b", "l": 3, "q": "إياب نهائي الكونفدرالية 2019 اللي الزمالك كسب فيه اللقب اتلعب في أنهي استاد؟", "a": "استاد برج العرب", "alt": ["برج العرب"], "opts": ["استاد القاهرة الدولي", "استاد السلام", "استاد بتروسبورت"], "note": "الزمالك كسب بضربات الترجيح 5-3 بعد التعادل 1-1 في مجموع المباراتين."}, {"id": "2b249661-2787-4274-8ee6-95f5950b83a0", "l": 4, "q": "الزمالك كسب كأس الكؤوس الأفريقية سنة 2000 في النهائي على حساب مين؟", "a": "كانون ياوندي", "alt": ["كانون", "كانون ياوندي الكاميروني"], "opts": ["تونير ياوندي", "هارتس أوف أوك", "الأفريقي التونسي"], "note": "الزمالك كسب الذهاب في القاهرة 4-1 وخسر الإياب في ياوندي 2-0، وكسب اللقب 4-3 في المجموع."}, {"id": "95f8c291-cfb8-4ca5-a14e-ac71bddff3ba", "l": 4, "q": "الزمالك كسب الدوري الممتاز لأول مرة في موسم كام؟", "a": "موسم 1959-1960", "alt": ["1959-1960", "1959-60", "موسم 59-60"], "opts": ["موسم 1948-1949", "موسم 1956-1957", "موسم 1961-1962"], "note": "اللقب التاني للزمالك في الدوري الممتاز جه موسم 1963-1964."}, {"id": "db21d239-0675-43df-a738-05fda4e57500", "l": 5, "q": "الزمالك كسب الكأس الأفروآسيوية سنة 1997 في النهائي على حساب مين؟", "a": "بوهانج ستيلرز", "alt": ["بوهانج", "بوهانغ ستيلرز", "بوهانج الكوري"], "opts": ["أولسان هيونداي", "سوون سامسونج", "الهلال السعودي"], "note": "الزمالك خسر في كوريا 2-1 وكسب في القاهرة 1-0، وخد اللقب بقاعدة الهدف خارج الأرض."}, {"id": "7b32d6dc-86cd-4e43-9926-a7aed81efa56", "l": 5, "q": "الزمالك، باسمه القديم وقتها، كسب أول نهائي في تاريخ كأس مصر سنة 1922 على حساب مين؟", "a": "الاتحاد السكندري", "alt": ["الاتحاد", "اتحاد إسكندرية", "اتحاد الإسكندرية"], "opts": ["الترسانة", "السكة الحديد", "الأوليمبي"], "note": "النهائي خلص 5-0 يوم 21 أبريل 1922."}]}, {"slug": "legends", "name": "أساطير الزمالك", "qs": [{"id": "3e3d9a42-885c-46a6-983b-339dddebdcc9", "l": 1, "q": "حسن شحاتة وهو لاعب في الزمالك كان الجمهور بيلقبه بإيه؟", "a": "المعلم", "alt": ["معلم"], "opts": ["الصخرة السوداء", "البلدوزر", "الأباتشي"], "note": "جماهير الزمالك هي اللي أطلقت عليه لقب المعلم وهو لاعب."}, {"id": "ebf2ff98-ba8c-45f9-b80c-86dbe8a763a1", "l": 1, "q": "عبد الحليم علي هداف الزمالك كان الجمهور بيلقبه بإيه؟", "a": "العندليب", "alt": ["العندليب الأسمر", "عندليب الزملكاوية"], "opts": ["ملك النص", "البلدوزر", "الأباتشي"], "note": "انضم للزمالك سنة 1999 من الشرقية للدخان واعتزل سنة 2009."}, {"id": "9283a4ec-f42d-4547-be53-d2f3ea4c4a77", "l": 2, "q": "مين أسطورة الزمالك اللي كان بيتلقب بـ«ملك النص»؟", "a": "فاروق جعفر", "alt": ["فاروق"], "opts": ["علي خليل", "جمال عبد الحميد", "حمادة إمام"], "note": "فاروق جعفر لعب للزمالك في السبعينات والتمانينات."}, {"id": "257fe67c-b8e8-46dc-85b9-8702a2993f25", "l": 2, "q": "شيكابالا ساب الزمالك في يناير 2014 واحترف في البرتغال، في أنهي نادي؟", "a": "سبورتنج لشبونة", "alt": ["سبورتنج", "سبورتينج", "سبورتينج لشبونة"], "opts": ["بنفيكا", "بورتو", "براجا"], "note": "قبلها كان احترف في باوك اليوناني سنة 2005."}, {"id": "0ce635ea-f065-400d-b8d0-ddaca438eb33", "l": 3, "q": "حمادة إمام نجم الزمالك في الستينات كان لقبه إيه؟", "a": "الثعلب", "alt": ["الثعلب الأبيض", "ثعلب الكرة", "الثعلب الكبير"], "opts": ["الصخرة السوداء", "المعلم", "الأباتشي"], "note": "اتولد سنة 1943 في المنيرة بالقاهرة."}, {"id": "9e4e9187-a3f0-4dd7-b053-7d003475a593", "l": 3, "q": "عمرو زكي اتعار من الزمالك لأنهي نادي إنجليزي في موسم 2008-2009؟", "a": "ويجان", "alt": ["ويجان أتلتيك", "ويغان"], "opts": ["بولتون", "ميدلزبره", "بورتسموث"], "note": "بعدها اتعار كمان لهال سيتي في 2010."}, {"id": "cd37741f-9acd-4d22-9a69-608de24fc28d", "l": 4, "q": "حسن شحاتة ساب الزمالك آخر الستينات وراح الكويت، اتعاقد مع أنهي نادي هناك؟", "a": "كاظمة", "alt": ["كاظمة الكويتي", "نادي كاظمة"], "opts": ["القادسية", "السالمية", "الجهراء"], "note": "أول ظهور له مع الفريق الأول للزمالك كان سنة 1966."}, {"id": "f41c7dc9-b2cd-4a59-a14d-b0720d96343a", "l": 4, "q": "يحيى إمام جد حازم إمام كان بيلعب للزمالك في الأربعينات في مركز إيه؟", "a": "حارس مرمى", "alt": ["حارس", "حارس المرمى", "جون"], "opts": ["قلب دفاع", "رأس حربة", "جناح أيمن"], "note": "مثّل مصر في أولمبياد لندن 1948، وهو والد حمادة إمام."}, {"id": "90c3f337-35b4-425d-be3d-91c65a15a6f3", "l": 5, "q": "محمد لطيف «شيخ المعلقين» لعب للزمالك، واحترف في منتصف التلاتينات في أنهي نادي اسكتلندي؟", "a": "رينجرز", "alt": ["جلاسجو رينجرز", "غلاسكو رينجرز"], "opts": ["سيلتك", "هارتس", "أبردين"], "note": "رجع للزمالك سنة 1936 وكمل معاه لحد 1945."}, {"id": "7d499407-3e08-4c8f-a27f-b38afa450fa3", "l": 5, "q": "حازم إمام وهو لاعب في أودينيزي اتعار لأنهي نادي هولندي؟", "a": "دي جرافشاب", "alt": ["دي خرافشاب", "خرافشاب", "جرافشاب", "دي غرافشاب"], "opts": ["فيتيسه", "هيرينفين", "تفينتي"], "note": "انتقل لأودينيزي صيف 1996 واتعار لدي جرافشاب سنة 1998."}]}, {"slug": "coaches", "name": "المدربون", "qs": [{"id": "7148ed9d-f87c-41c8-82d2-b9e56f30a8a2", "l": 1, "q": "مين المدرب اللي كسب مع الزمالك الكونفدرالية الأفريقية نسخة 2023-2024؟", "a": "جوزيه جوميز", "alt": ["جوميز", "خوسيه جوميز", "جوزيه غوميز", "José Gomes"], "opts": ["كريستيان جروس", "باتريس كارتيرون", "جيسوالدو فيريرا"], "note": "الزمالك حسمها في ماتش العودة في القاهرة يوم 19 مايو 2024."}, {"id": "fd58037d-6c86-44ec-a0bd-53087b3ecae2", "l": 1, "q": "مين المدرب اللي كسب مع الزمالك أول كونفدرالية في تاريخه، نسخة 2018-2019؟", "a": "كريستيان جروس", "alt": ["جروس", "كريستيان غروس", "Christian Gross"], "opts": ["ميتشو", "باتريس كارتيرون", "جيسوالدو فيريرا"], "note": "الزمالك كسب اللقب بضربات الترجيح بعد التعادل 1-1 في مجموع المباراتين."}, {"id": "77812d8b-1f52-45aa-83a2-bfe86c92a54c", "l": 2, "q": "مين مدرب الزمالك اللي كسب السوبر الأفريقي قدام الترجي 3-1 في قطر سنة 2020؟", "a": "باتريس كارتيرون", "alt": ["كارتيرون", "باتريس كارترون", "Patrice Carteron"], "opts": ["جوزيه جوميز", "ميتشو", "جايمي باتشيكو"], "note": "الماتش اتلعب يوم 14 فبراير 2020."}, {"id": "13109c13-8c18-4eea-9176-fa42345b30e2", "l": 3, "q": "مين المدرب اللي كسب مع الزمالك أول بطولة أفريقيا للأندية أبطال الدوري سنة 1984؟", "a": "محمود أبو رجيلة", "alt": ["أبو رجيلة", "محمود ابو رجيله", "أبو رجيله"], "opts": ["محمود الجوهري", "ديف ماكاي", "فيرنر أولك"], "note": "أبو رجيلة كسب مع الزمالك كمان الدوري موسم 1983-1984."}, {"id": "d2dccd80-d300-49b5-bd3d-fabf5d657f6d", "l": 3, "q": "مين المدرب اللي كسب مع الزمالك بطولة أفريقيا للأندية أبطال الدوري سنة 1993؟", "a": "محمود الجوهري", "alt": ["الجوهري", "محمود الجوهرى"], "opts": ["محمود أبو رجيلة", "فيرنر أولك", "ريتشي باركر"], "note": "الجوهري كسب مع الزمالك كمان السوبر الأفريقي 1994."}, {"id": "385bee00-fed9-4cad-b97b-b52cd7193042", "l": 4, "q": "مين المدرب اللي كسب مع الزمالك كأس الكؤوس الأفريقية سنة 2000؟", "a": "أوتو فيستر", "alt": ["فيستر", "أوتو بفيستر", "Otto Pfister"], "opts": ["فيرنر أولك", "رود كرول", "كابرال"], "note": "فيستر مدرب ألماني وكسب مع الزمالك كمان الدوري موسم 2000-2001."}, {"id": "c1ab48d3-4fdc-46a1-8208-52e0f2769b38", "l": 5, "q": "مين المدرب اللي كسب الدوري مع الزمالك موسم 1977-1978؟", "a": "زكي عثمان", "alt": ["زكى عثمان"], "opts": ["جوزيف فاندلر", "ديف ماكاي", "محمود الجوهري"], "note": null}, {"id": "8412083a-1883-4a9f-a7ba-2ee77587c99e", "l": 5, "q": "الزمالك كسب بطولة أفريقيا للأندية أبطال الدوري سنة 1986 بضربات الترجيح، مين كان المدرب؟", "a": "ريتشي باركر", "alt": ["باركر", "ريتشارد باركر", "Richie Barker"], "opts": ["محمود أبو رجيلة", "ديف ماكاي", "محمود الجوهري"], "note": "باركر مدرب إنجليزي، والزمالك كسب النهائي قدام أفريكا سبور الإيفواري."}]}, {"slug": "classic-matches", "name": "مباريات لا تُنسى", "qs": [{"id": "0712ff5f-acfa-4df8-b151-a955a894fa50", "l": 1, "q": "مين سجل هدف الزمالك في ماتش إياب نهائي الكونفدرالية اللي اتلعب في استاد القاهرة في مايو 2024؟", "a": "أحمد حمدي", "alt": ["حمدي"], "opts": ["أحمد سيد زيزو", "مصطفى شلبي", "عبد الله السعيد"], "note": "الماتش اتلعب يوم 19 مايو 2024 وخلص 1-0، والزمالك خد اللقب بقاعدة الهدف برا بعد تعادل مجموع الماتشين 2-2."}, {"id": "65db6652-485b-4747-8971-93dfae71dbef", "l": 2, "q": "الزمالك كسب نهائي دوري أبطال أفريقيا سنة 2002 قدام أنهي فريق؟", "a": "الرجاء البيضاوي", "alt": ["الرجاء", "رجاء الدار البيضاء", "الرجاء المغربي"], "opts": ["الوداد البيضاوي", "الترجي التونسي", "النجم الساحلي"], "note": "الذهاب في الدار البيضاء خلص 0-0، والزمالك كسب الإياب في القاهرة 1-0 يوم 13 ديسمبر 2002."}, {"id": "aa4d5dc2-c089-4e55-a186-1169e1115f73", "l": 3, "q": "مين سجل هدف الزمالك الوحيد في نهائي دوري أبطال أفريقيا سنة 2002؟", "a": "تامر عبد الحميد", "alt": ["تامر عبدالحميد"], "opts": ["حسام حسن", "حازم إمام", "عبد الحليم علي"], "note": "الهدف جه في الوقت بدل الضايع للشوط الأول في ماتش الإياب في القاهرة، وكان الهدف الوحيد في الماتشين."}, {"id": "6463ba25-fafb-4b2c-bf29-1c452fba321e", "l": 3, "q": "مين فتح التسجيل في فوز الزمالك 4-0 على الوداد في ذهاب نص نهائي دوري أبطال أفريقيا سنة 2016؟", "a": "شيكابالا", "alt": ["محمود عبد الرازق", "شيكا"], "opts": ["محمود كهربا", "محمد إبراهيم", "معروف يوسف"], "note": "الماتش اتلعب في برج العرب، والأهداف التانية جابها أيمن حفني وباسم مرسي ومصطفى فتحي."}, {"id": "05bb8114-8167-4e5f-9782-e245b22ce72e", "l": 4, "q": "الزمالك كسب نهائي كأس أفريقيا للأندية أبطال الدوري سنة 1993 بالترجيح 7-6، قدام أنهي فريق؟", "a": "أسانتي كوتوكو", "alt": ["كوتوكو", "أشانتي كوتوكو", "أسانتي كوتوكو الغاني"], "opts": ["هارتس أوف أوك", "شوتينج ستارز", "أفريكا سبور"], "note": "الماتشين خلصوا 0-0 في كوماسي والقاهرة، وضربات الترجيح كانت في استاد القاهرة يوم 10 ديسمبر 1993."}, {"id": "68cf188e-f5bb-4cac-94db-9dce8e6fc23e", "l": 4, "q": "مين سجل هدفين الزمالك في ذهاب نهائي أفريقيا سنة 1984 قدام شوتينج ستارز في القاهرة؟", "a": "جمال عبد الحميد", "alt": ["جمال عبدالحميد"], "opts": ["فاروق جعفر", "إبراهيم يوسف", "أشرف قاسم"], "note": "الماتش خلص 2-0 يوم 23 نوفمبر 1984 وواحد من الهدفين كان ضربة جزاء، والزمالك كسب الإياب في لاجوس 1-0 وخد أول لقب أفريقي في تاريخه."}, {"id": "77e3b565-9456-46fd-af44-a4ed007ea51c", "l": 5, "q": "في نص نهائي أفريقيا سنة 1984 الزمالك خسر الذهاب 3-1 ورجع كسب الإياب 3-0، قدام أنهي فريق جزائري؟", "a": "شبيبة القبائل", "alt": ["شبيبة تيزي وزو", "إلكترونيك تيزي وزو", "جي إي تيزي وزو", "تيزي وزو", "شبيبة القبائل الجزائري"], "opts": ["مولودية الجزائر", "وفاق سطيف", "شباب بلوزداد"], "note": "الفريق كان اسمه وقتها إلكترونيك تيزي وزو، وده الاسم القديم لشبيبة القبائل، والزمالك عدّى بمجموع 4-3 وكسب البطولة بعدها."}]}, {"slug": "derby", "name": "القمة", "qs": [{"id": "11099376-91c6-4f4f-bfe4-2dfe986429ae", "l": 1, "q": "في السوبر الأفريقي اللي اتلعب في الرياض سنة 2024، مين جاب هدف التعادل للزمالك قدام الأهلي؟", "a": "ناصر منسي", "alt": ["منسي", "ناصر منسى"], "opts": ["أحمد سيد زيزو", "سيف الجزيري", "مصطفى شلبي"], "note": "الماتش خلص 1-1 والزمالك كسب بضربات الترجيح 4-3 على ملعب المملكة أرينا يوم 27 سبتمبر 2024."}, {"id": "cf563d9b-c2fa-4dd4-9eca-9749e8959ab6", "l": 1, "q": "في نهائي دوري أبطال أفريقيا موسم 2019-2020 قدام الأهلي، مين جاب هدف الزمالك؟", "a": "شيكابالا", "alt": ["شيكا", "محمود عبد الرازق"], "opts": ["أشرف بن شرقي", "مصطفى محمد", "أحمد سيد زيزو"], "note": "الهدف جه في الدقيقة 31 والنهائي اتلعب يوم 27 نوفمبر 2020 وخلص 2-1 للأهلي."}, {"id": "a8377366-ed43-4e7f-89d5-6b918012e1d1", "l": 2, "q": "في نهائي كأس مصر موسم 2014-2015، مين جاب الهدفين للزمالك في الأهلي؟", "a": "باسم مرسي", "alt": ["باسم مرسى", "مرسي"], "opts": ["أيمن حفني", "محمد إبراهيم", "أحمد حمودي"], "note": "الزمالك كسب 2-0 يوم 21 سبتمبر 2015 والمدرب كان البرتغالي جيسوالدو فيريرا."}, {"id": "80dce00d-bb07-40e8-9e82-677925e56ddd", "l": 2, "q": "في نهائي كأس مصر موسم 1943-1944، الزمالك كسب الأهلي بكام؟", "a": "6-0", "alt": ["ستة صفر", "6 أهداف نظيفة"], "opts": ["5-0", "4-0", "3-0"], "note": "النهائي اتلعب يوم 2 يونيو 1944 على ملعب اتحاد الجيش."}, {"id": "b993a3f6-b338-4d9b-9fee-a49bb9f3695f", "l": 3, "q": "في نهائي كأس مصر موسم 2015-2016، الزمالك كسب الأهلي بكام؟", "a": "3-1", "alt": ["تلاتة واحد", "3 أهداف لهدف"], "opts": ["2-0", "2-1", "3-0"], "note": "النهائي اتلعب في إسكندرية في أغسطس 2016."}, {"id": "63e37f43-f4fd-459b-8b2c-25c599d9ba11", "l": 3, "q": "في السوبر الأفريقي سنة 1994، مين جاب هدف الزمالك الوحيد في الأهلي؟", "a": "أيمن منصور", "alt": ["ايمن منصور"], "opts": ["جمال عبد الحميد", "إسماعيل يوسف", "أيمن يونس"], "note": "الزمالك كسب الماتش 1-0."}, {"id": "ab41e8ba-c97b-4c4d-a0e6-e7e354dd536c", "l": 4, "q": "السوبر الأفريقي سنة 1994 اللي الزمالك كسب فيه الأهلي اتلعب في أنهي مدينة؟", "a": "جوهانسبرج", "alt": ["جوهانسبرغ", "جوهانسبيرج"], "opts": ["نيروبي", "أبيدجان", "الدار البيضاء"], "note": "الماتش اتلعب في جنوب أفريقيا وخلص 1-0 للزمالك."}, {"id": "22f40793-dccd-4044-9f2d-8677a02cebcf", "l": 4, "q": "نهائي كأس مصر موسم 2014-2015 اللي الزمالك كسب فيه الأهلي اتلعب على أنهي استاد؟", "a": "استاد بتروسبورت", "alt": ["بتروسبورت", "بترو سبورت"], "opts": ["استاد برج العرب", "استاد القاهرة الدولي", "استاد الدفاع الجوي"], "note": "الماتش اتلعب يوم 21 سبتمبر 2015 وخلص 2-0 للزمالك."}, {"id": "773ccf4f-870e-4a52-9ac3-c87bccd56ca5", "l": 5, "q": "مين عمل هاتريك للزمالك في الأهلي في نهائي كأس مصر موسم 1943-1944؟", "a": "زقلط", "alt": ["حافظ زقلط", "محمود حافظ", "محمد حافظ", "حسن حافظ"], "opts": ["عصام بهيج", "علاء الحامولي", "أنور البشبيشي"], "note": "النهائي اتلعب يوم 2 يونيو 1944."}]}, {"slug": "national-team", "name": "أبناء الزمالك في المنتخب", "qs": [{"id": "aea57cbd-4f31-4568-8e13-9c7ea765e507", "l": 1, "q": "إسماعيل يوسف وأحمد رمزي نجوم الزمالك لعبوا مع منتخب مصر كأس العالم 1990 في أنهي بلد؟", "a": "إيطاليا", "alt": ["ايطاليا", "إيطاليا 1990"], "opts": ["أمريكا", "فرنسا", "إسبانيا"], "note": "مصر اتعادلت مع هولندا 1-1 ومع أيرلندا 0-0 وخسرت من إنجلترا 1-0."}, {"id": "12fcc569-0516-4007-904c-da03483ca2c2", "l": 1, "q": "عمرو زكي مهاجم الزمالك اللي جاب هدفين لمصر في نص نهائي أمم أفريقيا 2008 كان لقبه إيه؟", "a": "البلدوزر", "alt": ["بلدوزر"], "opts": ["الفهد", "الثعلب", "الصاروخ"], "note": "جاب الهدفين قدام كوت ديفوار في الدقيقة 62 و67، والماتش خلص 4-1 لمصر."}, {"id": "0a2ad79c-8b0a-4ecd-a3ef-1c6f930116ad", "l": 2, "q": "مين حارس الزمالك اللي وقف في جول مصر في نهائي أمم أفريقيا 1998 قدام جنوب أفريقيا؟", "a": "نادر السيد", "alt": ["نادر"], "opts": ["أحمد شوبير", "عصام الحضري", "عبد الواحد السيد"], "note": "مصر كسبت النهائي 2-0 في واجادوجو، ونادر اتختار أحسن حارس في البطولة قبل ما يحترف في كلوب بروج."}, {"id": "ab846f27-1431-4ce9-b92f-5243d995e638", "l": 2, "q": "شيكابالا كان لاعب في الزمالك لما كسب كأس الأمم الأفريقية مع منتخب مصر سنة كام؟", "a": "2010", "alt": ["أنجولا 2010", "انجولا 2010"], "opts": ["1998", "2006", "2017"], "note": "كان في قايمة حسن شحاتة في أنجولا ومعاه من الزمالك عبد الواحد السيد وهاني سعيد ومحمود فتح الله ومحمد عبد الشافي."}, {"id": "8b798227-0360-42c4-b632-afb028747fb3", "l": 3, "q": "مين اللاعب اللي سجل أول هدف في تاريخ كأس الأمم الأفريقية سنة 1957، وبعدها بقى من نجوم الزمالك؟", "a": "رأفت عطية", "alt": ["رأفت عطيه", "رافت عطية"], "opts": ["علاء الحامولي", "عصام بهيج", "حنفي بسطان"], "note": "الهدف جه من ضربة جزاء في الدقيقة 21 قدام السودان في الخرطوم، ومصر كسبت 2-1 وبعدها خدت البطولة."}, {"id": "b911e1e6-6da7-45bf-a0e2-feab608d1806", "l": 4, "q": "مين نجم الزمالك اللي جاب هدفين مصر في ماتش السودان اللي حسم كأس الأمم الأفريقية 1959؟", "a": "عصام بهيج", "alt": ["بهيج"], "opts": ["علاء الحامولي", "صالح سليم", "محمود الجوهري"], "note": "مصر كسبت 2-1 في القاهرة وخدت ثاني لقب أفريقي في تاريخها."}, {"id": "6d1436c9-9040-48af-b159-77fb1acb0970", "l": 4, "q": "مين حارس الزمالك اللي كان في قايمة مصر في بطولتي أمم أفريقيا 2006 و2010؟", "a": "عبد الواحد السيد", "alt": ["عبدالواحد السيد", "عبد الواحد"], "opts": ["محمد عبد المنصف", "نادر السيد", "أيمن طاهر"], "note": "في قايمة 2006 كان معاه من حراس الزمالك كمان محمد عبد المنصف."}, {"id": "07eb1acd-a29c-47af-a2de-2b37ce54c42e", "l": 5, "q": "مين مهاجم الزمالك وقتها اللي كان في قايمة مصر اللي كسبت أمم أفريقيا 2006 في القاهرة؟", "a": "عبد الحليم علي", "alt": ["عبدالحليم علي", "عبد الحليم"], "opts": ["عماد متعب", "أسامة حسني", "أحمد بلال"], "note": "نزل بديل في النهائي اللي مصر كسبته بالترجيح قدام كوت ديفوار، وحسام حسن كان في القايمة بس وقتها كان لاعب في المصري."}]}, {"slug": "foreigners", "name": "الأجانب في الزمالك", "qs": [{"id": "cf4e1089-cf2a-444c-8c6e-c5e8231397b8", "l": 1, "q": "سيف الدين الجزيري، مهاجم الزمالك السابق، جنسيته إيه؟", "a": "تونسي", "alt": ["تونس", "من تونس"], "opts": ["مغربي", "جزائري", "ليبي"], "note": "الجزيري ساب الزمالك بالتراضي في صيف 2026."}, {"id": "af59eec5-6545-4c5d-b7f6-c1896d82d20b", "l": 2, "q": "مين المدرب الأجنبي اللي كسب مع الزمالك دوري أبطال أفريقيا سنة 2002؟", "a": "كارلوس كابرال", "alt": ["كابرال", "كابرالزينيو", "كارلوس روبرتو كابرال"], "opts": ["نيلو فينجادا", "جورفان فييرا", "روود كرول"], "note": "كابرال برازيلي، وأول فترة له مع الزمالك كانت من 2002 لـ 2003."}, {"id": "1022d048-ef29-44a9-9cf2-00d0eeaef98f", "l": 3, "q": "المهاجم المغربي حميد أحداد جه الزمالك سنة 2018 من أنهي نادي؟", "a": "الدفاع الحسني الجديدي", "alt": ["الدفاع الجديدي", "الدفاع الحسني"], "opts": ["الوداد", "الجيش الملكي", "نهضة بركان"], "note": null}, {"id": "312ab8ce-f359-4d7f-ae5b-fc06ac8721ec", "l": 4, "q": "مين المدرب الأجنبي اللي كسب الدوري مع الزمالك موسمين ورا بعض، 1991-1992 و1992-1993؟", "a": "ديف ماكاي", "alt": ["ماكاي", "ديفيد ماكاي"], "opts": ["ريتشي باركر", "روود كرول", "ألفريد ريدل"], "note": "ماكاي إسكتلندي ولعب لتوتنهام قبل ما يبقى مدرب، ودرّب الزمالك من 1991 لـ 1993."}, {"id": "06d741a1-be12-44ed-95d8-b1a639b977ef", "l": 4, "q": "المدرب الصربي ميتشو جه الزمالك سنة 2019 بعد ما ساب أنهي نادي؟", "a": "أورلاندو بايرتس", "alt": ["أورلاندو", "أورلاندو بيراتس", "أورلاندو بايريتس"], "opts": ["كايزر تشيفس", "ماميلودي صن داونز", "الوداد"], "note": "ميتشو استقال من أورلاندو بايرتس الجنوب أفريقي والزمالك أعلن تعيينه بعدها بساعات في أغسطس 2019."}, {"id": "bab06238-85bf-46fc-9c6d-21564e969dba", "l": 5, "q": "النيجيري إيمانويل أمونيكي جه الزمالك سنة 1991 من أنهي نادي؟", "a": "جوليوس بيرجر", "alt": ["جوليوس برجر", "يوليوس بيرجر"], "opts": ["شوتينج ستارز", "إنيمبا", "رينجرز إنترناشونال"], "note": "أمونيكي لعب للزمالك من 1991 لـ 1994 وكسب معاه بطولة أفريقيا للأندية أبطال الدوري 1993."}]}, {"slug": "other-sports", "name": "ألعاب أخرى", "qs": [{"id": "e885bb88-9d47-48ce-8fbb-0488a46feb6e", "l": 1, "q": "سلة الزمالك كسبت أول نسخة من دوري السلة الأفريقي BAL سنة 2021، كسبت مين في النهائي؟", "a": "الاتحاد المنستيري", "alt": ["المنستير", "اتحاد المنستير", "يو إس موناستير", "US Monastir"], "opts": ["الأهلي", "بترو دي لواندا", "الترجي"], "note": "الزمالك كسب النهائي 76-63."}, {"id": "aa1ccf88-6d8f-4c77-8690-23943fdbe536", "l": 1, "q": "مين نجم يد الزمالك اللي شال علم مصر في افتتاح أولمبياد ريو 2016؟", "a": "أحمد الأحمر", "alt": ["الأحمر", "Ahmed El-Ahmar"], "opts": ["حسام عبدالله", "حسين زكي", "محمد ممدوح هاشم"], "note": "أحمد الأحمر اتولد سنة 1984 وبدأ مشواره مع الفريق الأول للزمالك سنة 2004."}, {"id": "2cacca1e-7b6d-4dbc-b4b4-8331766777ef", "l": 2, "q": "سلة الزمالك اتتوجت بلقب BAL سنة 2021 في أنهي عاصمة أفريقية؟", "a": "كيجالي", "alt": ["كيغالي", "Kigali"], "opts": ["داكار", "القاهرة", "لواندا"], "note": "النهائي اتلعب في صالة كيجالي أرينا في رواندا."}, {"id": "e23d6c36-e261-44ed-b376-d05154ccd4cb", "l": 2, "q": "يد الزمالك كسبت نهائي بطولة أفريقيا لأندية اليد أبطال الدوري سنة 2018 في أبيدجان على مين؟", "a": "الأهلي", "alt": ["أهلي", "النادي الأهلي"], "opts": ["سبورتنج", "الترجي", "الأفريقي"], "note": "الزمالك كسب النهائي 27-25 في كوت ديفوار."}, {"id": "840c035d-c6cc-46c2-9ac4-63e0f25a6f32", "l": 3, "q": "مين لاعب الزمالك اللي خد جايزة أحسن لاعب MVP في أول موسم لدوري BAL سنة 2021؟", "a": "والتر هودج", "alt": ["هودج", "Walter Hodge"], "opts": ["سليمان دياباتي", "مهاب ياسر", "مايكل فاكواده"], "note": "هودج اتولد في بورتوريكو سنة 1986."}, {"id": "3a2f2103-edd6-463f-9843-f4d70339b69d", "l": 3, "q": "يد الزمالك كسبت نهائي بطولة أفريقيا لأندية اليد أبطال الدوري سنة 2019 في كاب فيردي على مين؟", "a": "سبورتنج", "alt": ["نادي سبورتنج", "سبورتنج السكندري"], "opts": ["الأهلي", "الترجي", "إنتركلوب الأنجولي"], "note": "الزمالك كسب 33-31 في مدينة برايا عاصمة كاب فيردي."}, {"id": "3d947dee-ee7e-4543-a570-33f61e3df5dc", "l": 4, "q": "الزمالك كسب أول نسخة من بطولة أفريقيا لأندية اليد أبطال الدوري، النسخة دي اتلعبت سنة كام؟", "a": "1979", "alt": ["79", "سنة 1979"], "opts": ["1975", "1983", "1985"], "note": "الزمالك كسب البطولة 3 سنين ورا بعض: 1979 و1980 و1981."}, {"id": "572ce092-6748-4cbc-ac64-4014a2589852", "l": 4, "q": "سيدات طائرة الزمالك كسبوا بطولة أفريقيا للأندية لأول مرة في تاريخهم سنة كام؟", "a": "2023", "alt": ["سنة 2023"], "opts": ["2017", "2019", "2021"], "note": "كسبوا النهائي في تونس على كينيا بايبلاين 3-1."}, {"id": "2afb7b23-33c3-44c5-ac2b-af66127b2833", "l": 5, "q": "أول بطولة أفريقية لسلة الزمالك كانت كأس أفريقيا للأندية البطلة سنة كام؟", "a": "1992", "alt": ["92", "سنة 1992"], "opts": ["1975", "1976", "1998"], "note": "لقب BAL سنة 2021 كان تاني لقب أفريقي لسلة الزمالك بعد لقب 1992."}, {"id": "45ae3b11-303f-4c3a-8150-2b72d85b8c57", "l": 5, "q": "يد الزمالك خلّصت في المركز الكام في بطولة السوبر جلوب لأندية العالم سنة 2010 في الدوحة؟", "a": "المركز التالت", "alt": ["التالت", "الثالث", "المركز الثالث", "البرونزية"], "opts": ["المركز الأول", "المركز التاني", "المركز الرابع"], "note": "البطولة كسبها سيوداد ريال الإسباني."}]}];
+</script>
+<script>
+(function(){
+"use strict";
+
+const KEY = BRAND.storageKey;
+const COLORS = BRAND.teamColors || ["#e6b04a","#41c7b4","#f07f66","#b195f5","#a6d15a","#62b8f0"];
+const ORD = ["الفريق الأول","الفريق الثاني","الفريق الثالث","الفريق الرابع","الفريق الخامس","الفريق السادس"];
+const VALUES = [100,200,300,400,500];
+const BY_SLUG = {}, BY_ID = {};
+BANK.forEach(c => { BY_SLUG[c.slug] = c; c.qs.forEach(q => { BY_ID[q.id] = {q, cat:c}; }); });
+const TOTAL_Q = Object.keys(BY_ID).length;
+
+const nf = new Intl.NumberFormat("ar-EG");
+const nfs = new Intl.NumberFormat("ar-EG",{signDisplay:"always"});
+const fmt = n => nf.format(n);
+const fmtS = n => nfs.format(n);
+const $ = id => document.getElementById(id);
+
+function h(tag, props, ...kids){
+  const el = document.createElement(tag);
+  if (props) for (const [k,v] of Object.entries(props)){
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "style") el.style.cssText = v;
+    else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : String(v));
+  }
+  for (const c of kids.flat()){
+    if (c == null || c === false) continue;
+    el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function pickOne(a){ return a[Math.floor(Math.random() * a.length)]; }
+function qWord(n){ return n === 1 ? "سؤال واحد" : n === 2 ? "سؤالان" : (n >= 3 && n <= 10) ? fmt(n) + " أسئلة" : fmt(n) + " سؤالًا"; }
+
+/* ===== state (kept in this browser) ===== */
+function defaults(){
+  return {
+    teams:[{id:"t1",name:ORD[0],color:COLORS[0]},{id:"t2",name:ORD[1],color:COLORS[1]}],
+    settings:{cols:5,time:30,deduct:false,sound:true},
+    picks:[],
+    game:null,
+    recent:[],
+    flagged:[],
+    pendingFlags:[]
+  };
+}
+function normalize(s){
+  const d = defaults();
+  if (!s || typeof s !== "object") return d;
+  const out = Object.assign({}, d, s);
+  out.settings = Object.assign({}, d.settings, s.settings || {});
+  ["teams","picks","recent","flagged","pendingFlags"].forEach(k => { if (!Array.isArray(out[k])) out[k] = d[k]; });
+  if (out.teams.length < 1) out.teams = d.teams;
+  out.picks = out.picks.filter(p => BY_SLUG[p]);
+  if (out.game && (!Array.isArray(out.game.cats) || !out.game.used)) out.game = null;
+  return out;
+}
+let state = defaults();
+function load(){ try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+const tname = (t,i) => (t.name || "").trim() || ORD[i] || ("فريق " + fmt(i+1));
+const cellQ = (g, ci, ri) => { const id = g.cats[ci].cells[ri]; return id ? BY_ID[id] : null; };
+const total = g => g.cats.reduce((n,c) => n + c.cells.filter(Boolean).length, 0);
+const remaining = g => total(g) - Object.keys(g.used).length;
+const isDone = g => !!g && remaining(g) <= 0;
+function freshCount(slug){
+  const recent = new Set(state.recent), flagged = new Set(state.flagged);
+  return BY_SLUG[slug].qs.filter(q => !recent.has(q.id) && !flagged.has(q.id)).length;
+}
+
+/* ===== where reports and game results go =====
+   Inside claude.ai: the page's own store, read back by Claude.
+   Anywhere else (the hosted site): straight into Supabase with the publishable key.
+   The database only lets this key ADD games, plays and reports; it can never read questions or answers. */
+const SB = {
+  url: "https://bsfzfarfrnxgpckmprut.supabase.co/rest/v1",
+  key: "sb_publishable_6LjuIzeMjepexKqCHCy9vQ_IcLWX4DX",
+  brand: BRAND.brandId
+};
+const IN_CLAUDE = !!(window.claude && typeof window.claude.use === "function");
+const dbPromise = IN_CLAUDE ? window.claude.use("db").then(d => d || null, () => null) : Promise.resolve(null);
+function uuid(){
+  if (window.crypto && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); });
+}
+async function sbPost(path, body){
+  const r = await fetch(SB.url + path, {method:"POST", headers:{"apikey":SB.key, "Content-Type":"application/json", "Prefer":"return=minimal"}, body:JSON.stringify(body)});
+  if (!r.ok) throw new Error("supabase " + r.status);
+  return r;
+}
+let chain = Promise.resolve();
+function queue(fn){ chain = chain.then(fn).catch(() => {}); return chain; }
+const store = {
+  async gameStarted(g, teams, cats){
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) return;
+      await db.doc("games/" + g.gid).set({started_at:new Date().toISOString(), mode:"board", bank:BRAND.bankLabel, teams, categories:cats, plays:[]});
+    } else {
+      await sbPost("/games", {id:g.gid, brand_id:SB.brand, mode:"board", settings:{bank:BRAND.bankLabel, teams, categories:cats}});
+    }
+    g.synced = true; save();
+  },
+  async played(g, entries){
+    if (!g.synced) return;
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) return;
+      await db.doc("games/" + g.gid).update({plays:g.plays.slice(), updated_at:new Date().toISOString()});
+    } else {
+      await sbPost("/plays", entries.map(e => ({game_id:g.gid, question_id:e.qid, outcome:e.outcome, answered_by:e.team || null})));
+    }
+  },
+  async ended(g, scores){
+    if (!g.synced || !IN_CLAUDE) return;
+    const db = await dbPromise; if (!db) return;
+    await db.doc("games/" + g.gid).update({ended_at:new Date().toISOString(), scores});
+  },
+  async flag(f){
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) throw new Error("no-db");
+      await db.collection("flags").add(f);
+    } else {
+      await sbPost("/flags", {question_id:f.qid, game_id:f.gameSynced ? f.game : null, note:f.note || null});
+    }
+  },
+  async inactiveIds(){
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) return null;
+      const snap = await db.collection("flags").get();
+      return snap.docs.map(d => (d.data() || {}).qid).filter(x => typeof x === "string");
+    }
+    const r = await fetch(SB.url + "/rpc/inactive_question_ids", {method:"POST", headers:{"apikey":SB.key, "Content-Type":"application/json"}, body:"{}"});
+    if (!r.ok) throw new Error("supabase " + r.status);
+    const rows = await r.json();
+    return rows.map(x => typeof x === "string" ? x : (x && x.inactive_question_ids)).filter(Boolean);
+  }
+};
+function syncFlagsIn(){
+  queue(async () => {
+    for (const f of state.pendingFlags.slice()){
+      await store.flag(f);
+      state.pendingFlags = state.pendingFlags.filter(x => x !== f);
+      save();
+    }
+  });
+  queue(async () => {
+    const ids = await store.inactiveIds();
+    if (!ids) return;
+    const pendingIds = state.pendingFlags.map(f => f.qid);
+    // Hosted: the database decides what is out of play (a reviewed question comes back). In claude.ai: add to what this device knows.
+    const merged = IN_CLAUDE ? state.flagged.concat(ids) : ids.concat(pendingIds);
+    state.flagged = [...new Set(merged)].filter(id => BY_ID[id]);
+    save(); renderSetup();
+  });
+}
+
+/* ===== elements ===== */
+const scrSetup = $("scr-setup"), scrBoard = $("scr-board");
+const teamsEl = $("teams"), catsEl = $("cats");
+const boardEl = $("board"), scoresEl = $("scores"), turnEl = $("turn");
+const qover = $("qover"), endover = $("endover");
+const ring = $("ring"), RING = 2 * Math.PI * 44;
+ring.style.strokeDasharray = String(RING);
+
+function show(name){
+  scrSetup.hidden = name !== "setup";
+  scrBoard.hidden = name !== "board";
+  window.scrollTo(0,0);
+  if (name === "board") wake();
+}
+function setMsg(el, text, err){ el.textContent = text || ""; el.classList.toggle("is-err", !!err); }
+function keepFocus(fn){
+  const a = document.activeElement, id = a && a.id, s = a && a.selectionStart, e = a && a.selectionEnd;
+  fn();
+  if (id){ const n = $(id); if (n && n !== a){ n.focus(); try { if (s != null) n.setSelectionRange(s,e); } catch(_){} } }
+}
+
+/* ===== setup ===== */
+function renderSeg(el, opts, cur, pick){
+  el.replaceChildren(...opts.map(([v,l]) => h("button",{type:"button","aria-pressed":String(v === cur),onclick:() => pick(v)}, l)));
+}
+function renderSetup(){ keepFocus(renderSetupInner); }
+function renderSetupInner(){
+  const g = state.game, st = state.settings, cols = st.cols;
+  const left = g ? remaining(g) : 0;
+  $("resume").hidden = !(g && left > 0);
+  if (g && left > 0) $("resume-text").textContent = "لديكم لوحة لم تكتمل، بقي فيها " + qWord(left) + ".";
+
+  teamsEl.replaceChildren(...state.teams.map((t,i) => h("li",{class:"team-row",style:"--tc:" + t.color},
+    h("span",{class:"swatch","aria-hidden":"true"}),
+    h("input",{id:"team-" + t.id,value:t.name,maxlength:24,placeholder:ORD[i] || "",autocomplete:"off","aria-label":"اسم " + (ORD[i] || "الفريق"),
+      oninput:e => { t.name = e.target.value; save(); }}),
+    state.teams.length > 2 ? h("button",{class:"x",type:"button","aria-label":"احذف " + tname(t,i),onclick:() => removeTeam(t.id)},"حذف") : null
+  )));
+  $("add-team").disabled = state.teams.length >= 6;
+
+  renderSeg($("seg-cols"), [[4,fmt(4)],[5,fmt(5)],[6,fmt(6)]], cols, v => { st.cols = v; if (state.picks.length > v) state.picks.length = v; save(); renderSetup(); });
+  renderSeg($("seg-time"), [[20,fmt(20) + " ث"],[30,fmt(30) + " ث"],[45,fmt(45) + " ث"],[0,"مفتوح"]], st.time, v => { st.time = v; save(); renderSetup(); });
+  $("opt-deduct").checked = !!st.deduct;
+
+  const full = state.picks.length >= cols;
+  catsEl.replaceChildren(...BANK.map(c => {
+    const on = state.picks.includes(c.slug);
+    const fresh = freshCount(c.slug);
+    return h("button",{class:"catpick",type:"button","aria-pressed":String(on),disabled:(!on && full) ? true : null,
+      "aria-label":c.name + "، " + qWord(fresh) + " لم تُلعب بعد",onclick:() => togglePick(c.slug)},
+      h("span",{class:"nm"}, c.name), h("span",{class:"fresh","aria-hidden":"true"}, fmt(fresh)));
+  }));
+  $("cat-count").textContent = fmt(state.picks.length) + " من " + fmt(cols);
+  const gap = cols - state.picks.length;
+  $("fill-hint").textContent = gap <= 0 ? "اكتملت الفئات باختياركم." : gap === 1 ? "ستُختار فئة واحدة عشوائيًا." : (gap === 2 ? "ستُختار فئتان عشوائيًا." : "ستُختار " + fmt(gap) + " فئات عشوائيًا.");
+  const flaggedN = state.flagged.filter(id => BY_ID[id]).length;
+  $("bank-note").textContent = "في البنك " + fmt(TOTAL_Q) + " سؤالًا في " + fmt(BANK.length) + " فئات، كلها مُتحقَّق منها من مصادر موثوقة." + (flaggedN ? " " + (flaggedN === 1 ? "سؤال واحد مُبلَّغ عنه وموقوف" : qWord(flaggedN) + " مُبلَّغ عنها وموقوفة") + " حتى تتم مراجعته." : "");
+}
+function togglePick(slug){
+  const i = state.picks.indexOf(slug);
+  if (i >= 0) state.picks.splice(i,1);
+  else if (state.picks.length < state.settings.cols) state.picks.push(slug);
+  setMsg($("setup-msg"), "");
+  save(); renderSetup();
+}
+function addTeam(){
+  if (state.teams.length >= 6) return;
+  const used = new Set(state.teams.map(t => t.color));
+  const color = COLORS.find(c => !used.has(c)) || COLORS[state.teams.length % COLORS.length];
+  const id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  state.teams.push({id, name:ORD[state.teams.length] || "", color});
+  save(); renderSetup(); renderBoard();
+  const inp = $("team-" + id); if (inp){ inp.focus(); inp.select(); }
+}
+function removeTeam(id){
+  if (state.teams.length <= 2) return;
+  state.teams = state.teams.filter(t => t.id !== id);
+  if (state.game && state.game.turn >= state.teams.length) state.game.turn = 0;
+  save(); renderSetup(); renderBoard();
+}
+function fixNames(){ state.teams.forEach((t,i) => { if (!(t.name || "").trim()) t.name = ORD[i] || ("فريق " + fmt(i+1)); }); }
+
+/* ===== build a board from the bank ===== */
+function buildCats(){
+  const cols = state.settings.cols;
+  const recent = new Set(state.recent), flagged = new Set(state.flagged);
+  const slugs = state.picks.filter(s => BY_SLUG[s]).slice(0, cols);
+  const others = BANK.map(c => c.slug).filter(s => !slugs.includes(s));
+  // fill the open slots, preferring categories with the most unplayed questions
+  shuffle(others).sort((a,b) => freshCount(b) - freshCount(a)).forEach(s => { if (slugs.length < cols) slugs.push(s); });
+  return slugs.map(slug => {
+    const c = BY_SLUG[slug];
+    const cells = [1,2,3,4,5].map(l => {
+      const pool = c.qs.filter(q => q.l === l && !flagged.has(q.id));
+      const fresh = pool.filter(q => !recent.has(q.id));
+      const from = fresh.length ? fresh : pool;
+      return from.length ? pickOne(from).id : null;
+    });
+    return {slug, name:c.name, cells};
+  });
+}
+function startGame(){
+  fixNames();
+  const cats = buildCats();
+  const scores = {}; state.teams.forEach(t => scores[t.id] = 0);
+  const live = [];
+  cats.forEach((c,ci) => c.cells.forEach((id,ri) => { if (id && ri >= 2) live.push(ci + "-" + ri); }));
+  state.game = {gid:uuid(), cats, used:{}, dd: live.length ? pickOne(live) : null, scores, turn:0, plays:[], synced:false};
+  save(); renderBoard(); setMsg($("board-msg"), ""); show("board");
+  const g = state.game, teams = state.teams.map((t,i) => tname(t,i)), slugs = cats.map(c => c.slug);
+  queue(() => store.gameStarted(g, teams, slugs));
+  return g;
+}
+function recordPlays(entries){
+  const g = state.game; if (!g || !entries.length) return;
+  entries.forEach(e => {
+    g.plays.push(e);
+    if (!state.recent.includes(e.qid)) state.recent.push(e.qid);
+  });
+  state.recent = state.recent.slice(-300);
+  queue(() => store.played(g, entries));
+}
+
+/* ===== board ===== */
+function renderBoard(){
+  const g = state.game;
+  if (!g){ boardEl.replaceChildren(); scoresEl.replaceChildren(); turnEl.replaceChildren(); return; }
+  boardEl.style.setProperty("--cols", g.cats.length);
+  const kids = [];
+  g.cats.forEach(c => kids.push(h("div",{class:"plate cat"}, h("span",{class:"cat-name"}, c.name))));
+  VALUES.forEach((v,ri) => g.cats.forEach((c,ci) => {
+    const key = ci + "-" + ri, cell = g.used[key], hasQ = !!c.cells[ri];
+    if (cell || !hasQ){
+      const idx = cell && cell.by ? state.teams.findIndex(t => t.id === cell.by) : -1;
+      const team = idx >= 0 ? state.teams[idx] : null;
+      kids.push(h("div",{class:"cell used",title:!hasQ ? "لا يوجد سؤال متاح" : team ? "أجاب عنه " + tname(team,idx) : "لم يُجب عنه أحد"},
+        h("span",{class:"v"}, fmt(v)),
+        hasQ ? h("span",{class:"mark" + (team ? "" : " none"),style:team ? "--tc:" + team.color : null,"aria-hidden":"true"}) : null));
+    } else {
+      kids.push(h("button",{class:"plate cell",type:"button","aria-label":c.name + "، " + fmt(v) + " نقطة",onclick:() => openQ(ci,ri)},
+        h("span",{class:"v"}, fmt(v))));
+    }
+  }));
+  boardEl.replaceChildren(...kids);
+  renderScores(); renderTurn();
+}
+function renderScores(){
+  const g = state.game; if (!g) return;
+  scoresEl.replaceChildren(...state.teams.map((t,i) => h("div",{class:"score" + (g.turn === i ? " is-turn" : ""),style:"--tc:" + t.color},
+    h("button",{class:"nm",type:"button",title:"اجعلوا الدور لهذا الفريق",onclick:() => { g.turn = i; save(); renderScores(); renderTurn(); }},
+      h("span",{class:"dot","aria-hidden":"true"}), tname(t,i)),
+    h("span",{class:"pts"}, fmt(g.scores[t.id] || 0)),
+    h("span",{class:"adj"},
+      h("button",{type:"button","aria-label":"اخصم 100 من " + tname(t,i),onclick:() => adjust(t.id,-100)}, fmtS(-100)),
+      h("button",{type:"button","aria-label":"أضف 100 إلى " + tname(t,i),onclick:() => adjust(t.id,100)}, fmtS(100)))
+  )));
+}
+function renderTurn(){
+  const g = state.game; if (!g) return;
+  if (g.turn >= state.teams.length || g.turn < 0) g.turn = 0;
+  const t = state.teams[g.turn];
+  turnEl.replaceChildren(h("span",{class:"dot",style:"--tc:" + t.color,"aria-hidden":"true"}), "الدور على ", h("b",{style:"--tc:" + t.color}, tname(t,g.turn)), " ليختار سؤالًا");
+}
+function adjust(id, d){ const g = state.game; g.scores[id] = (g.scores[id] || 0) + d; save(); renderScores(); }
+
+/* ===== sound + screen ===== */
+let actx = null;
+function primeAudio(){ try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); } catch(e){ actx = null; } }
+function beep(freq, dur, vol){
+  if (!state.settings.sound || !actx) return;
+  try {
+    const o = actx.createOscillator(), gn = actx.createGain(), t0 = actx.currentTime;
+    o.type = "sine"; o.frequency.value = freq;
+    gn.gain.setValueAtTime(vol, t0); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(gn); gn.connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  } catch(e){}
+}
+let wl = null;
+async function wake(){ try { if ("wakeLock" in navigator && !wl){ wl = await navigator.wakeLock.request("screen"); wl.addEventListener("release", () => { wl = null; }); } } catch(e){ wl = null; } }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !scrBoard.hidden) wake(); });
+function renderSound(){ const b = $("b-sound"); b.setAttribute("aria-pressed", String(!!state.settings.sound)); b.textContent = state.settings.sound ? "الصوت: يعمل" : "الصوت: متوقف"; }
+
+/* ===== question ===== */
+let cur = null, T = null;
+function altFor(g, ci, ri){
+  const c = BY_SLUG[g.cats[ci].slug], curId = g.cats[ci].cells[ri], flagged = new Set(state.flagged);
+  const l = ri + 1;
+  return c.qs.find(q => q.l === l && q.id !== curId && !flagged.has(q.id)) || null;
+}
+function fillQuestion(){
+  const g = state.game, rec = cellQ(g, cur.ci, cur.ri);
+  $("q-text").textContent = rec.q.q;
+  $("q-a").textContent = rec.q.a;
+  $("q-note").textContent = rec.q.note || "";
+  $("q-swap").hidden = cur.swapped || !altFor(g, cur.ci, cur.ri);
+  $("flag-open").hidden = false; $("flag-form").hidden = true; $("flag-done").hidden = true; $("flag-note").value = "";
+}
+function openQ(ci, ri){
+  const g = state.game, key = ci + "-" + ri;
+  if (!g || g.used[key] || !g.cats[ci].cells[ri]) return;
+  primeAudio();
+  const dd = g.dd === key;
+  cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, wrong:new Set(), swapped:false, skipped:null};
+  $("q-cat").textContent = g.cats[ci].name;
+  $("q-val").textContent = fmt(cur.value) + " نقطة";
+  $("q-dd").hidden = !dd;
+  fillQuestion();
+  $("q-answer").hidden = true; $("q-pre").hidden = false; $("q-post").hidden = true;
+  qover.hidden = false;
+  startTimer();
+  if (dd) beep(988, .18, .12);
+  $("q-reveal").focus();
+}
+function swapQ(){
+  if (!cur || cur.revealed || cur.swapped) return;
+  const g = state.game, alt = altFor(g, cur.ci, cur.ri);
+  if (!alt) return;
+  cur.skipped = g.cats[cur.ci].cells[cur.ri];
+  g.cats[cur.ci].cells[cur.ri] = alt.id;
+  cur.swapped = true;
+  save(); fillQuestion(); startTimer();
+}
+function startTimer(){
+  stopTimer();
+  const tot = Number(state.settings.time) || 0;
+  $("q-timer").hidden = !tot;
+  if (!tot){ T = null; return; }
+  T = {total:tot, left:tot, endAt:performance.now() + tot * 1000, running:true, lastSec:tot, iv:0};
+  T.iv = setInterval(tick, 100);
+  drawTimer();
+}
+function tick(){
+  if (!T || !T.running) return;
+  T.left = Math.max(0, (T.endAt - performance.now()) / 1000);
+  const s = Math.ceil(T.left);
+  if (s !== T.lastSec){
+    T.lastSec = s;
+    if (s > 0 && s <= 3) beep(660, .09, .12);
+    if (s === 0){ beep(330, .55, .2); T.running = false; clearInterval(T.iv); }
+  }
+  drawTimer();
+}
+function drawTimer(){
+  if (!T) return;
+  const frac = T.total ? T.left / T.total : 0;
+  ring.style.strokeDashoffset = String(RING * (1 - frac));
+  const s = Math.ceil(T.left), out = s <= 0;
+  $("t-num").textContent = out ? "انتهى الوقت" : fmt(s);
+  $("t-state").textContent = (!T.running && !out && !(cur && cur.revealed)) ? "متوقف" : "";
+  const el = $("q-timer");
+  el.classList.toggle("warn", T.left <= 5);
+  el.classList.toggle("out", out);
+  el.setAttribute("aria-label", out ? "انتهى الوقت" : (T.running ? "بقي " + fmt(s) + " ثانية، اضغطوا لإيقاف العداد" : "العداد متوقف عند " + fmt(s) + " ثانية، اضغطوا ليكمل"));
+}
+function toggleTimer(){
+  if (!T || T.left <= 0 || (cur && cur.revealed)) return;
+  if (T.running){ T.left = Math.max(0, (T.endAt - performance.now()) / 1000); T.running = false; }
+  else { T.endAt = performance.now() + T.left * 1000; T.running = true; }
+  drawTimer();
+}
+function stopTimer(){ if (T){ clearInterval(T.iv); T.running = false; } }
+function reveal(){
+  if (!cur || cur.revealed) return;
+  cur.revealed = true;
+  if (T){ T.left = Math.max(0, (T.endAt - performance.now()) / 1000); }
+  stopTimer(); drawTimer();
+  $("q-answer").hidden = false; $("q-pre").hidden = true; $("q-post").hidden = false;
+  renderJudge();
+  const first = document.querySelector("#judge .jt-ok"); if (first) first.focus();
+}
+function renderJudge(){
+  const v = cur.value;
+  $("judge").replaceChildren(...state.teams.map((t,i) => {
+    const bad = cur.wrong.has(t.id);
+    return h("div",{class:"jt",style:"--tc:" + t.color},
+      h("button",{class:"jt-ok",type:"button","aria-label":tname(t,i) + " أجاب إجابة صحيحة، " + fmtS(v),onclick:() => award(t.id)}, tname(t,i), h("small",null,fmtS(v))),
+      state.settings.deduct ? h("button",{class:"jt-bad",type:"button",disabled:bad ? true : null,"aria-label":tname(t,i) + " أجاب إجابة خاطئة، " + fmtS(-v),onclick:() => wrong(t.id)}, bad ? fmtS(-v) : "خطأ") : null);
+  }));
+}
+function finish(outcome, teamId){
+  const g = state.game, at = new Date().toISOString();
+  const qid = g.cats[cur.ci].cells[cur.ri];
+  const ti = teamId ? state.teams.findIndex(t => t.id === teamId) : -1;
+  const entries = [];
+  if (cur.skipped) entries.push({qid:cur.skipped, outcome:"skipped", at});
+  state.teams.forEach((t,i) => { if (cur.wrong.has(t.id)) entries.push({qid, outcome:"wrong", team:tname(t,i), value:cur.value, at}); });
+  entries.push({qid, outcome, value:cur.value, team: ti >= 0 ? tname(state.teams[ti], ti) : null, at});
+  recordPlays(entries);
+}
+function award(id){
+  const g = state.game; if (!g || !cur) return;
+  g.scores[id] = (g.scores[id] || 0) + cur.value;
+  g.used[cur.key] = {by:id};
+  g.turn = Math.max(0, state.teams.findIndex(t => t.id === id));
+  finish("correct", id);
+  closeQ();
+}
+function nobody(){
+  const g = state.game; if (!g || !cur) return;
+  g.used[cur.key] = {by:null};
+  g.turn = (g.turn + 1) % state.teams.length;
+  finish("none", null);
+  closeQ();
+}
+function wrong(id){
+  const g = state.game; if (!g || !cur || cur.wrong.has(id)) return;
+  cur.wrong.add(id);
+  g.scores[id] = (g.scores[id] || 0) - cur.value;
+  save(); renderJudge(); renderScores();
+}
+function closeQ(){
+  stopTimer(); qover.hidden = true; cur = null;
+  save(); renderBoard();
+  if (isDone(state.game)) setTimeout(showEnd, 250);
+}
+function cancelQ(){
+  if (cur && cur.skipped){ const g = state.game; g.cats[cur.ci].cells[cur.ri] = cur.skipped; save(); }
+  stopTimer(); qover.hidden = true; cur = null; renderBoard();
+}
+
+/* ===== flag a question ===== */
+function submitFlag(e){
+  e.preventDefault();
+  if (!cur) return;
+  const g = state.game, qid = g.cats[cur.ci].cells[cur.ri], rec = BY_ID[qid];
+  const flag = {qid, category: rec.cat.slug, level: rec.q.l, question: rec.q.q, answer: rec.q.a,
+    note: $("flag-note").value.trim().slice(0,300), game: g.gid, gameSynced: !!g.synced, at: new Date().toISOString()};
+  if (!state.flagged.includes(qid)) state.flagged.push(qid);
+  save();
+  $("flag-form").hidden = true;
+  const done = $("flag-done");
+  done.hidden = false; done.textContent = "جارٍ إرسال البلاغ…";
+  store.flag(flag).then(() => {
+    done.textContent = "وصل البلاغ. أُوقف هذا السؤال حتى تتم مراجعته.";
+  }).catch(() => {
+    state.pendingFlags.push(flag); save();
+    done.textContent = "حُفظ البلاغ على هذا الجهاز وسيُرسل لاحقًا. أُوقف هذا السؤال حتى تتم مراجعته.";
+  });
+}
+
+/* ===== end ===== */
+function showEnd(){
+  const g = state.game; if (!g) return;
+  const done = isDone(g);
+  const ranked = state.teams.map((t,i) => ({t, i, p:g.scores[t.id] || 0})).sort((a,b) => b.p - a.p);
+  const top = ranked[0].p, winners = ranked.filter(r => r.p === top);
+  $("end-k").textContent = done ? "انتهت اللوحة" : "النتيجة حتى الآن";
+  const w = $("end-w");
+  if (winners.length === 1){
+    const x = winners[0];
+    w.replaceChildren(done ? "مبروك يا " : "", h("span",{style:"--tc:" + x.t.color}, tname(x.t,x.i)), done ? "!" : " في المقدمة");
+  } else {
+    const parts = ["تعادل بين "];
+    winners.forEach((x,k) => { if (k) parts.push(k === winners.length - 1 ? " و" : "، "); parts.push(h("span",{style:"--tc:" + x.t.color}, tname(x.t,x.i))); });
+    w.replaceChildren(...parts);
+  }
+  $("rank").replaceChildren(...ranked.map((r,k) => h("li",{style:"--tc:" + r.t.color},
+    h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"nm"}, tname(r.t,r.i)), h("span",{class:"p"}, fmt(r.p)))));
+  $("end-back").textContent = done ? "عرض اللوحة" : "أكملوا اللعب";
+  endover.hidden = false;
+  $("end-new").focus();
+  if (done){ const scores = ranked.map(r => ({team: tname(r.t,r.i), points: r.p})); queue(() => store.ended(g, scores)); }
+}
+
+/* ===== wiring ===== */
+function bind(){
+  $("add-team").addEventListener("click", addTeam);
+  $("opt-deduct").addEventListener("change", e => { state.settings.deduct = e.target.checked; save(); });
+  $("go").addEventListener("click", () => { setMsg($("setup-msg"), ""); startGame(); });
+  $("resume-go").addEventListener("click", () => { renderBoard(); show("board"); });
+
+  $("b-setup").addEventListener("click", () => { renderSetup(); show("setup"); });
+  $("b-end").addEventListener("click", showEnd);
+  $("b-sound").addEventListener("click", () => { state.settings.sound = !state.settings.sound; save(); renderSound(); if (state.settings.sound){ primeAudio(); beep(880,.1,.1); } });
+  const fs = $("b-full");
+  fs.hidden = !(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+  fs.addEventListener("click", async () => {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }
+    catch(e){ fs.hidden = true; }
+  });
+  document.addEventListener("fullscreenchange", () => { fs.textContent = document.fullscreenElement ? "الخروج من ملء الشاشة" : "ملء الشاشة"; });
+
+  $("q-reveal").addEventListener("click", reveal);
+  $("q-swap").addEventListener("click", swapQ);
+  $("q-cancel").addEventListener("click", cancelQ);
+  $("q-none").addEventListener("click", nobody);
+  $("q-timer").addEventListener("click", toggleTimer);
+  $("flag-open").addEventListener("click", () => { $("flag-open").hidden = true; $("flag-form").hidden = false; $("flag-note").focus(); });
+  $("flag-cancel").addEventListener("click", () => { $("flag-form").hidden = true; $("flag-open").hidden = false; });
+  $("flag-form").addEventListener("submit", submitFlag);
+
+  $("end-new").addEventListener("click", () => { state.game = null; save(); endover.hidden = true; renderSetup(); renderBoard(); show("setup"); });
+  $("end-back").addEventListener("click", () => { endover.hidden = true; });
+
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!qover.hidden && cur && !cur.revealed) cancelQ();
+    else if (!endover.hidden) endover.hidden = true;
+  });
+}
+
+function boot(data){
+  state = normalize((data && data.state) || load());
+  bind();
+  renderSetup(); renderBoard(); renderSound();
+  show("setup");
+  syncFlagsIn();
+}
+try { const hot = window.claude && window.claude.hot; if (hot && typeof hot.snapshot === "function") hot.snapshot(() => ({state})); } catch(e){}
+const hot = window.claude && window.claude.hot;
+if (hot && typeof hot.ready === "function") hot.ready(boot); else boot((hot && hot.data) || {});
+})();
+</script>
+</body></html>
