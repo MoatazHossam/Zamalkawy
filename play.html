@@ -107,6 +107,9 @@ input:focus{outline:none;border-color:var(--brass)}
 .buzzbtn:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.32),inset 0 0 0 8px rgba(255,255,255,.22)}
 .buzzbtn:disabled{opacity:.6;transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.32);cursor:default}
 .rank li .dot{width:12px;height:12px;border-radius:50%;background:var(--tc);flex:none}
+.tally{display:none}
+.tally svg{display:block;height:24px;width:auto}
+.big-ico svg{display:block;width:56px;height:56px;margin:0 auto}
 .turnline{margin:0;text-align:center;font-size:1.15rem;font-weight:600;padding:10px 14px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
 .turnline.mine{background:var(--brass);color:var(--brass-ink);border-color:var(--brass)}
 .pboard{display:flex;flex-direction:column;gap:7px}
@@ -273,7 +276,7 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
     <!-- answer sent -->
     <section class="view" id="v-sent" hidden>
       <div class="card center">
-        <p class="big-ico" aria-hidden="true">⏳</p>
+        <p class="big-ico" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6h24M12 42h24M15 6c0 10 18 12 18 18s-18 8-18 18M33 6c0 10-18 12-18 18s18 8 18 18"/></svg></p>
         <h2>وصلت إجابتك</h2>
         <span class="chip" id="s-chip"></span>
         <p class="sub" id="s-sub">انتظر حتى يجيب الباقون أو ينتهي الوقت.</p>
@@ -438,6 +441,24 @@ function h(tag, props, ...kids){
   for (const c of kids.flat()){ if (c == null || c === false) continue; el.append(c.nodeType ? c : document.createTextNode(String(c))); }
   return el;
 }
+/* simple line icons instead of emoji */
+const ICO = {
+  bell:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 34V22a12 12 0 0 1 24 0v12l4 4H8z"/><path d="M20 42a4 4 0 0 0 8 0"/></svg>',
+  wait:'<svg viewBox="0 0 48 48" fill="currentColor"><circle cx="12" cy="24" r="3.5"/><circle cx="24" cy="24" r="3.5"/><circle cx="36" cy="24" r="3.5"/></svg>',
+  ok:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 25l9 9 19-20"/></svg>',
+  out:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M14 14l20 20M34 14L14 34"/></svg>'
+};
+function setIco(el, v){ if (ICO[v]) el.innerHTML = ICO[v]; else el.textContent = v; }
+function tallySvg(n){
+  n = Math.max(0, Math.min(40, n | 0)); if (!n) return "";
+  const groups = Math.ceil(n / 5), w = groups * 40 - 6, parts = [];
+  for (let g = 0; g < groups; g++){
+    const x0 = g * 40, k = Math.min(5, n - g * 5);
+    for (let i = 0; i < Math.min(4, k); i++){ const x = x0 + 4 + i * 8; parts.push("M" + x + " " + (4 + (i % 2)) + " L" + (x - 1 + (i % 2) * 2) + " 32"); }
+    if (k === 5) parts.push("M" + (x0 - 1) + " 26 L" + (x0 + 33) + " 9");
+  }
+  return '<svg width="' + w + '" height="36" viewBox="0 0 ' + w + ' 36" aria-hidden="true"><path d="' + parts.join(" ") + '" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>';
+}
 function view(id){ VIEWS.forEach(v => { $(v).hidden = v !== id; }); }
 function cleanName(s){ return String(s || "").replace(/\s+/g, " ").trim().slice(0, 16); }
 function cleanCode(s){ return String(s || "").replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g, "").slice(0, 4); }
@@ -477,12 +498,12 @@ function join(code, name){
   if (location.hash.slice(1) !== code){ try { history.replaceState(null, "", "#" + code); } catch(e){} }
   last = null; hs = null; seq = -1; everOpen = false; buzzedKey = ""; pickSent = null;
   $("me").hidden = false; $("me").replaceChildren("أنت: ", h("b", null, name));
-  waitView("…", "جارٍ الدخول إلى الغرفة " + fmt(Number(code)) + "…", "");
+  waitView("wait", "جارٍ الدخول إلى الغرفة " + fmt(Number(code)) + "…", "");
   room = liveRoom({topic: topicFor(code), onMessage, onStatus});
   hello();
   pulse = setInterval(hello, 4000);
   tick = setInterval(onTick, 150);
-  lost = setTimeout(() => { if (!last) waitView("…", "لم نجد الغرفة بعد", "تأكد أن رقم الغرفة صحيح وأن شاشة اللعبة مفتوحة. ما زلنا نحاول…", true); }, 9000);
+  lost = setTimeout(() => { if (!last) waitView("wait", "لم نجد الغرفة بعد", "تأكد أن رقم الغرفة صحيح وأن شاشة اللعبة مفتوحة. ما زلنا نحاول…", true); }, 9000);
   keepAwake();
 }
 function stop(){
@@ -514,7 +535,7 @@ function myRank(){
 }
 function waitView(ico, title, sub, canLeave){
   view("v-wait");
-  $("w-ico").textContent = ico; $("w-title").textContent = title; $("w-sub").textContent = sub || "";
+  setIco($("w-ico"), ico); $("w-title").textContent = title; $("w-sub").textContent = sub || "";
   $("w-leave").hidden = !canLeave; $("w-scores").hidden = true;
 }
 function render(){
@@ -526,7 +547,7 @@ function render(){
   if (p.phase === "lobby"){
     const ps = players(), inRoom = ps.some(x => x.id === me.pid);
     const others = ps.length - (inRoom ? 1 : 0);
-    waitView(inRoom ? "✓" : "…", inRoom ? "أنت في الغرفة" : "جارٍ تسجيل اسمك…",
+    waitView(inRoom ? "ok" : "wait", inRoom ? "أنت في الغرفة" : "جارٍ تسجيل اسمك…",
       (others > 0 ? "معك في الغرفة " + (others === 1 ? "لاعب واحد" : others === 2 ? "لاعبان" : fmt(others) + " لاعبين") + ". " : "") + "انتظر حتى يبدأ السباق على الشاشة.");
     return;
   }
@@ -597,12 +618,12 @@ function resultView(q){
   else { $("r-ico").textContent = "–"; $("r-lead").textContent = "لم تُجب عن هذا السؤال"; $("r-pts").textContent = ""; }
   $("r-ans").textContent = (q.opts && q.correct != null) ? q.opts[q.correct] : "";
   const mr = myRank();
-  $("r-rank").textContent = mr ? "ترتيبك " + fmt(mr.pos) + " من " + fmt(mr.of) + " · مجموعك " + fmt(mr.score) + " نقطة" : "";
+  $("r-rank").textContent = mr ? "ترتيبك " + fmt(mr.pos) + " من " + fmt(mr.of) + "، مجموعك " + fmt(mr.score) + " نقطة" : "";
 }
 function finalView(){
   view("v-final"); $("f-sub").textContent = "انتهى السباق";
   const mr = myRank(), ps = players();
-  $("f-title").textContent = mr ? (mr.pos === 1 ? "أنت الفائز! 🏆" : "المركز " + fmt(mr.pos) + " من " + fmt(mr.of)) : "النتيجة النهائية";
+  $("f-title").textContent = mr ? (mr.pos === 1 ? "أنت الفائز!" : "المركز " + fmt(mr.pos) + " من " + fmt(mr.of)) : "النتيجة النهائية";
   $("f-pts").textContent = mr ? fmt(mr.score) + " نقطة" : "";
   $("f-rank").replaceChildren(...ps.slice(0, 5).map((x,k) => h("li",{class:x.id === me.pid ? "mine" : null},
     h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"nm"}, x.name), h("span",{class:"p"}, fmt(x.score || 0)))));
@@ -625,30 +646,31 @@ function scoresList(tid, at){
   const teams = bTeams().slice().sort((a,b) => (b.score || 0) - (a.score || 0));
   const el = $(at || "w-scores"); el.hidden = !teams.length;
   el.replaceChildren(...teams.map(t => h("li",{class:t.id === tid ? "mine" : null,style:"--tc:" + t.color},
-    h("span",{class:"dot","aria-hidden":"true"}), h("span",{class:"nm"}, t.name), h("span",{class:"p"}, fmt(t.score || 0)))));
+    h("span",{class:"dot","aria-hidden":"true"}), h("span",{class:"nm"}, t.name), tallyOf(t.won || 0), h("span",{class:"p"}, fmt(t.score || 0)))));
 }
+function tallyOf(n){ const el = h("span",{class:"tally",role:"img","aria-label":fmt(n) + " صح"}); el.innerHTML = tallySvg(n); return el; }
 function boardRender(p){
   $("tag").textContent = "لوحة الفئات";
   const tid = myTeam();
   if (!tid){ teamView(); return; }
   $("me").hidden = false;
-  $("me").replaceChildren("أنت: ", h("b", null, me.name), " · ", h("b",{style:"color:" + (teamColor(tid) || "inherit")}, teamName(tid)));
+  $("me").replaceChildren(h("b", null, me.name), "، ", h("b",{style:"color:" + (teamColor(tid) || "inherit")}, teamName(tid)));
   const q = p.q || null;
-  if (q && p.phase === "reveal"){ waitView("✓", "الإجابة: " + (q.answer || ""), "استنوا الحكم على الشاشة."); scoresList(tid); return; }
+  if (q && p.phase === "reveal"){ waitView("ok", "الإجابة: " + (q.answer || ""), "استنوا الحكم على الشاشة."); scoresList(tid); return; }
   if (q && p.phase === "locked" && q.buzz){
     const b = q.buzz;
-    if (b.pid === me.pid) waitView("🔔", "إنت أول واحد ضغط!", "جاوب بصوت عالي.");
-    else if (b.team === tid) waitView("🔔", b.name + " من فريقك ضغط الأول", "ساعدوه في الإجابة.");
-    else waitView("✋", b.name + " من " + teamName(b.team) + " ضغط الأول", "لو إجابته غلط، الأزرار هتفتح تاني.");
+    if (b.pid === me.pid) waitView("bell", "إنت أول واحد ضغط!", "جاوب بصوت عالي.");
+    else if (b.team === tid) waitView("bell", b.name + " من فريقك ضغط الأول", "ساعدوه في الإجابة.");
+    else waitView("bell", b.name + " من " + teamName(b.team) + " ضغط الأول", "لو إجابته غلط، الأزرار هتفتح تاني.");
     return;
   }
   if (q && (p.phase === "buzz" || p.phase === "open")){
-    if (p.phase === "buzz" && Array.isArray(q.out) && q.out.includes(tid)){ waitView("✗", "فريقك خرج من السؤال ده", "استنوا الفرق التانية."); return; }
+    if (p.phase === "buzz" && Array.isArray(q.out) && q.out.includes(tid)){ waitView("out", "فريقك خرج من السؤال ده", "استنوا الفرق التانية."); return; }
     buzzView(q, tid, p.phase === "buzz"); return;
   }
   if (p.phase === "final"){ boardFinal(tid); return; }
   if (p.phase === "idle" && p.board){ boardView(p, tid); return; }
-  waitView("✓", "إنت في " + teamName(tid), "استنوا لحد ما اللعب يبدأ على الشاشة.");
+  waitView("ok", "إنت في " + teamName(tid), "استنوا لحد ما اللعب يبدأ على الشاشة.");
   scoresList(tid);
 }
 function boardView(p, tid){
@@ -713,7 +735,7 @@ function boardFinal(tid){
   view("v-final"); $("f-sub").textContent = "انتهت اللوحة";
   const ranked = bTeams().slice().sort((a,b) => (b.score || 0) - (a.score || 0));
   const top = ranked.length ? ranked[0].score || 0 : 0, winners = ranked.filter(t => (t.score || 0) === top);
-  $("f-title").textContent = winners.length !== 1 ? "تعادل" : winners[0].id === tid ? "فريقك كسب! 🏆" : "مبروك يا " + winners[0].name;
+  $("f-title").textContent = winners.length !== 1 ? "تعادل" : winners[0].id === tid ? "فريقك كسب!" : "مبروك يا " + winners[0].name;
   $("f-pts").textContent = "";
   $("f-rank").replaceChildren(...ranked.map((t,k) => h("li",{class:t.id === tid ? "mine" : null,style:"--tc:" + t.color},
     h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"dot","aria-hidden":"true"}), h("span",{class:"nm"}, t.name), h("span",{class:"p"}, fmt(t.score || 0)))));
