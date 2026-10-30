@@ -239,7 +239,18 @@ button.cell:hover{transform:translateY(-2px);filter:brightness(1.12)}
 .jt-bad:hover{background:var(--panel)}
 .jt-bad:disabled{background:var(--bad);color:var(--on-bad);cursor:default}
 
-.qflag{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.qfb{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 2px}
+.qfb[hidden]{display:none}
+.fb-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 10px}
+.fb-l{font-size:.92rem;opacity:.8}
+.fb,.fb-v{font:inherit;cursor:pointer;border:1.5px solid var(--line-strong);background:transparent;color:inherit;border-radius:999px;line-height:1.2}
+.fb{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;font-size:.98rem}
+.fb svg{width:18px;height:18px;flex:none}
+.fb-v{min-width:56px;padding:6px 10px;font-size:.92rem;font-variant-numeric:tabular-nums}
+.fb-v.cur{border-style:dashed}
+.fb[aria-pressed="true"],.fb-v[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:var(--brass-ink)}
+.fb:focus-visible,.fb-v:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.qflag{width:100%;display:flex-direction:column;align-items:center;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
 .qflag form{display:flex;flex-direction:column;gap:8px;width:min(100%,520px);text-align:start}
 .qflag label{font-size:.9rem;color:var(--enamel-edge)}
 .qflag textarea{width:100%;resize:vertical;background:var(--night);border:1px solid var(--line-strong);border-radius:10px;padding:8px 12px;min-height:64px}
@@ -656,6 +667,16 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
       <button class="ghost" id="q-swap" type="button" hidden>سؤال آخر</button>
       <button class="ghost" id="q-cancel" type="button">العودة إلى اللوحة</button>
     </div>
+    <div class="qfb" id="qfb" hidden>
+      <div class="fb-row" role="group" aria-label="رأيك في السؤال">
+        <button class="fb" id="fb-like" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>أعجبني</button>
+        <button class="fb" id="fb-dislike" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>لم يعجبني</button>
+      </div>
+      <div class="fb-row" role="group" aria-labelledby="fb-lv-l">
+        <span class="fb-l" id="fb-lv-l">قيمته المناسبة:</span>
+        <span class="fb-row" id="fb-levels"></span>
+      </div>
+    </div>
     <div class="qjudge" id="q-post" hidden>
       <p class="lbl">من أجاب إجابة صحيحة؟</p>
       <div class="judge-teams" id="judge"></div>
@@ -974,6 +995,14 @@ const store = {
     if (!g.synced || !IN_CLAUDE) return;
     const db = await dbPromise; if (!db) return;
     await db.doc("games/" + g.gid).update({ended_at:new Date().toISOString(), scores});
+  },
+  async feedback(f){
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) return;
+      await db.collection("feedback").add(f);
+    } else {
+      await sbPost("/question_feedback", {question_id:f.qid, game_id:f.game, brand_id:SB.brand, mode:f.mode, vote:f.vote, suggested_level:f.sug, shown_level:f.level});
+    }
   },
   async flag(f){
     if (IN_CLAUDE){
@@ -1426,6 +1455,7 @@ function reveal(){
   if (T){ T.left = Math.max(0, (T.endAt - performance.now()) / 1000); }
   stopTimer(); drawTimer();
   $("q-answer").hidden = false; $("q-pre").hidden = true; $("q-post").hidden = false;
+  { const g = state.game, qid = g.cats[cur.ci].cells[cur.ri]; fbOpen("b:" + g.gid + ":" + cur.key + ":" + qid, qid, "board", g, $("q-post")); }
   renderJudge();
   if (bRoom){ bPhase = "reveal"; bPush(true); }
   renderBuzz();
@@ -1473,6 +1503,7 @@ function wrong(id){
   save(); renderJudge(); renderScores();
 }
 function closeQ(){
+  fbFlush();
   stopTimer(); qover.hidden = true; cur = null;
   save(); renderBoard();
   if (bRoom){ bPhase = "idle"; bPush(true); }
@@ -1490,6 +1521,36 @@ function cancelQ(){
   stopTimer(); qover.hidden = true; cur = null; renderBoard();
   if (bRoom){ bPhase = "idle"; bPush(true); }
 }
+
+/* ===== the judge's feedback on a question =====
+   After the answer is shown: like or dislike, and the value the question deserves. It is kept while the question is
+   on screen and sent once when it closes, so changing one's mind costs nothing. It never takes a question out of play. */
+let fb = null;
+function fbOpen(key, qid, mode, game, beforeEl){
+  if (fb && fb.key === key) return;
+  fbFlush();
+  const rec = BY_ID[qid]; if (!rec) return;
+  fb = {key, qid, mode, game, level:rec.q.l, vote:null, sug:null};
+  beforeEl.before($("qfb"));
+  renderFb();
+}
+function fbFlush(){
+  const f = fb; fb = null;
+  $("qfb").hidden = true;
+  if (!f || (!f.vote && !f.sug)) return;
+  queue(() => store.feedback({qid:f.qid, game:f.game && f.game.synced ? f.game.gid : null, mode:f.mode, vote:f.vote, sug:f.sug, level:f.level}));
+}
+function renderFb(){
+  $("qfb").hidden = !fb; if (!fb) return;
+  $("fb-like").setAttribute("aria-pressed", String(fb.vote === "like"));
+  $("fb-dislike").setAttribute("aria-pressed", String(fb.vote === "dislike"));
+  $("fb-levels").replaceChildren(...VALUES.map((v,i) => {
+    const l = i + 1, now = l === fb.level, on = fb.sug === l;
+    return h("button",{class:"fb-v" + (now ? " cur" : ""),type:"button","aria-pressed":String(on),title:now ? "قيمته الحالية" : null,
+      "aria-label":fmt(v) + (now ? "، قيمته الحالية" : ""),onclick:() => { fb.sug = on || now ? null : l; renderFb(); }}, fmt(v));
+  }));
+}
+function fbVote(v){ if (!fb) return; fb.vote = fb.vote === v ? null : v; renderFb(); }
 
 /* ===== flag a question ===== */
 let flagCtx = "board";
@@ -1665,6 +1726,7 @@ function connectRoom(){
   clearInterval(rTick); rTick = setInterval(raceTick, 100);
 }
 function closeRoom(){
+  fbFlush();
   const R = state.race;
   if (R && room){ R.phase = "closed"; room.send("state", publicState()); const r = room; setTimeout(() => r.close(), 600); }
   room = null;
@@ -1846,6 +1908,8 @@ function renderRaceQ(){
   slot.hidden = !rev;
   if (rev && flagCtx !== "race"){ slot.append($("qflag")); flagCtx = "race"; resetFlag(); $("flag-open").textContent = "في السؤال خطأ؟"; }
   if (!rev && flagCtx === "race"){ flagCtx = "pending"; resetFlag(); }
+  if (rev){ const rd = R.rounds[R.i]; fbOpen("r:" + R.gid + ":" + R.i, rd.qid, "speed_race", R, $("qflag")); }
+  else if (fb && fb.mode === "speed_race") fbFlush();
   if (rev) $("r-next").focus();
 }
 function renderRaceCount(){
@@ -1855,6 +1919,7 @@ function renderRaceCount(){
 }
 function finishRace(){
   const R = state.race; if (!R) return;
+  fbFlush();
   R.phase = "final"; save(); pushState(true);
   rover.hidden = true;
   const ranked = rankList();
@@ -2342,6 +2407,8 @@ function bind(){
   $("opt-deduct").addEventListener("change", e => { state.settings.deduct = e.target.checked; save(); });
   $("opt-helps").addEventListener("change", e => { state.settings.helps = e.target.checked; save(); renderSetup(); if (state.game) renderBoard(); bPush(true); });
   $("q-two").addEventListener("click", () => { const id = answeringTeam(); if (id) useTwo(id); });
+  $("fb-like").addEventListener("click", () => fbVote("like"));
+  $("fb-dislike").addEventListener("click", () => fbVote("dislike"));
   $("go").addEventListener("click", () => { setMsg($("setup-msg"), ""); if (state.mode === "race") openRoom(); else if (state.mode === "feud") startFeud(); else startGame(); });
   $("resume-go").addEventListener("click", () => {
     if (state.mode === "race"){ resumeRace(); return; }
