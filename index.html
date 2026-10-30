@@ -294,6 +294,7 @@ button.cell:hover{transform:translateY(-2px);filter:brightness(1.12)}
 .qbuzz p:empty{display:none}
 .qbuzz.hit p{opacity:1;font-family:var(--f-display);font-size:clamp(1.4rem,3vw,2.2rem);line-height:1.3;padding:10px 24px 8px;border-radius:14px;background:var(--tc);color:var(--team-ink)}
 .jt.buzzed{box-shadow:0 0 0 3px var(--cream),0 0 0 6px var(--tc)}
+#rover{background:var(--night)}   /* the race takes the whole screen: the room behind it does not show through */
 .rcard{width:min(1180px,100%);margin:auto;display:flex;flex-direction:column;gap:clamp(12px,2vw,20px);align-items:center;text-align:center}
 .rtop{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;align-items:center;color:var(--muted)}
 .rtop b{color:var(--cream);font-variant-numeric:tabular-nums}
@@ -313,6 +314,7 @@ button.cell:hover{transform:translateY(-2px);filter:brightness(1.12)}
 .rnote:empty{display:none}
 .standings{width:min(620px,100%)}
 .standings .gain{color:var(--good);font-size:.95rem;font-variant-numeric:tabular-nums}
+.gain.loss{color:var(--bad)}
 .rflag{width:100%}
 .rflag .qflag{border-top-color:var(--line)}
 /* ---------- «أشهر إجابة» ---------- */
@@ -511,9 +513,11 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
 
       <section class="card" id="card-race" aria-labelledby="h-race" hidden>
         <h2 id="h-race">سباق السرعة</h2>
-        <p class="hint">كل لاعب يدخل من موبايله. السؤال يظهر على هذه الشاشة، والاختيارات الأربعة على الموبايلات. الإجابة الصحيحة تكسب حتى ١٠٠٠ نقطة، وكلما كانت أسرع كانت النقاط أكثر.</p>
+        <p class="hint" id="race-hint"></p>
+        <div class="field"><span class="lbl" id="l-rs">طريقة الإجابة</span><div class="seg" id="seg-rs" role="group" aria-labelledby="l-rs"></div></div>
         <div class="field"><span class="lbl" id="l-rn">عدد الأسئلة</span><div class="seg" id="seg-rn" role="group" aria-labelledby="l-rn"></div></div>
         <div class="field"><span class="lbl" id="l-rt">وقت كل سؤال</span><div class="seg" id="seg-rt" role="group" aria-labelledby="l-rt"></div></div>
+        <label class="switch" for="opt-rdeduct" id="opt-rdeduct-row"><input type="checkbox" id="opt-rdeduct"><span>الإجابة الخاطئة تخصم النقاط</span></label>
       </section>
 
       <section class="card" id="card-cats" aria-labelledby="h-cats">
@@ -611,7 +615,7 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
 <!-- SPEED RACE: question and answer -->
 <div class="over" id="rover" hidden role="dialog" aria-modal="true" aria-labelledby="r-q" dir="rtl" lang="ar">
   <div class="rcard">
-    <div class="rtop"><span id="r-n"></span><span class="qc" id="r-cat"></span><span>الغرفة <b id="r-code2"></b></span></div>
+    <div class="rtop"><span id="r-n"></span><span class="qc" id="r-cat"></span><span class="qv" id="r-val" hidden></span><span>الغرفة <b id="r-code2"></b></span></div>
     <p class="qtext" id="r-q"></p>
     <div class="rmid">
       <div class="qtimer" id="r-timer" role="timer">
@@ -623,6 +627,12 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
       </div>
       <p class="rcount" id="r-count" aria-live="polite"></p>
     </div>
+    <div class="qbuzz hit" id="r-buzz" hidden aria-live="assertive" style="--tc:var(--brass)"><p id="r-buzz-text"></p></div>
+    <div class="qactions" id="r-judge" hidden>
+      <button class="primary" id="r-ok" type="button">إجابة صحيحة</button>
+      <button class="ghost" id="r-bad" type="button">إجابة خاطئة</button>
+    </div>
+    <div class="qanswer" id="r-ans" hidden><span class="lbl">الإجابة</span><strong id="r-a"></strong></div>
     <ol class="ropts" id="r-opts"></ol>
     <p class="rnote" id="r-note"></p>
     <ol class="rank standings" id="r-stand" hidden></ol>
@@ -874,7 +884,7 @@ function defaults(){
     pendingFlags:[],
     mode:"board",
     racePicks:[],
-    raceSettings:{n:10,time:20},
+    raceSettings:{n:10,time:20,style:"choices",deduct:false},
     race:null,
     broom:null,
     feud:null,
@@ -908,9 +918,10 @@ function normalize(s){
     && Number.isInteger(F.i) && F.i >= 0 && F.i < F.rounds.length && F.scores && typeof F.scores === "object" && F.open && typeof F.open === "object";
   if (!feudOk) out.feud = null; else if (!Array.isArray(F.logged)) F.logged = [];
   const r = out.race;
-  const raceOk = r && typeof r === "object" && /^\d{4}$/.test(r.code || "") && Array.isArray(r.rounds) && r.rounds.every(x => x && BY_ID[x.qid] && Array.isArray(x.opts))
+  const raceOk = r && typeof r === "object" && /^\d{4}$/.test(r.code || "") && Array.isArray(r.rounds) && r.rounds.every(x => x && BY_ID[x.qid] && (r.style === "buzz" || Array.isArray(x.opts)))
     && r.players && typeof r.players === "object" && r.phase !== "closed" && (Date.now() - (r.createdAt || 0)) < 12 * 3600 * 1000;
   if (!raceOk) out.race = null;
+  else if (!Array.isArray(r.out)) Object.assign(r, {buzz:null, out:[], round:0, openAt:0, left:0});
   const B = out.broom;
   if (!(B && typeof B === "object" && /^\d{4}$/.test(B.code || "") && B.players && typeof B.players === "object" && (Date.now() - (B.createdAt || 0)) < 12 * 3600 * 1000)) out.broom = null;
   return out;
@@ -1651,10 +1662,10 @@ function setMode(m){
   setMsg($("setup-msg"), ""); save(); renderSetup();
 }
 function racePool(){
-  const flagged = new Set(state.flagged);
+  const flagged = new Set(state.flagged), bz = state.raceSettings.style === "buzz";
   const slugs = (state.racePicks.length ? state.racePicks : BANK.map(c => c.slug)).filter(s => BY_SLUG[s]);
   const pool = [];
-  slugs.forEach(s => BY_SLUG[s].qs.forEach(q => { if (!flagged.has(q.id) && Array.isArray(q.opts) && q.opts.length >= 3) pool.push({q, slug:s}); }));
+  slugs.forEach(s => BY_SLUG[s].qs.forEach(q => { if (!flagged.has(q.id) && (bz || (Array.isArray(q.opts) && q.opts.length >= 3))) pool.push({q, slug:s}); }));
   return pool;
 }
 function renderRaceSetup(){
@@ -1663,6 +1674,13 @@ function renderRaceSetup(){
   $("go").textContent = "افتحوا غرفة السباق";
   $("resume").hidden = !R;
   if (R){ $("resume-text").textContent = "غرفة السباق رقم " + R.code + " ما زالت مفتوحة."; $("resume-go").textContent = "ارجعوا إلى الغرفة"; }
+  const bz = rs.style === "buzz";
+  $("race-hint").textContent = bz
+    ? "كل لاعب يدخل من موبايله، والسؤال يظهر على هذه الشاشة وعلى الموبايلات من غير اختيارات. أول من يضغط يجاوب بصوته، وأنتم تحكمون: الإجابة الصحيحة تكسب من ١٠٠ إلى ٥٠٠ نقطة على قدر صعوبة السؤال، والخاطئة تُخرج صاحبها من السؤال ويفتح الزر للباقين."
+    : "كل لاعب يدخل من موبايله. السؤال يظهر على هذه الشاشة، والاختيارات الأربعة على الموبايلات. الإجابة الصحيحة تكسب حتى ١٠٠٠ نقطة، وكلما كانت أسرع كانت النقاط أكثر.";
+  renderSeg($("seg-rs"), [["choices","أربعة اختيارات"],["buzz","أول من يضغط يجاوب"]], bz ? "buzz" : "choices", v => { rs.style = v; save(); renderSetup(); });
+  $("opt-rdeduct-row").hidden = !bz;
+  $("opt-rdeduct").checked = !!rs.deduct;
   renderSeg($("seg-rn"), [[10,fmt(10)],[15,fmt(15)],[20,fmt(20)]], rs.n, v => { rs.n = v; save(); renderSetup(); });
   renderSeg($("seg-rt"), [[10,fmt(10) + " ث"],[15,fmt(15) + " ث"],[20,fmt(20) + " ث"],[30,fmt(30) + " ث"]], rs.time, v => { rs.time = v; save(); renderSetup(); });
   $("cats-hint").textContent = "اختاروا الفئات التي تدخل السباق، ولو لم تختاروا شيئًا تدخل كل الفئات. تبدأ الأسئلة سهلة ثم تصعب.";
@@ -1699,12 +1717,15 @@ function pickRace(n){
     if (x) out.push(x);
   }
   out.sort((a,b) => a.q.l - b.q.l);
+  if (state.raceSettings.style === "buzz") return out.map(x => ({qid:x.q.id}));
   return out.map(x => { const opts = shuffle([x.q.a].concat(x.q.opts.slice(0, 3))); return {qid:x.q.id, opts, correct:opts.indexOf(x.q.a)}; });
 }
 function newRace(code, players){
   const rs = state.raceSettings;
   return {code, rid:uuid().slice(0, 8), gid:uuid(), synced:false, createdAt:Date.now(), n:rs.n, time:rs.time,
-    rounds:pickRace(rs.n), i:-1, phase:"lobby", players:players || {}, answers:{}, results:null, endsAt:0, plays:[]};
+    style:rs.style === "buzz" ? "buzz" : "choices", deduct:!!rs.deduct,
+    rounds:pickRace(rs.n), i:-1, phase:"lobby", players:players || {}, answers:{}, results:null, endsAt:0, plays:[],
+    buzz:null, out:[], round:0, openAt:0, left:0};
 }
 
 /* room */
@@ -1737,13 +1758,18 @@ function closeRoom(){
 }
 function publicState(){
   const R = state.race;
-  const s = {v:1, hs:HS, seq:++rSeq, rid:R.rid, phase:R.phase, players:rankList()};
+  const bz = R.style === "buzz";
+  const s = {v:1, hs:HS, seq:++rSeq, rid:R.rid, phase:R.phase, players:rankList(), style:bz ? "buzz" : "choices"};
   const rd = R.rounds[R.i];
   if ((R.phase === "question" || R.phase === "reveal") && rd){
     const rec = BY_ID[rd.qid];
-    s.q = {i:R.i, n:R.rounds.length, cat:rec.cat.name, text:rec.q.q, opts:rd.opts, limit:R.time * 1000};
-    if (R.phase === "question"){ s.q.remain = Math.max(0, R.endsAt - Date.now()); s.q.answered = Object.keys(R.answers); }
-    else { s.q.correct = rd.correct; s.q.results = R.results || {}; }
+    s.q = {i:R.i, n:R.rounds.length, cat:rec.cat.name, text:rec.q.q, opts:bz ? null : rd.opts, limit:R.time * 1000, style:s.style};
+    if (bz) s.q.val = raceVal(R);
+    if (R.phase === "question"){
+      s.q.remain = bz && R.buzz ? R.left : Math.max(0, R.endsAt - Date.now()); s.q.answered = Object.keys(R.answers);
+      if (bz){ s.q.key = rbKey(); s.q.buzz = R.buzz ? {pid:R.buzz.pid, name:R.buzz.name} : null; s.q.out = R.out.slice(); }
+    }
+    else { s.q.correct = bz ? null : rd.correct; s.q.results = R.results || {}; if (bz) s.q.answer = rec.q.a; }
   }
   return s;
 }
@@ -1770,7 +1796,26 @@ function onPhone(ev, p){
     renderRacePlayers(); renderRaceCount(); pushState();
     return;
   }
+  if (ev === "ping"){
+    // clock sync: the phone works out how its clock lines up with this screen's, so presses can be compared fairly
+    const now = Date.now();
+    if (typeof p.t !== "number" || !Number.isFinite(p.t) || now - (pongAt[p.pid] || 0) < 150) return;
+    pongAt[p.pid] = now; room.send("pong", {pid:p.pid, t:p.t, h:now});
+    return;
+  }
+  if (ev === "buzz"){
+    if (R.style !== "buzz" || R.phase !== "question" || R.buzz || !R.players[p.pid] || R.out.includes(p.pid) || p.key !== rbKey()) return;
+    if (Date.now() > R.endsAt + 300 || rCands.some(c => c.pid === p.pid)) return;
+    const now = Date.now(); seen[p.pid] = now;
+    // the press time in this screen's clock, as the phone measured it; implausible values fall back to arrival time
+    let at = Number(p.at);
+    if (!Number.isFinite(at) || at < R.openAt - 250 || at > now + 100) at = now;
+    rCands.push({pid:p.pid, at:Math.max(at, R.openAt), arr:now});
+    if (!rWin) rWin = setTimeout(pickRaceBuzz, BUZZ_WINDOW);
+    return;
+  }
   if (ev === "answer"){
+    if (R.style === "buzz") return;
     if (R.phase !== "question" || p.i !== R.i || !R.players[p.pid] || R.answers[p.pid]) return;
     if (Date.now() > R.endsAt + 1500) return;
     const c = Number(p.c);
@@ -1786,13 +1831,45 @@ function onPhone(ev, p){
   }
 }
 
+/* the buzzer race: presses are collected for a moment after the first one arrives, then the earliest press wins
+   (by the phones' synced clocks, so a slow connection does not lose the turn). The screen judges right or wrong. */
+const BUZZ_WINDOW = 400;
+let rCands = [], rWin = 0;
+const pongAt = {};
+const raceVal = R => { const rd = R.rounds[R.i], rec = rd && BY_ID[rd.qid]; return rec ? VALUES[Math.min(5, Math.max(1, rec.q.l)) - 1] : 0; };
+function rbKey(){ const R = state.race; return R ? R.rid + ":" + R.i + ":" + (R.round || 0) : ""; }
+function pickRaceBuzz(){
+  rWin = 0;
+  const R = state.race, cands = rCands; rCands = [];
+  if (!R || R.style !== "buzz" || R.phase !== "question" || R.buzz) return;
+  const c = cands.filter(x => R.players[x.pid] && !R.out.includes(x.pid)).sort((a,b) => a.at - b.at || a.arr - b.arr)[0];
+  if (!c) return;
+  R.buzz = {pid:c.pid, name:R.players[c.pid].name};
+  R.left = Math.max(0, R.endsAt - Date.now());
+  beep(1318, .16, .16);
+  save(); pushState(true); renderRaceQ();
+}
+function judgeRace(ok){
+  const R = state.race; if (!R || R.style !== "buzz" || R.phase !== "question" || !R.buzz) return;
+  const pid = R.buzz.pid, pl = R.players[pid], v = raceVal(R);
+  R.buzz = null;
+  if (ok){ pl.score = (pl.score || 0) + v; R.answers[pid] = {ok:true, pts:v}; revealRace(); return; }
+  const pts = R.deduct ? -v : 0;
+  pl.score = (pl.score || 0) + pts; R.answers[pid] = {ok:false, pts};
+  R.out.push(pid); R.round = (R.round || 0) + 1;
+  R.endsAt = Date.now() + R.left; R.openAt = Date.now(); rLastSec = null;
+  const left = activeIds().filter(id => !R.out.includes(id));
+  save(); pushState(true); renderRaceQ();
+  if (!left.length || R.left <= 0) revealRace();
+}
+
 /* lobby */
 function renderLobby(){
   const R = state.race; if (!R) return;
   $("r-code").textContent = R.code;
   $("r-code").setAttribute("aria-label", "رقم الغرفة " + R.code.split("").join(" "));
   drawJoin(R.code);
-  $("r-plan").textContent = "السباق: " + qWord(R.rounds.length) + "، و" + fmt(R.time) + " ثانية لكل سؤال.";
+  $("r-plan").textContent = "السباق: " + qWord(R.rounds.length) + "، و" + fmt(R.time) + " ثانية لكل سؤال." + (R.style === "buzz" ? " أول من يضغط يجاوب." : "");
   $("r-start").textContent = R.phase === "final" ? "سباق جديد" : "ابدأوا السباق";
   setMsg($("r-msg"), "");
   renderRacePlayers(); renderConn();
@@ -1835,24 +1912,27 @@ function nextRaceQ(){
   if (R.i + 1 >= R.rounds.length){ finishRace(); return; }
   R.i++; R.phase = "question"; R.answers = {}; R.results = null;
   R.endsAt = Date.now() + R.time * 1000; rLastSec = null;
+  R.buzz = null; R.out = []; R.round = 0; R.openAt = Date.now(); R.left = 0; rCands = []; clearTimeout(rWin); rWin = 0;
   save(); pushState(true); renderRaceQ();
 }
 function raceTick(){
   const R = state.race; if (!R || R.phase !== "question") return;
   drawRaceTimer();
+  if (R.buzz || rWin) return;   // someone is answering, or presses are being compared
   if (Date.now() >= R.endsAt + 600) revealRace();
 }
 function drawRaceTimer(){
   const R = state.race; if (!R) return;
-  const left = Math.max(0, (R.endsAt - Date.now()) / 1000), s = Math.ceil(left);
+  const left = Math.max(0, (R.buzz ? R.left : R.endsAt - Date.now()) / 1000), s = Math.ceil(left);
   rRing.style.strokeDashoffset = String(RING * (1 - left / R.time));
   $("r-tnum").textContent = fmt(s);
   $("r-timer").classList.toggle("warn", left <= 5);
   $("r-timer").setAttribute("aria-label", "بقي " + fmt(s) + " ثانية");
-  if (s !== rLastSec){ rLastSec = s; if (s > 0 && s <= 3) beep(660, .09, .12); if (s === 0) beep(330, .55, .2); }
+  if (s !== rLastSec && !R.buzz){ rLastSec = s; if (s > 0 && s <= 3) beep(660, .09, .12); if (s === 0) beep(330, .55, .2); }
 }
 function revealRace(){
   const R = state.race; if (!R || R.phase !== "question") return;
+  if (R.style === "buzz"){ revealRaceBuzz(); return; }
   const rd = R.rounds[R.i], limit = R.time * 1000, at = new Date().toISOString();
   const act = new Set(activeIds()), res = {}, entries = [];
   Object.entries(R.players).forEach(([pid, pl]) => {
@@ -1874,12 +1954,33 @@ function revealRace(){
   beep(784, .12, .1);
   renderRaceQ();
 }
+function revealRaceBuzz(){
+  // scores were already given as each answer was judged; this records the question and shows the answer
+  const R = state.race, rd = R.rounds[R.i], at = new Date().toISOString(), entries = [];
+  clearTimeout(rWin); rWin = 0; rCands = [];
+  Object.entries(R.answers).forEach(([pid, a]) => { const pl = R.players[pid]; if (pl) entries.push({qid:rd.qid, outcome:a.ok ? "correct" : "wrong", team:pl.name, at}); });
+  if (!Object.values(R.answers).some(a => a.ok)) entries.push({qid:rd.qid, outcome:"none", team:null, at});
+  R.results = Object.assign({}, R.answers); R.phase = "reveal"; R.buzz = null;
+  R.plays.push(...entries);
+  if (!state.recent.includes(rd.qid)) state.recent.push(rd.qid);
+  state.recent = state.recent.slice(-300);
+  save(); pushState(true);
+  queue(() => store.played(R, entries));
+  beep(784, .12, .1);
+  renderRaceQ();
+}
 function renderRaceQ(){
   const R = state.race;
   if (!R || (R.phase !== "question" && R.phase !== "reveal")){ rover.hidden = true; return; }
-  const rd = R.rounds[R.i], rec = BY_ID[rd.qid], rev = R.phase === "reveal";
+  const rd = R.rounds[R.i], rec = BY_ID[rd.qid], rev = R.phase === "reveal", bz = R.style === "buzz";
   rover.hidden = false;
   $("r-n").textContent = "سؤال " + fmt(R.i + 1) + " من " + fmt(R.rounds.length);
+  $("r-val").hidden = !bz; if (bz) $("r-val").textContent = fmt(raceVal(R)) + " نقطة";
+  $("r-buzz").hidden = !(bz && !rev && R.buzz);
+  if (bz && R.buzz) $("r-buzz-text").textContent = R.buzz.name + " ضغط الأول";
+  $("r-judge").hidden = !(bz && !rev && R.buzz);
+  $("r-ans").hidden = !(bz && rev);
+  if (bz && rev) $("r-a").textContent = rec.q.a;
   $("r-cat").textContent = rec.cat.name;
   $("r-code2").textContent = R.code;
   $("r-q").textContent = rec.q.q;
@@ -1887,7 +1988,8 @@ function renderRaceQ(){
   if (rev) Object.values(R.answers).forEach(a => { counts[a.c]++; });
   const box = $("r-opts");
   box.classList.toggle("revealed", rev);
-  box.replaceChildren(...rd.opts.map((t,k) => h("li",{class:"ropt" + (rev && k === rd.correct ? " right" : ""),style:"--oc:var(--o" + k + ")"},
+  box.hidden = bz;
+  box.replaceChildren(...(rd.opts || []).map((t,k) => h("li",{class:"ropt" + (rev && k === rd.correct ? " right" : ""),style:"--oc:var(--o" + k + ")"},
     h("span",{class:"sh","aria-hidden":"true"}, SHAPES[k]), h("span",{class:"tx"}, t),
     rev ? h("span",{class:"n",title:"عدد من اختاروها"}, fmt(counts[k])) : null)));
   $("r-note").textContent = rev ? (rec.q.note || "") : "";
@@ -1899,11 +2001,12 @@ function renderRaceQ(){
   if (rev) st.replaceChildren(...rankList().slice(0, 6).map((x,k) => {
     const r = R.results[x.id];
     return h("li", null, h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"nm"}, x.name),
-      r && r.pts ? h("span",{class:"gain"}, fmtS(r.pts)) : null, h("span",{class:"p"}, fmt(x.score)));
+      r && r.pts ? h("span",{class:"gain" + (r.pts < 0 ? " loss" : "")}, fmtS(r.pts)) : null, h("span",{class:"p"}, fmt(x.score)));
   }));
   $("r-next").hidden = !rev;
   $("r-next").textContent = R.i + 1 >= R.rounds.length ? "النتيجة النهائية" : "السؤال التالي";
   $("r-now").hidden = rev;
+  if (bz && !rev && R.buzz) $("r-ok").focus();
   const slot = $("r-flag-slot");
   slot.hidden = !rev;
   if (rev && flagCtx !== "race"){ slot.append($("qflag")); flagCtx = "race"; resetFlag(); $("flag-open").textContent = "في السؤال خطأ؟"; }
@@ -1914,6 +2017,11 @@ function renderRaceQ(){
 }
 function renderRaceCount(){
   const R = state.race; if (!R || rover.hidden) return;
+  if (R.style === "buzz"){
+    const out = R.out.map(id => R.players[id] && R.players[id].name).filter(Boolean);
+    $("r-count").textContent = R.phase !== "question" || R.buzz ? "" : "الأزرار مفتوحة على الموبايلات: أول من يضغط يجاوب." + (out.length ? " خرج من السؤال: " + out.join("، ") + "." : "");
+    return;
+  }
   const n = Object.keys(R.answers).length, of = Math.max(activeIds().length, n);
   $("r-count").replaceChildren(h("b", null, fmt(n)), " من " + fmt(of) + " أجابوا");
 }
@@ -1944,7 +2052,7 @@ function resumeRace(){
   // after a reload we have not heard from anyone yet: count every player as present until they go quiet
   Object.keys(R.players).forEach(id => { seen[id] = Date.now(); });
   connectRoom(); renderLobby(); show("lobby");
-  if (R.phase === "question"){ R.endsAt = Date.now() + R.time * 1000; rLastSec = null; save(); renderRaceQ(); }
+  if (R.phase === "question"){ if (!R.buzz){ R.endsAt = Date.now() + R.time * 1000; R.openAt = Date.now(); } rLastSec = null; save(); renderRaceQ(); }
   else if (R.phase === "reveal") renderRaceQ();
   else if (R.phase === "final") finishRace();
 }
@@ -2405,6 +2513,9 @@ function bind(){
   });
   $("add-team").addEventListener("click", addTeam);
   $("opt-deduct").addEventListener("change", e => { state.settings.deduct = e.target.checked; save(); });
+  $("opt-rdeduct").addEventListener("change", e => { state.raceSettings.deduct = e.target.checked; save(); });
+  $("r-ok").addEventListener("click", () => judgeRace(true));
+  $("r-bad").addEventListener("click", () => judgeRace(false));
   $("opt-helps").addEventListener("change", e => { state.settings.helps = e.target.checked; save(); renderSetup(); if (state.game) renderBoard(); bPush(true); });
   $("q-two").addEventListener("click", () => { const id = answeringTeam(); if (id) useTwo(id); });
   $("fb-like").addEventListener("click", () => fbVote("like"));
