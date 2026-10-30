@@ -140,6 +140,19 @@ button.mode:disabled{opacity:.5;cursor:not-allowed}
 /* ---------- board ---------- */
 .boardscr{display:flex;flex-direction:column;gap:14px}
 .board-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.turnwrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.helps{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.help{font:inherit;font-weight:700;font-size:.98rem;line-height:1.3;padding:7px 15px;border-radius:999px;border:1.5px solid var(--brass);background:transparent;color:var(--brass);cursor:pointer}
+.help:hover{background:var(--panel)}
+.help.on,.help[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
+.help.tgt{border-color:var(--tc);color:var(--tc)}
+.help.tgt.on{background:var(--tc);color:var(--team-ink)}
+.help:focus-visible{outline:3px solid var(--cream);outline-offset:2px}
+.help-for{color:var(--muted);font-size:.95rem}
+.score .hl{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}
+.score .hl span{font-size:.74rem;line-height:1.2;padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted)}
+.qhelp{margin:0;text-align:center;font-weight:600;color:var(--brass);max-width:min(100%,40em)}
+.helps-note{margin:-4px 0 0;padding:0 28px 0 0;color:var(--muted);font-size:.88rem;display:flex;flex-direction:column;gap:2px;list-style:none}
 .turn{margin:0;font-size:1.15rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .turn b{color:var(--tc);font-weight:700}
 .dot{width:12px;height:12px;border-radius:50%;background:var(--tc);flex:none;display:inline-block}
@@ -455,6 +468,12 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
         <div class="field"><span class="lbl" id="l-cols">عدد الفئات</span><div class="seg" id="seg-cols" role="group" aria-labelledby="l-cols"></div></div>
         <div class="field"><span class="lbl" id="l-time">وقت الإجابة</span><div class="seg" id="seg-time" role="group" aria-labelledby="l-time"></div></div>
         <label class="switch" for="opt-deduct"><input type="checkbox" id="opt-deduct"><span>الإجابة الخاطئة تخصم النقاط</span></label>
+        <label class="switch" for="opt-helps"><input type="checkbox" id="opt-helps"><span>وسائل المساعدة، كل فريق يستخدم كل واحدة مرة واحدة</span></label>
+        <ul class="helps-note" id="helps-note">
+          <li><b>دبل:</b> يُستخدم قبل اختيار السؤال، ونقاطه تتضاعف للفريق.</li>
+          <li><b>جاوب جوابين:</b> يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.</li>
+          <li><b>اختار للخصم:</b> الفريق يختار سؤالًا يجاوب عنه فريق آخر.</li>
+        </ul>
         <label class="switch" for="opt-phones" id="opt-phones-row"><input type="checkbox" id="opt-phones"><span>اللاعبين يدخلوا من موبايلاتهم وتظهر لهم اللوحة، والفريق اللي عليه الدور يختار السؤال</span></label>
         <label class="switch sub-switch" for="opt-buzz" id="opt-buzz-row"><input type="checkbox" id="opt-buzz"><span>زرار على الموبايل: أول فريق يضغط يجاوب</span></label>
         </div>
@@ -499,7 +518,10 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
   <!-- BOARD -->
   <main id="scr-board" class="boardscr" hidden>
     <div class="board-bar">
-      <p class="turn" id="turn"></p>
+      <div class="turnwrap">
+        <p class="turn" id="turn"></p>
+        <div class="helps" id="helps" role="group" hidden></div>
+      </div>
       <div class="tools">
         <button class="ghost" id="b-room" type="button" hidden></button>
         <button class="ghost" id="b-sound" type="button"></button>
@@ -599,6 +621,7 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
       <span class="qv" id="q-val"></span>
       <span class="dd" id="q-dd" hidden>سؤال مضاعف</span>
     </div>
+    <p class="qhelp" id="q-help" hidden></p>
     <p class="qtext" id="q-text"></p>
     <button class="qtimer" id="q-timer" type="button">
       <svg viewBox="0 0 100 100" aria-hidden="true">
@@ -618,6 +641,7 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
     </div>
     <div class="qactions" id="q-pre">
       <button class="primary" id="q-reveal" type="button">أظهِر الإجابة</button>
+      <button class="help" id="q-two" type="button" hidden></button>
       <button class="ghost" id="q-swap" type="button" hidden>سؤال آخر</button>
       <button class="ghost" id="q-cancel" type="button">العودة إلى اللوحة</button>
     </div>
@@ -810,7 +834,7 @@ function qWord(n){ return n === 1 ? "سؤال واحد" : n === 2 ? "سؤالا�
 function defaults(){
   return {
     teams:[{id:"t1",name:ORD[0],color:COLORS[0]},{id:"t2",name:ORD[1],color:COLORS[1]}],
-    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true},
+    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true,helps:true},
     picks:[],
     game:null,
     recent:[],
@@ -839,6 +863,11 @@ function normalize(s){
   out.picks = out.picks.filter(p => BY_SLUG[p]);
   out.racePicks = out.racePicks.filter(p => BY_SLUG[p]);
   if (out.game && (!Array.isArray(out.game.cats) || !out.game.used)) out.game = null;
+  if (out.game){
+    if (!out.game.helps || typeof out.game.helps !== "object") out.game.helps = {};
+    const A = out.game.armed;
+    if (!(A && typeof A === "object" && (A.kind === "dbl" || A.kind === "pick") && out.teams.some(t => t.id === A.team))) out.game.armed = null;
+  }
   out.raceSettings = Object.assign({}, d.raceSettings, s.raceSettings || {});
   if (out.mode !== "race" && out.mode !== "feud") out.mode = "board";
   out.feudSettings = Object.assign({}, d.feudSettings, s.feudSettings || {});
@@ -1030,6 +1059,8 @@ function renderSetupInner(){
   renderSeg($("seg-cols"), [[4,fmt(4)],[5,fmt(5)],[6,fmt(6)]], cols, v => { st.cols = v; if (state.picks.length > v) state.picks.length = v; save(); renderSetup(); });
   renderSeg($("seg-time"), [[20,fmt(20) + " ث"],[30,fmt(30) + " ث"],[45,fmt(45) + " ث"],[0,"مفتوح"]], st.time, v => { st.time = v; save(); renderSetup(); });
   $("opt-deduct").checked = !!st.deduct;
+  $("opt-helps").checked = st.helps !== false;
+  $("helps-note").hidden = st.helps === false;
   $("opt-phones").checked = !!st.phones;
   $("opt-phones-row").hidden = !RACE_OK;
   $("opt-buzz").checked = st.buzz !== false;
@@ -1174,10 +1205,11 @@ function renderScores(){
   const g = state.game; if (!g) return;
   if (bRoom) bPush();
   scoresEl.replaceChildren(...state.teams.map((t,i) => h("div",{class:"score" + (g.turn === i ? " is-turn" : ""),style:"--tc:" + t.color},
-    h("button",{class:"nm",type:"button",title:"اجعلوا الدور لهذا الفريق",onclick:() => { g.turn = i; save(); renderScores(); renderTurn(); }},
+    h("button",{class:"nm",type:"button",title:"اجعلوا الدور لهذا الفريق",onclick:() => { g.turn = i; g.armed = null; save(); renderScores(); renderTurn(); bPush(true); }},
       h("span",{class:"dot","aria-hidden":"true"}), tname(t,i)),
     h("span",{class:"pts"}, fmt(g.scores[t.id] || 0)),
     tallyEl(wonBy(g, t.id)),
+    helpChips(t.id),
     h("span",{class:"adj"},
       h("button",{type:"button","aria-label":"اخصم 100 من " + tname(t,i),onclick:() => adjust(t.id,-100)}, fmtS(-100)),
       h("button",{type:"button","aria-label":"أضف 100 إلى " + tname(t,i),onclick:() => adjust(t.id,100)}, fmtS(100)))
@@ -1187,7 +1219,87 @@ function renderTurn(){
   const g = state.game; if (!g) return;
   if (g.turn >= state.teams.length || g.turn < 0) g.turn = 0;
   const t = state.teams[g.turn];
-  turnEl.replaceChildren(h("span",{class:"dot",style:"--tc:" + t.color,"aria-hidden":"true"}), "الدور على ", h("b",{style:"--tc:" + t.color}, tname(t,g.turn)), " ليختار سؤالًا");
+  const a = armedNow(), o = a && a.kind === "pick" ? teamOf(a.target) : null;
+  if (o) turnEl.replaceChildren(h("span",{class:"dot",style:"--tc:" + t.color,"aria-hidden":"true"}), h("b",{style:"--tc:" + t.color}, tname(t,g.turn)), " يختار سؤالًا يجاوب عنه ", h("b",{style:"--tc:" + o.t.color}, tname(o.t,o.i)));
+  else turnEl.replaceChildren(h("span",{class:"dot",style:"--tc:" + t.color,"aria-hidden":"true"}), "الدور على ", h("b",{style:"--tc:" + t.color}, tname(t,g.turn)), " ليختار سؤالًا");
+  renderHelps();
+}
+
+/* ===== helps =====
+   Each team can use each help once a game. دبل and اختار للخصم are chosen by the team whose turn it is before it
+   picks a question; they wait in g.armed and are spent when the question opens (given back if it is cancelled).
+   جاوب جوابين is called during the question by the team answering: its first wrong answer does not count. */
+const HELP = {dbl:"دبل", two:"جاوب جوابين", pick:"اختار للخصم"};
+const helpsOn = () => state.settings.helps !== false;
+function hasHelp(id, k){ const g = state.game; return helpsOn() && !!g && !!id && !((g.helps || {})[id] || {})[k]; }
+function spendHelp(id, k, back){ const g = state.game; g.helps = g.helps || {}; g.helps[id] = Object.assign({}, g.helps[id], {[k]:!back}); }
+function turnTeam(){ const g = state.game; return g && state.teams[g.turn] ? state.teams[g.turn] : null; }
+function armedNow(){ const g = state.game, t = turnTeam(); return helpsOn() && g && g.armed && t && g.armed.team === t.id && hasHelp(t.id, g.armed.kind) ? g.armed : null; }
+function nextTeam(id){ const i = state.teams.findIndex(t => t.id === id); return state.teams.length > 1 ? state.teams[(i + 1) % state.teams.length].id : null; }
+function setArmed(kind, target){
+  const g = state.game, t = turnTeam(); if (!g || !t || cur) return;
+  if (!kind || !hasHelp(t.id, kind)) g.armed = null;
+  else {
+    const to = kind === "pick" ? (target && target !== t.id && teamOf(target) ? target : nextTeam(t.id)) : null;
+    if (kind === "pick" && !to) return;
+    g.armed = {team:t.id, kind, target:to};
+  }
+  save(); renderTurn(); bPush(true);
+}
+function renderHelps(){
+  const box = $("helps"), g = state.game, t = turnTeam(), a = armedNow();
+  if (!g || !t || !helpsOn()){ box.hidden = true; box.replaceChildren(); return; }
+  const kids = ["dbl","pick"].filter(k => hasHelp(t.id, k)).map(k => {
+    const on = !!a && a.kind === k;
+    return h("button",{class:"help" + (on ? " on" : ""),type:"button","aria-pressed":String(on),onclick:() => setArmed(on ? null : k)}, HELP[k]);
+  });
+  if (a && a.kind === "pick" && state.teams.length > 2){
+    kids.push(h("span",{class:"help-for"}, "لأي فريق؟"));
+    state.teams.forEach((o,i) => {
+      if (o.id === t.id) return;
+      const on = a.target === o.id;
+      kids.push(h("button",{class:"help tgt" + (on ? " on" : ""),type:"button","aria-pressed":String(on),style:"--tc:" + o.color,onclick:() => setArmed("pick", o.id)}, tname(o,i)));
+    });
+  }
+  box.hidden = !kids.length;
+  box.setAttribute("aria-label", "وسائل المساعدة، " + tname(t, g.turn));
+  box.replaceChildren(...kids);
+}
+function helpChips(id){
+  if (!helpsOn()) return null;
+  const left = ["dbl","two","pick"].filter(k => hasHelp(id, k));
+  return left.length ? h("span",{class:"hl",role:"img","aria-label":"باقي له: " + left.map(k => HELP[k]).join("، ")}, ...left.map(k => h("span",null,HELP[k]))) : null;
+}
+const valFor = id => cur ? cur.value * (cur.dbl && cur.dbl === id ? 2 : 1) : 0;
+function answeringTeam(){
+  if (!cur) return null;
+  if (bRoom && buzzOn()) return cur.buzz ? cur.buzz.team : null;
+  return cur.lead || (turnTeam() ? turnTeam().id : null);
+}
+function useTwo(id){
+  if (!cur || cur.revealed || cur.two || !hasHelp(id, "two")) return;
+  cur.two = id; cur.twoSpent = false; spendHelp(id, "two");
+  save(); renderBuzz(); renderScores();
+  bPush(true);
+}
+function renderQHelp(){
+  if (!cur) return;
+  const nm = id => { const o = teamOf(id); return o ? tname(o.t, o.i) : ""; }, bits = [];
+  if (cur.forT) bits.push("اختاره " + nm(cur.forT.by) + "، ويجاوب عنه " + nm(cur.forT.to) + ".");
+  if (cur.dbl) bits.push(nm(cur.dbl) + " لعب دبل: " + fmt(valFor(cur.dbl)) + " نقطة إن أجاب صح" + (state.settings.deduct ? "، وتُخصم إن أخطأ." : "."));
+  if (cur.two) bits.push(nm(cur.two) + " يجاوب جوابين.");
+  $("q-help").textContent = bits.join(" ");
+  $("q-help").hidden = !bits.length;
+  const who = cur.revealed || cur.two ? null : answeringTeam(), btn = $("q-two");
+  btn.hidden = !(who && hasHelp(who, "two"));
+  if (!btn.hidden) btn.textContent = "جاوب جوابين، " + nm(who);
+}
+function startAnswering(){
+  // who answers first when a question opens: whoever presses first, unless دبل or اختار للخصم named the team
+  if (!bRoom) return;
+  if (buzzOn() && cur.lead && !cur.out.has(cur.lead)){ cur.buzz = {pid:null, name:null, team:cur.lead, auto:true}; bPhase = "locked"; }
+  else bPhase = buzzOn() ? "buzz" : "open";
+  bPush(true);
 }
 function adjust(id, d){ const g = state.game; g.scores[id] = (g.scores[id] || 0) + d; save(); renderScores(); }
 
@@ -1227,8 +1339,12 @@ function openQ(ci, ri){
   const g = state.game, key = ci + "-" + ri;
   if (!g || g.used[key] || !g.cats[ci].cells[ri]) return;
   primeAudio();
-  const dd = g.dd === key;
-  cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, wrong:new Set(), swapped:false, skipped:null, out:new Set(), buzz:null, round:0};
+  const dd = g.dd === key, a = armedNow();
+  g.armed = null;
+  if (a) spendHelp(a.team, a.kind);
+  cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, wrong:new Set(), swapped:false, skipped:null, out:new Set(), buzz:null, round:0,
+    used:a || null, dbl:a && a.kind === "dbl" ? a.team : null, forT:a && a.kind === "pick" ? {by:a.team, to:a.target} : null, two:null, twoSpent:false};
+  cur.lead = cur.forT ? cur.forT.to : cur.dbl;
   qover.querySelector(".qcard").append($("qflag")); flagCtx = "board"; $("flag-open").textContent = "في السؤال خطأ؟";
   $("q-cat").textContent = g.cats[ci].name;
   $("q-val").textContent = fmt(cur.value) + " نقطة";
@@ -1237,7 +1353,8 @@ function openQ(ci, ri){
   $("q-answer").hidden = true; $("q-pre").hidden = false; $("q-post").hidden = true;
   qover.hidden = false;
   startTimer();
-  if (bRoom){ bPhase = buzzOn() ? "buzz" : "open"; bPush(true); }
+  save(); renderScores();
+  startAnswering();
   renderBuzz();
   if (dd) beep(988, .18, .12);
   $("q-reveal").focus();
@@ -1250,7 +1367,7 @@ function swapQ(){
   g.cats[cur.ci].cells[cur.ri] = alt.id;
   cur.swapped = true;
   save(); fillQuestion(); startTimer();
-  if (bRoom){ cur.buzz = null; cur.out.clear(); cur.round = (cur.round || 0) + 1; bPhase = buzzOn() ? "buzz" : "open"; bPush(true); }
+  if (bRoom){ cur.buzz = null; cur.out.clear(); cur.round = (cur.round || 0) + 1; cur.twoSpent = false; startAnswering(); }
   renderBuzz();
 }
 function startTimer(){
@@ -1304,9 +1421,8 @@ function reveal(){
   const first = document.querySelector(cur.buzz ? "#judge .jt.buzzed .jt-ok" : "#judge .jt-ok") || document.querySelector("#judge .jt-ok"); if (first) first.focus();
 }
 function renderJudge(){
-  const v = cur.value;
   $("judge").replaceChildren(...state.teams.map((t,i) => {
-    const bad = cur.wrong.has(t.id);
+    const bad = cur.wrong.has(t.id), v = valFor(t.id);
     return h("div",{class:"jt" + (cur.buzz && cur.buzz.team === t.id ? " buzzed" : ""),style:"--tc:" + t.color},
       h("button",{class:"jt-ok",type:"button","aria-label":tname(t,i) + " أجاب إجابة صحيحة، " + fmtS(v),onclick:() => award(t.id)}, tname(t,i), h("small",null,fmtS(v))),
       state.settings.deduct ? h("button",{class:"jt-bad",type:"button",disabled:bad ? true : null,"aria-label":tname(t,i) + " أجاب إجابة خاطئة، " + fmtS(-v),onclick:() => wrong(t.id)}, bad ? fmtS(-v) : "خطأ") : null);
@@ -1318,16 +1434,16 @@ function finish(outcome, teamId){
   const ti = teamId ? state.teams.findIndex(t => t.id === teamId) : -1;
   const entries = [];
   if (cur.skipped) entries.push({qid:cur.skipped, outcome:"skipped", at});
-  state.teams.forEach((t,i) => { if (cur.wrong.has(t.id)) entries.push({qid, outcome:"wrong", team:tname(t,i), value:cur.value, at}); });
-  entries.push({qid, outcome, value:cur.value, team: ti >= 0 ? tname(state.teams[ti], ti) : null, at});
+  state.teams.forEach((t,i) => { if (cur.wrong.has(t.id)) entries.push({qid, outcome:"wrong", team:tname(t,i), value:valFor(t.id), at}); });
+  entries.push({qid, outcome, value:teamId ? valFor(teamId) : cur.value, team: ti >= 0 ? tname(state.teams[ti], ti) : null, at});
   recordPlays(entries);
 }
 function award(id){
   const g = state.game; if (!g || !cur) return;
-  g.scores[id] = (g.scores[id] || 0) + cur.value;
+  g.scores[id] = (g.scores[id] || 0) + valFor(id);
   g.used[cur.key] = {by:id};
   g.turn = Math.max(0, state.teams.findIndex(t => t.id === id));
-  bLast = {team:id, pts:cur.value};
+  bLast = {team:id, pts:valFor(id)};
   finish("correct", id);
   closeQ();
 }
@@ -1342,7 +1458,7 @@ function nobody(){
 function wrong(id){
   const g = state.game; if (!g || !cur || cur.wrong.has(id)) return;
   cur.wrong.add(id);
-  g.scores[id] = (g.scores[id] || 0) - cur.value;
+  g.scores[id] = (g.scores[id] || 0) - valFor(id);
   save(); renderJudge(); renderScores();
 }
 function closeQ(){
@@ -1353,6 +1469,13 @@ function closeQ(){
 }
 function cancelQ(){
   if (cur && cur.skipped){ const g = state.game; g.cats[cur.ci].cells[cur.ri] = cur.skipped; save(); }
+  if (cur){
+    // nothing was played, so the helps it used come back (an armed one stays armed)
+    const g = state.game;
+    if (cur.used){ spendHelp(cur.used.team, cur.used.kind, true); g.armed = cur.used; }
+    if (cur.two) spendHelp(cur.two, "two", true);
+    save();
+  }
   stopTimer(); qover.hidden = true; cur = null; renderBoard();
   if (bRoom){ bPhase = "idle"; bPush(true); }
 }
@@ -1802,8 +1925,10 @@ function bKey(){
 function bPublic(){
   const R = state.broom, g = state.game;
   const s = {v:1, hs:HS, seq:++bSeq, rid:R ? R.rid : "", kind:"board", phase:bPhase,
-    teams:state.teams.map((t,i) => ({id:t.id, name:tname(t,i), color:t.color, score:g ? (g.scores[t.id] || 0) : 0, won:g ? wonBy(g, t.id) : 0})),
-    players:R ? Object.entries(R.players).map(([id,p]) => ({id, name:p.name, team:p.team || null})) : [], last:bLast, buzz:buzzOn()};
+    teams:state.teams.map((t,i) => ({id:t.id, name:tname(t,i), color:t.color, score:g ? (g.scores[t.id] || 0) : 0, won:g ? wonBy(g, t.id) : 0,
+      helps:g ? ["dbl","two","pick"].filter(k => hasHelp(t.id, k)) : []})),
+    players:R ? Object.entries(R.players).map(([id,p]) => ({id, name:p.name, team:p.team || null})) : [], last:bLast, buzz:buzzOn(),
+    helps:helpsOn(), armed:armedNow()};
   if (g){
     // the board as phones see it: "" open, "x" no question, "-" nobody answered, or the id of the team that won it
     s.turn = state.teams[g.turn] ? state.teams[g.turn].id : null;
@@ -1812,7 +1937,8 @@ function bPublic(){
   }
   if (cur && g && (bPhase === "buzz" || bPhase === "open" || bPhase === "locked" || bPhase === "reveal")){
     const rec = BY_ID[g.cats[cur.ci].cells[cur.ri]];
-    s.q = {key:bKey(), cat:g.cats[cur.ci].name, val:cur.value, text:rec.q.q, out:[...cur.out], buzz:cur.buzz || null};
+    s.q = {key:bKey(), cat:g.cats[cur.ci].name, val:cur.value, text:rec.q.q, out:[...cur.out], buzz:cur.buzz || null,
+      dbl:cur.dbl || null, forT:cur.forT || null, two:cur.two || null, twoSpent:!!cur.twoSpent, ans:answeringTeam()};
     if (bPhase === "reveal") s.q.answer = rec.q.a;
   }
   return s;
@@ -1851,6 +1977,20 @@ function onBoardPhone(ev, p){
     openQ(ci, ri);
     return;
   }
+  if (ev === "help"){
+    const g = state.game, pl = R.players[p.pid];
+    if (!g || !helpsOn() || !pl || !pl.team || !teamOf(pl.team)) return;
+    seen[p.pid] = Date.now();
+    if (p.kind === "two"){
+      if (!cur || cur.revealed || p.key !== bKey() || answeringTeam() !== pl.team) return;
+      useTwo(pl.team); return;
+    }
+    if (cur || bPhase !== "idle" || scrBoard.hidden || !qover.hidden || !endover.hidden) return;
+    const t = turnTeam(); if (!t || t.id !== pl.team) return;
+    if (p.kind === "none") setArmed(null);
+    else if (p.kind === "dbl" || p.kind === "pick") setArmed(p.kind, typeof p.target === "string" ? p.target : null);
+    return;
+  }
   if (ev === "buzz"){
     if (!buzzOn() || bPhase !== "buzz" || !cur || cur.revealed || p.key !== bKey()) return;
     const pl = R.players[p.pid];
@@ -1865,6 +2005,7 @@ function onBoardPhone(ev, p){
 function reopenBuzzers(){
   if (!cur || !cur.buzz || cur.revealed) return;
   const team = cur.buzz.team;
+  if (cur.two === team && !cur.twoSpent){ cur.twoSpent = true; bPush(true); renderBuzz(); return; }
   cur.out.add(team);
   if (state.settings.deduct) wrong(team);
   cur.buzz = null; cur.round = (cur.round || 0) + 1;
@@ -1873,6 +2014,7 @@ function reopenBuzzers(){
   bPhase = "buzz"; bPush(true); renderBuzz();
 }
 function renderBuzz(){
+  renderQHelp();
   const box = $("q-buzz");
   if (!bRoom || !cur || !buzzOn()){ box.hidden = true; return; }
   box.hidden = false;
@@ -1880,13 +2022,15 @@ function renderBuzz(){
   if (b){
     const tm = teamOf(b.team);
     box.classList.add("hit"); box.style.setProperty("--tc", tm ? tm.t.color : "var(--brass)");
-    txt.textContent = b.name + (tm ? " (" + tname(tm.t, tm.i) + ")" : "") + " ضغط الأول";
+    const nm = tm ? tname(tm.t, tm.i) : "";
+    txt.textContent = (b.auto ? nm + " يجاوب" : b.name + (tm ? " (" + nm + ")" : "") + " ضغط الأول") + (cur.two === b.team && cur.twoSpent ? "، المحاولة الثانية" : "");
   } else {
     box.classList.remove("hit"); box.style.removeProperty("--tc");
     const out = state.teams.map((t,i) => cur.out.has(t.id) ? tname(t,i) : null).filter(Boolean);
     txt.textContent = cur.revealed ? "" : "الأزرار مفتوحة على الموبايلات: أول فريق يضغط يجاوب." + (out.length ? " خرج من السؤال: " + out.join("، ") + "." : "");
   }
   $("q-rebuzz").hidden = !(b && !cur.revealed);
+  $("q-rebuzz").textContent = b && cur.two === b.team && !cur.twoSpent ? "الإجابة الأولى غلط؟ لهم محاولة ثانية" : "إجابة غلط؟ افتحوا الأزرار للفرق التانية";
   if (cur.revealed) renderJudge();
 }
 function renderBoardLobby(){
@@ -2185,6 +2329,8 @@ function bind(){
   });
   $("add-team").addEventListener("click", addTeam);
   $("opt-deduct").addEventListener("change", e => { state.settings.deduct = e.target.checked; save(); });
+  $("opt-helps").addEventListener("change", e => { state.settings.helps = e.target.checked; save(); renderSetup(); if (state.game) renderBoard(); bPush(true); });
+  $("q-two").addEventListener("click", () => { const id = answeringTeam(); if (id) useTwo(id); });
   $("go").addEventListener("click", () => { setMsg($("setup-msg"), ""); if (state.mode === "race") openRoom(); else if (state.mode === "feud") startFeud(); else startGame(); });
   $("resume-go").addEventListener("click", () => {
     if (state.mode === "race"){ resumeRace(); return; }
