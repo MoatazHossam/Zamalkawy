@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Lalezar&family=Readex+Pro:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Changa:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Changa:wght@500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: one-screen game app. Setup panel -> board of enamel street-sign plates -> full-screen question plate.
    Deliberately a single dark "night" look: it is played on a TV or laptop at night. */
@@ -377,89 +377,406 @@ button.cell:hover{transform:translateY(-2px);filter:brightness(1.12)}
 .lockform input:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
 .lockmsg{margin:0;min-height:1.6em;color:var(--brass)}
 .lockover.busy .lockform{visibility:hidden}
-/* brand theme */
+/* the studio look, shared by every brand */
+/* ===== the studio: a 90s TV game show =====
+   Shared by the game screen and the phones of every brand. A sunburst stage, category signs ringed with bulbs,
+   chunky yellow tiles, LED score podiums with a spotlight on the team whose turn it is, and a cream question card.
+   A brand theme only sets the tokens below (and adds its own flourishes). */
 :root{
-  --zr:#c8102e; --zr-deep:#9a0b22; --ink:#1b1214;
-  --night:#f6f4f3; --panel:#ffffff;
+  --stage:#0E3B43; --stage-ray:#124A53; --stage-dim:rgba(4,20,24,.55);
+  --sign:#F2672E; --sign-deep:#B6461A; --sign-ink:#FFF4DC; --bulb:#FFE9A0; --bulb-glow:rgba(255,201,60,.5);
+  --tile:#FFC93C; --tile-hi:#FFD964; --tile-lo:#F5B524; --tile-edge:#C7861A; --tile-ink:#10222A;
+  --led:#10222A; --led-rim:#2B4A52; --led-ink:#FFC93C; --led-glow:rgba(255,201,60,.6);
+  --hot:#D6336C; --hot-deep:#8E1F48; --hot-ink:#FFF4DC;
+  --card:#FFF4DC; --card-ink:#10222A; --card-muted:#53646A; --card-line:rgba(16,34,42,.18); --field:#FFFFFF;
+  --good:#2FB36B; --good-deep:#1B7A45; --on-good:#FFF4DC; --bad:#E0443A; --bad-deep:#9A2620; --on-bad:#FFF4DC;
+  --wash:rgba(255,244,220,.07); --spot:rgba(255,233,160,.3);
+  --confetti:#FFC93C,#F2672E,#D6336C,#FFF4DC,#4FA3E0,#3CC07A;
+  --f-show:"Marhey","Lalezar","Readex Pro",system-ui,Tahoma,sans-serif;
+  /* the older tokens the rest of the page uses */
+  --night:#0A2E35; --panel:#0F3F47;
+  --line:rgba(255,244,220,.16); --line-strong:rgba(255,244,220,.42); --glow:transparent;
+  --cream:#FFF4DC; --muted:#A9D2CF;
+  --brass:#FFC93C; --brass-deep:#C7861A; --brass-ink:#10222A;
+  --team-ink:#10222A;
+  --scrim:rgba(5,24,28,.9); --shadow:rgba(0,0,0,.35); --ring-track:rgba(255,244,220,.2);
+  --f-display:var(--f-show);
+}
+body{
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 105%,transparent 35%,var(--stage-dim) 100%),
+    repeating-conic-gradient(from -3deg at 50% 110%,var(--stage) 0deg 6deg,var(--stage-ray) 6deg 12deg);
+  background-color:var(--stage);background-attachment:fixed;
+}
+.ico{width:1.2em;height:1.2em;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- shared pieces ---------- */
+.logo{font-family:var(--f-show);font-weight:700;color:var(--tile);text-shadow:0 4px 0 var(--sign-deep)}
+.primary{
+  font-family:var(--f-show);font-weight:700;border-radius:16px;
+  background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));color:var(--tile-ink);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 6px 0 var(--tile-edge),0 10px 18px rgba(0,0,0,.25);
+}
+.primary:hover{filter:brightness(1.05)}
+.primary:active{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 2px 0 var(--tile-edge)}
+.ghost{border-radius:12px;border:2px solid var(--line-strong)}
+.card{background:var(--panel);border:0;border-radius:22px;box-shadow:inset 0 0 0 2px var(--line),0 10px 24px rgba(0,0,0,.18)}
+.card h2,h1,h2{font-family:var(--f-show);font-weight:700}
+.card h2{color:var(--tile)}
+.help{border-radius:12px;border-width:2px;font-family:var(--f-show);font-weight:700}
+.help.on,.help[aria-pressed="true"]{box-shadow:0 4px 0 var(--tile-edge)}
+.help.tgt.on{color:var(--team-ink)}
+
+/* ---------- game screen: setup ---------- */
+.modes{background:none;border:0;padding:0;gap:10px}
+.mode{font-family:var(--f-show);font-weight:700;font-size:1.05rem;padding:9px 18px 10px;border-radius:14px;color:var(--cream);background:var(--wash);box-shadow:inset 0 0 0 2px var(--line)}
+.mode .ico{width:22px;height:22px}
+.mode.is-on{background:var(--hot);color:var(--hot-ink);box-shadow:0 5px 0 var(--hot-deep)}
+.resume{background:var(--hot);color:var(--hot-ink);border-radius:18px;box-shadow:0 6px 0 var(--hot-deep)}
+.resume .secondary{border-color:var(--hot-ink);color:var(--hot-ink);border-width:2px}
+.team-row{gap:12px}
+.swatch{width:22px;height:22px;box-shadow:0 0 0 3px var(--line-strong)}
+.team-row input{background:var(--night);border:0;border-inline-start:8px solid var(--tc);border-radius:12px;font-weight:600;font-size:1.1rem;padding:10px 14px}
+.team-row input:focus{box-shadow:0 0 0 3px var(--tc)}
+.seg{background:var(--night);border:0;border-radius:14px;padding:4px}
+.seg button{border-radius:10px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--tile);color:var(--tile-ink);box-shadow:0 3px 0 var(--tile-edge)}
+.switch input{accent-color:var(--tile)}
+.helps-note b{color:var(--tile)}
+.cats{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.catpick{justify-content:flex-start;gap:10px;padding:9px 12px;border:0;border-radius:16px;background:var(--wash);box-shadow:inset 0 0 0 2px var(--line);color:var(--cream)}
+.catpick .ico{width:34px;height:34px;padding:6px;border-radius:50%;background:var(--wash);box-shadow:inset 0 0 0 1.5px var(--line)}
+.catpick .nm{flex:1;font-family:var(--f-body);font-weight:600;font-size:1.02rem}
+.catpick:hover{box-shadow:inset 0 0 0 2px var(--line-strong)}
+.catpick[aria-pressed="true"]{background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));color:var(--tile-ink);border:0;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 5px 0 var(--tile-edge)}
+.catpick[aria-pressed="true"] .ico{background:rgba(16,34,42,.1);box-shadow:none}
+.catpick[aria-pressed="true"] .fresh{color:var(--tile-ink);opacity:.7}
+.actions .primary{font-size:1.6rem;padding:17px 40px 15px}
+.fest{border-inline-start-color:var(--tile)}
+
+/* ---------- game screen: the board ---------- */
+/* during a game the header shrinks and the board and podiums share one screen */
+.app[data-scr="board"],.app[data-scr="feud"]{gap:12px;padding-block:12px 20px}
+.app[data-scr="board"] .logo,.app[data-scr="feud"] .logo{font-size:clamp(1.6rem,2.6vw,2.2rem)}
+.app[data-scr="board"] .tag,.app[data-scr="feud"] .tag{display:none}
+.app[data-scr="board"] .cell{height:clamp(50px,calc((100dvh - 545px) / 5),118px)}
+.app[data-scr="board"] .cat{min-height:clamp(64px,10.5vh,104px)}
+.helps .help,.phelps .help{background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));color:var(--tile-ink);border:0;padding:7px 18px 8px;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 var(--tile-edge)}
+.helps .help.on,.helps .help[aria-pressed="true"],.phelps .help.on,.phelps .help[aria-pressed="true"]{background:var(--hot);color:var(--hot-ink);box-shadow:0 0 0 3px var(--bulb),0 4px 0 var(--hot-deep)}
+.turn{font-family:var(--f-show);font-weight:700;font-size:1.3rem;line-height:1.3;background:var(--hot);color:var(--hot-ink);padding:8px 24px 9px;border-radius:999px;box-shadow:0 5px 0 var(--hot-deep)}
+.turn b{color:inherit}
+.turn .dot{width:16px;height:16px;box-shadow:0 0 0 3px var(--hot-ink)}
+.tools .ghost{border:0;background:none;color:var(--muted);padding:8px 10px}
+.tools .ghost:hover{color:var(--cream)}
+.board{gap:12px 14px}
+.board-wrap{padding:10px 8px 12px}
+.cat{
+  min-height:clamp(78px,12vh,108px);flex-direction:column;gap:4px;padding:8px 6px;
+  background:var(--sign);color:var(--sign-ink);border:5px dotted var(--bulb);border-radius:18px;
+  box-shadow:0 0 0 4px var(--sign),0 0 22px var(--bulb-glow);
+}
+.cat-ico{width:clamp(22px,2.2vw,30px);height:clamp(22px,2.2vw,30px);stroke-width:2}
+.cat-name{font-family:var(--f-show);font-weight:700;font-size:clamp(1rem,1.55vw,1.45rem);line-height:1.2;color:var(--sign-ink)}
+button.cell{
+  border-radius:16px;font-family:var(--f-show);font-weight:700;color:var(--tile-ink);
+  background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 8px 0 var(--tile-edge),0 12px 18px rgba(0,0,0,.28);
+}
+button.cell:hover{transform:translateY(-3px);filter:brightness(1.05)}
+button.cell:active{transform:translateY(5px);box-shadow:inset 0 3px 0 rgba(255,255,255,.55),0 3px 0 var(--tile-edge)}
+.cell.used{border-radius:16px;background:rgba(0,0,0,.24);box-shadow:inset 0 4px 10px rgba(0,0,0,.32);color:transparent}
+.cell.used .v{display:none}
+.cell .mark{display:none}
+.cell.won{background:var(--tc);box-shadow:inset 0 3px 0 rgba(255,255,255,.28),0 5px 0 rgba(0,0,0,.28);transform:translateY(3px)}
+.cell.won .v{display:block;opacity:.5;text-decoration:none;color:var(--team-ink);font-size:.62em}
+.cell.empty{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.board.deal .cat,.board.deal .cell{animation:deal .5s cubic-bezier(.2,1.35,.4,1) both;animation-delay:calc(var(--i,0) * 26ms)}
+@keyframes deal{from{opacity:0;transform:translateY(-28px) scale(.85)}}
+
+/* the scores: LED podiums, the spotlight on the team whose turn it is */
+.scores{display:flex;flex-wrap:wrap;justify-content:center;gap:22px;padding-top:34px}
+.score{
+  position:relative;flex:1 1 210px;max-width:300px;padding:0;border:0;border-radius:16px 16px 12px 12px;
+  background:var(--tc);color:var(--team-ink);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"pts pts" "nm adj" "hl adj";gap:0;
+  box-shadow:inset 0 -8px 0 rgba(0,0,0,.16),0 6px 0 rgba(0,0,0,.22);
+}
+.score .pts{
+  grid-area:pts;display:block;text-align:center;margin:0;padding:8px 10px 4px;border-radius:16px 16px 0 0;
+  background:var(--led);color:var(--led-ink);text-shadow:0 0 14px var(--led-glow);box-shadow:inset 0 0 0 3px var(--led-rim);
+  font-family:var(--f-show);font-weight:700;font-size:clamp(1.9rem,3vw,2.7rem);line-height:1.15;
+}
+.score .pts.bump{animation:bump .6s ease}
+@keyframes bump{30%{transform:scale(1.16)}}
+.score .nm{grid-area:nm;color:var(--team-ink);font-family:var(--f-show);font-weight:700;font-size:1.15rem;line-height:1.3;padding:8px 16px 2px}
+.score .nm .dot{display:none}
+.score .tally{display:none}
+.score .hl{grid-area:hl;padding:2px 16px 12px;margin:0}
+.score .hl span{border:0;background:rgba(16,34,42,.16);color:var(--team-ink);font-weight:600;border-radius:8px;padding:3px 9px}
+.score .adj{grid-area:adj;flex-direction:column;gap:5px;padding:8px 10px 12px;align-self:end}
+.score .adj button{border:0;border-radius:8px;background:rgba(16,34,42,.16);color:var(--team-ink);font-weight:600}
+.score .adj button:hover{background:rgba(16,34,42,.28);color:var(--team-ink)}
+.score.is-turn{box-shadow:0 0 0 4px var(--bulb),0 0 32px var(--bulb-glow),0 6px 0 rgba(0,0,0,.22)}
+.score.is-turn::before{content:"";position:absolute;left:6%;right:6%;bottom:calc(100% + 4px);height:40px;pointer-events:none;
+  background:linear-gradient(to top,var(--spot),transparent);clip-path:polygon(32% 0,68% 0,100% 100%,0 100%)}
+
+/* ---------- the question card ---------- */
+#qover,#endover,#rover{background:
+  radial-gradient(ellipse 80% 70% at 50% 45%,transparent 30%,var(--stage-dim) 100%),
+  repeating-conic-gradient(from -3deg at 50% 45%,var(--stage) 0deg 6deg,var(--stage-ray) 6deg 12deg)}
+.qcard{
+  position:relative;width:min(1060px,calc(100% - 28px));background:var(--card);color:var(--card-ink);border-radius:30px;
+  box-shadow:0 0 0 8px var(--tile),0 0 0 14px var(--sign),0 24px 60px rgba(0,0,0,.45);
+  animation:qin .35s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes qin{from{opacity:0;transform:scale(.88)}}
+.qc{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-show);font-weight:700;background:var(--sign);color:var(--sign-ink);padding:3px 18px 6px;border-radius:999px;font-size:clamp(1.05rem,1.8vw,1.4rem)}
+.qc:empty{display:none}
+.qc .ico{width:1.1em;height:1.1em}
+.qv{font-family:var(--f-show);font-weight:700;color:var(--tile)}
+.qcard .qv{color:var(--card-ink)}
+.dd{font-family:var(--f-show);font-weight:700;background:var(--hot);color:var(--hot-ink)}
+.qcard .qtext{color:var(--card-ink)}
+.qhelp{color:var(--hot);font-weight:700}
+.qcard .qhelp{color:var(--card-muted)}
+.qcard .qtimer .trk{stroke:var(--card-line)}
+.qcard .qtimer .prg{stroke:var(--sign)}
+.qcard .qtimer.warn .prg{stroke:var(--bad)}
+.qtimer .n{font-family:var(--f-show);font-weight:700}
+.qcard .qtimer .n{color:var(--card-ink)}
+.qcard .qtimer .n small{color:var(--card-muted);opacity:1}
+.qtimer .prg{stroke:var(--tile)}
+.qanswer{background:var(--hot);color:var(--hot-ink);border-radius:16px}
+.qanswer .lbl{color:var(--hot-ink);opacity:.85}
+.qanswer strong{font-family:var(--f-show);font-weight:700}
+.qcard.revealed .qtimer{display:none}
+.qcard.revealed .qtext{font-size:clamp(1.35rem,3vw,2.4rem)}
+.qcard .qanswer{align-self:stretch;max-width:none;border-radius:0;margin-inline:calc(-1 * clamp(20px,4vw,52px));padding:14px 24px 18px}
+.qcard .ghost{color:var(--card-ink);border-color:var(--card-line)}
+.qcard .ghost:hover{border-color:var(--card-muted)}
+.qcard .help{border-color:var(--card-ink);color:var(--card-ink);background:transparent}
+.qcard .help:hover{background:rgba(16,34,42,.06)}
+.qcard .help.tgt{background:var(--tc);color:var(--team-ink);border-color:transparent;box-shadow:0 4px 0 rgba(0,0,0,.22)}
+.qsteal .lbl{color:var(--card-muted);font-weight:600}
+.qcard .qjudge .lbl{color:var(--card-ink);opacity:1;font-family:var(--f-show);font-weight:700;font-size:clamp(1.25rem,2.4vw,1.7rem)}
+#judge .jt{border:0;background:none;box-shadow:none;overflow:visible;display:flex;flex-wrap:wrap;justify-content:center;gap:18px}
+#judge .jt-ok,#judge .jt-bad{
+  min-width:min(250px,40vw);display:flex;flex-direction:column;align-items:center;gap:2px;border:0;border-radius:20px;padding:12px 26px 12px;
+  font-family:var(--f-show);font-weight:700;font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.15;cursor:pointer;
+}
+#judge .jt-ok small,#judge .jt-bad small{font-family:var(--f-body);font-size:1rem;font-weight:600;opacity:.92}
+#judge .jt-ok{background:var(--good);color:var(--on-good);box-shadow:inset 0 3px 0 rgba(255,255,255,.3),0 8px 0 var(--good-deep)}
+#judge .jt-bad{background:var(--bad);color:var(--on-bad);box-shadow:inset 0 3px 0 rgba(255,255,255,.25),0 8px 0 var(--bad-deep)}
+#judge .jt-ok:hover,#judge .jt-bad:hover{filter:brightness(1.06)}
+#judge .jt-ok:active,#judge .jt-bad:active{transform:translateY(5px)}
+#judge .jt-ok,#judge .jt-bad{justify-content:center;min-height:84px}
+.qcard .qjudge{gap:18px}
+.jt{border:0;border-radius:14px;box-shadow:0 5px 0 rgba(0,0,0,.22)}
+.qcard .fb,.qcard .fb-v{border-color:var(--card-line);color:var(--card-ink)}
+.qcard .fb[aria-pressed="true"],.qcard .fb-v[aria-pressed="true"]{background:var(--tile);border-color:var(--tile);color:var(--tile-ink)}
+.qcard .qflag{border-top:2px dashed var(--card-line)}
+.qcard .qflag label,.qcard .linkish{color:var(--card-muted)}
+.qcard .qflag textarea{background:var(--field);color:var(--card-ink);border-color:var(--card-line)}
+.qcard .flag-done{background:rgba(16,34,42,.07);color:var(--card-ink)}
+/* the steal: a stamp on the card */
+.qstamp{
+  position:absolute;top:-30px;inset-inline-end:clamp(18px,4vw,48px);margin:0;z-index:2;
+  display:flex;flex-direction:column;align-items:center;padding:4px 22px 8px;border-radius:16px;transform:rotate(-8deg);
+  background:var(--hot);color:var(--hot-ink);box-shadow:0 0 0 4px var(--card),0 0 0 7px var(--hot),0 12px 26px rgba(0,0,0,.35);
+  animation:stamp .5s cubic-bezier(.2,1.6,.4,1);
+}
+.qstamp b{font-family:var(--f-show);font-weight:700;font-size:clamp(2rem,4vw,2.8rem);line-height:1.15}
+.qstamp span{font-weight:700;font-size:1rem}
+.qstamp span::before{content:"";display:inline-block;width:.7em;height:.7em;border-radius:50%;background:var(--tc);margin-inline-end:6px;box-shadow:0 0 0 2px var(--hot-ink)}
+@keyframes stamp{from{opacity:0;transform:rotate(-8deg) scale(2.2)}}
+@media (max-width:640px){.qstamp{position:static;transform:rotate(-3deg);margin-top:-6px}@keyframes stamp{from{opacity:0;transform:rotate(-3deg) scale(1.8)}}}
+
+/* ---------- the end of a game ---------- */
+.endcard{background:var(--card);color:var(--card-ink);border:0;border-radius:28px;width:min(640px,calc(100% - 28px));
+  box-shadow:0 0 0 8px var(--tile),0 0 0 14px var(--sign),0 24px 60px rgba(0,0,0,.45);animation:qin .4s cubic-bezier(.2,1.3,.4,1)}
+.end-k{color:var(--card-muted)}
+.end-w{font-family:var(--f-show);font-weight:700;color:var(--card-ink)}
+.end-w{line-height:1.35}
+.end-w span{display:inline-block;background:var(--tc);color:var(--team-ink);padding:0 .3em .06em;margin-block:.08em;border-radius:.25em;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.endcard .rank li{background:var(--tc,rgba(16,34,42,.07));color:var(--team-ink);border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+.endcard .rank li:first-child{box-shadow:0 0 0 4px var(--bulb),0 4px 0 rgba(0,0,0,.2);padding-block:14px}
+.endcard .rank .pos,.endcard .rank .nm{color:var(--team-ink)}
+.endcard .rank .p{min-width:3.6em;text-align:center;background:var(--led);color:var(--led-ink);text-shadow:0 0 10px var(--led-glow);font-family:var(--f-show);font-weight:700;padding:4px 14px 2px;border-radius:10px;box-shadow:inset 0 0 0 2px var(--led-rim)}
+.endcard .ghost{color:var(--card-ink);border-color:var(--card-line)}
+
+/* ---------- «أشهر إجابة» ---------- */
+.fstage{background:var(--card);color:var(--card-ink);border-radius:30px;width:min(1060px,calc(100% - 28px));
+  box-shadow:0 0 0 8px var(--tile),0 0 0 14px var(--sign),0 18px 50px rgba(0,0,0,.4)}
+.fprompt{color:var(--card-ink)}
+.fbank,.fctl .lbl,.fmsg{color:var(--card-ink)}
+.fbank b{background:var(--led);color:var(--led-ink);text-shadow:0 0 10px var(--led-glow);padding:4px 14px 0;border-radius:10px;font-family:var(--f-show);font-weight:700}
+.fctl .lbl b{background:var(--tc);color:var(--team-ink);padding:0 .35em;border-radius:6px}
+.fx i{border-color:var(--card-line)}
+.fx i.on{background:var(--bad);border-color:var(--bad);color:var(--on-bad)}
+.ftile{background:var(--led);box-shadow:inset 0 0 0 3px var(--led-rim);border-radius:14px}
+.ftile .rk{color:var(--led-ink);opacity:.9;font-family:var(--f-show);font-weight:700}
+.ftile.open{background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));box-shadow:0 4px 0 var(--tile-edge)}
+.ftile.open .tx{color:var(--tile-ink)}
+.ftile .pt{background:var(--sign);color:var(--sign-ink);font-family:var(--f-show);font-weight:700}
+.ftile.late{background:transparent;box-shadow:inset 0 0 0 2px var(--card-line)}
+.ftile.late .tx,.ftile.late .pt{color:var(--card-muted);background:transparent}
+.fform input{background:var(--field);color:var(--card-ink);border-color:var(--card-line)}
+.fform input:focus{border-color:var(--sign)}
+.fstage .ghost{color:var(--card-ink);border-color:var(--card-line)}
+.fstage .judge-teams .lbl{color:var(--card-muted)}
+.fstage .qflag label,.fstage .linkish{color:var(--card-muted)}
+.fstage .qflag textarea{background:var(--field);color:var(--card-ink)}
+.fbig{font-family:var(--f-show);font-weight:700;color:var(--bad);text-shadow:0 0 0 transparent,0 10px 0 var(--bad-deep),0 18px 50px rgba(0,0,0,.5)}
+
+/* ---------- speed race ---------- */
+.room-code{font-family:var(--f-show);font-weight:700;background:var(--led);color:var(--led-ink);text-shadow:0 0 18px var(--led-glow);padding:12px 26px 4px;border-radius:16px;box-shadow:inset 0 0 0 4px var(--led-rim)}
+.qr{box-shadow:0 0 0 6px var(--tile),0 0 0 11px var(--sign)}
+.players li{background:var(--wash);border:0;box-shadow:inset 0 0 0 2px var(--line)}
+.ropt{border-radius:18px;font-weight:700;box-shadow:inset 0 3px 0 rgba(255,255,255,.22),0 6px 0 rgba(0,0,0,.3)}
+.ropt.right{box-shadow:0 0 0 5px var(--bulb),0 0 26px var(--bulb-glow)}
+.rcard .qtext{color:var(--cream)}
+
+/* ---------- confetti and the big X ---------- */
+.confetti{position:fixed;inset:0;z-index:70;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-24px;left:var(--x);width:var(--w);height:calc(var(--w) * 1.6);background:var(--c);border-radius:2px;
+  animation:fall var(--t) cubic-bezier(.25,.6,.5,1) var(--d) forwards;opacity:0}
+@keyframes fall{0%{opacity:1;transform:translate(0,0) rotate(0)}85%{opacity:1}100%{opacity:0;transform:translate(var(--dx),105vh) rotate(var(--r))}}
+
+/* ---------- the lock ---------- */
+.lockover{background:
+  radial-gradient(ellipse 80% 70% at 50% 45%,transparent 30%,var(--stage-dim) 100%),
+  repeating-conic-gradient(from -3deg at 50% 45%,var(--stage) 0deg 6deg,var(--stage-ray) 6deg 12deg)}
+.lockcard{background:var(--card);color:var(--card-ink);border-radius:26px;padding:24px 26px 18px;width:min(400px,calc(100% - 28px));box-shadow:0 0 0 8px var(--tile),0 0 0 14px var(--sign),0 24px 60px rgba(0,0,0,.45)}
+.lockcard .logo{color:var(--sign);text-shadow:none}
+.lockform label{color:var(--card-muted)}
+.lockform input{background:var(--field);color:var(--card-ink);border:2px solid var(--card-line);letter-spacing:.2em}
+.lockmsg{color:var(--hot);font-weight:600}
+
+/* ---------- phones ---------- */
+.me b{color:var(--cream)}
+.conn{background:var(--panel)}
+#in-code{background:var(--led);color:var(--led-ink);border:0;box-shadow:inset 0 0 0 3px var(--led-rim);text-shadow:0 0 12px var(--led-glow);font-family:var(--f-show);font-weight:700}
+.turnline{font-family:var(--f-show);font-weight:700;background:var(--wash);border:0;box-shadow:inset 0 0 0 2px var(--line);border-radius:999px}
+.turnline.mine{background:var(--hot);color:var(--hot-ink);box-shadow:0 5px 0 var(--hot-deep)}
+.turnline b{color:inherit!important;background:var(--tc,transparent)}
+.pboard{gap:14px}
+.prow{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.pc{grid-column:1/-1;justify-content:center;gap:8px;font-family:var(--f-show);font-weight:700;font-size:1rem;color:var(--sign-ink);background:var(--sign);border:3px dotted var(--bulb);border-radius:12px;padding:3px 10px 5px;box-shadow:0 0 0 2px var(--sign)}
+.pc .ico{width:18px;height:18px}
+.pv{border-radius:10px;font-family:var(--f-show);font-weight:700;border:0;background:rgba(0,0,0,.24);color:transparent}
+button.pv,button.pv:not(:disabled){background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));color:var(--tile-ink);border:0;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 var(--tile-edge)}
+button.pv:disabled{opacity:.62}
+button.pv.sent{background:var(--hot);color:var(--hot-ink);box-shadow:0 4px 0 var(--hot-deep);opacity:1}
+.pv.used{border:0;text-decoration:none;opacity:1;color:transparent;background:rgba(0,0,0,.24)}
+.pv.used[style]{background:var(--tc)}
+.pv.used[style]::after{display:none}
+.pv.none{background:transparent;box-shadow:inset 0 0 0 2px var(--line)}
+.buzzbtn{
+  width:min(66vw,250px);border:0;color:var(--hot-ink);font-family:var(--f-show);font-weight:700;font-size:3.2rem;
+  background:radial-gradient(circle at 40% 30%,#FF8A5C 0%,var(--sign) 40%,var(--sign-deep) 100%);
+  box-shadow:0 0 0 12px var(--led),0 0 0 17px var(--tile),0 0 36px var(--bulb-glow),inset 0 -12px 0 rgba(0,0,0,.22),inset 0 6px 0 rgba(255,255,255,.3),0 26px 0 -6px rgba(0,0,0,.35);
+  margin:30px 0 20px;
+}
+.buzzbtn:active{transform:translateY(5px);box-shadow:0 0 0 12px var(--led),0 0 0 17px var(--tile),inset 0 -6px 0 rgba(0,0,0,.22),inset 0 6px 0 rgba(255,255,255,.3)}
+.buzzbtn:disabled{opacity:.7;transform:translateY(5px)}
+#v-buzz .qmeta,#v-q .qmeta{align-items:center}
+#v-buzz .qmeta b,#v-q .qmeta b{display:inline-flex;align-items:center;gap:6px;background:var(--sign);color:var(--sign-ink);font-family:var(--f-show);padding:2px 14px 4px;border-radius:999px}
+#v-buzz .qmeta b .ico{width:18px;height:18px}
+#v-buzz .qtext,#v-q .qtext{background:var(--card);color:var(--card-ink);border-radius:20px;padding:16px 18px;box-shadow:0 0 0 5px var(--tile)}
+#g-scores li,#w-scores li,#f-rank li{background:var(--tc);color:var(--team-ink);border:0;border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+#g-scores li.mine,#w-scores li.mine,#f-rank li.mine{box-shadow:0 0 0 3px var(--bulb),0 4px 0 rgba(0,0,0,.2)}
+#g-scores .dot,#w-scores .dot,#f-rank .dot{display:none}
+#g-scores .nm,#w-scores .nm,#f-rank .nm,#f-rank .pos{color:var(--team-ink)}
+#g-scores .p,#w-scores .p,#f-rank .p{background:var(--led);color:var(--led-ink);text-shadow:0 0 10px var(--led-glow);font-family:var(--f-show);font-weight:700;padding:2px 12px 0;border-radius:10px;min-width:3.2em;text-align:center}
+.tp{font-family:var(--f-show);border-radius:16px;box-shadow:inset 0 -6px 0 rgba(0,0,0,.16),0 5px 0 rgba(0,0,0,.25)}
+.opt{border-radius:16px;font-weight:700;box-shadow:inset 0 3px 0 rgba(255,255,255,.2),0 5px 0 rgba(0,0,0,.3)}
+.bar{background:var(--wash);height:10px}
+.bar i{background:var(--tile)}
+
+@media (max-width:560px){
+  .modes{gap:6px}
+  .mode{padding:7px 12px 8px;font-size:.95rem}
+  .scores{gap:12px;padding-top:30px}
+  .score{flex:1 1 100%;max-width:none;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"pts nm adj" "pts hl adj";border-radius:14px}
+  .score .pts{border-radius:14px 0 0 14px;border-start-start-radius:14px;border-end-start-radius:14px;border-start-end-radius:0;border-end-end-radius:0;display:grid;place-items:center;min-width:4.2em;font-size:2rem}
+  .score.is-turn::before{display:none}
+}
+
+/* brand theme */
+/* زملكاوي: the studio in the club's colours. A light stage with faint red rays, red signs ringed with white bulbs,
+   white tiles with the shirt's two red stripes, black for whose turn it is, red LED digits. */
+:root{
+  --zr:#c8102e; --zr-deep:#8a0a1f; --ink:#1b1214;
+  --stage:#F6EEEE; --stage-ray:#FCF8F8; --stage-dim:rgba(138,10,31,.10);
+  --sign:#c8102e; --sign-deep:#8a0a1f; --sign-ink:#FFFFFF; --bulb:#FFFFFF; --bulb-glow:rgba(200,16,46,.32);
+  --tile:#FFFFFF; --tile-hi:#FFFFFF; --tile-lo:#F3EDED; --tile-edge:#D9CBCB; --tile-ink:#1b1214;
+  --led:#1b1214; --led-rim:#3d2b2f; --led-ink:#FF5468; --led-glow:rgba(255,60,80,.55);
+  --hot:#1b1214; --hot-deep:#000000; --hot-ink:#FFFFFF;
+  --card:#FFFFFF; --card-ink:#1b1214; --card-muted:#6c5f62; --card-line:rgba(27,18,20,.16); --field:#F6F4F3;
+  --good:#15803d; --good-deep:#0d5a2a; --on-good:#FFFFFF; --bad:#b4232f; --bad-deep:#7a141e; --on-bad:#FFFFFF;
+  --wash:rgba(27,18,20,.04); --spot:rgba(200,16,46,.14);
+  --confetti:#c8102e,#FFFFFF,#1b1214,#e2dada,#c8102e;
+  --f-show:"Changa","Lalezar","Readex Pro",system-ui,Tahoma,sans-serif;
+  --night:#F6F4F3; --panel:#FFFFFF;
   --line:rgba(27,18,20,.12); --line-strong:rgba(27,18,20,.3);
-  --glow:rgba(200,16,46,.09);
-  --enamel:#ffffff; --enamel-hi:#ffffff; --enamel-edge:#e2dada; --rivet:#ffffff;
   --cream:#1b1214; --muted:#6c5f62;
-  --brass:#c8102e; --brass-deep:#8a0a1f; --brass-ink:#ffffff;
-  --team-ink:#ffffff; --bad:#b4232f; --on-bad:#ffffff;
+  --brass:#c8102e; --brass-deep:#8a0a1f; --brass-ink:#FFFFFF;
+  --team-ink:#FFFFFF;
   --scrim:rgba(246,244,243,.95); --shadow:rgba(80,10,24,.14); --ring-track:rgba(27,18,20,.12);
-  --f-display:"Changa","Lalezar",system-ui,Tahoma,sans-serif;
-  --f-sign:"Changa","Readex Pro",Tahoma,sans-serif;
   color-scheme:light;
 }
 /* the shirt: white with two red stripes */
-.brand::after{content:"";display:block;width:136px;height:12px;margin-top:10px;background:linear-gradient(180deg,var(--zr) 0 4px,transparent 4px 8px,var(--zr) 8px 12px)}
-.logo{font-weight:800;color:var(--ink);letter-spacing:0}
+.brand::after{content:"";display:block;width:136px;height:12px;margin-top:8px;background:linear-gradient(180deg,var(--zr) 0 4px,transparent 4px 8px,var(--zr) 8px 12px)}
+.logo{font-weight:800;color:var(--zr);text-shadow:0 3px 0 rgba(27,18,20,.14)}
 .tag{font-family:var(--f-body);font-size:1rem;color:var(--muted)}
-.card h2,.primary,.dd,.qv,.score .pts,.rank .p,.rank .pos,.qtimer .n,.load-title{font-weight:700}
-.end-w{font-weight:800}
-.card{box-shadow:0 1px 0 var(--line)}
-.mode.is-on{background:var(--zr);color:#fff;box-shadow:none}
-.resume{background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-.secondary{border-color:var(--zr);color:var(--zr)}
-.catpick .nm{font-weight:600;font-size:1.08rem}
-.catpick[aria-pressed="true"]{background:var(--zr);border-color:var(--zr);box-shadow:none;color:#fff}
-.catpick[aria-pressed="true"] .fresh{color:#fff;opacity:.85}
-.plate{color:var(--ink);box-shadow:inset 0 0 0 1px var(--enamel-edge),0 2px 0 var(--shadow)}
-.cat{
-  background:
-    linear-gradient(180deg,transparent 0 9px,rgba(255,255,255,.92) 9px 13px,transparent 13px 17px,rgba(255,255,255,.92) 17px 21px,transparent 21px),
-    linear-gradient(180deg,#d3142f,var(--zr-deep));
-  color:#fff;box-shadow:0 2px 0 var(--shadow);padding-top:28px;
-}
-.cat-name{font-weight:700}
-button.cell.plate{
-  background:
-    linear-gradient(180deg,transparent 0 8px,var(--zr) 8px 12px,transparent 12px 16px,var(--zr) 16px 20px,transparent 20px),
-    #fff;
-  padding-top:16px;font-weight:700;
-}
-button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0 var(--shadow)}
-.qcard{
-  background:
-    linear-gradient(180deg,transparent 0 24px,var(--zr) 24px 34px,transparent 34px 42px,var(--zr) 42px 52px,transparent 52px),
-    #fff;
-  box-shadow:0 0 0 1px var(--line),0 24px 70px var(--shadow);
-  padding-top:clamp(70px,8vw,92px);
-}
-.qc{font-weight:600}
-.qcard .ghost{color:var(--ink);border-color:var(--line-strong)}
-.qtimer .n small,.qjudge .lbl,.qflag label,.linkish{color:var(--muted)}
-.qanswer .lbl{color:#fff;opacity:.85}
-.qflag textarea{background:#fff}
-.flag-done{background:var(--night);color:var(--ink)}
-.jt{background:#fff}
-.jt-bad{color:var(--ink)}
-.jt-bad:hover{background:var(--night)}
-.team-row input{background:#fff}
-.seg{background:#fff}
-.adj button{background:#fff}
-/* «أشهر إجابة» on the light theme */
-.fstage{background:linear-gradient(180deg,transparent 0 24px,var(--zr) 24px 34px,transparent 34px 42px,var(--zr) 42px 52px,transparent 52px),#fff;box-shadow:0 0 0 1px var(--line),0 18px 50px var(--shadow);padding-top:clamp(70px,8vw,92px)}
-.fbank,.fctl .lbl,.fmsg,.fest{color:var(--muted)}
-.fbank b{color:var(--zr)}
-.ftile{background:var(--night);box-shadow:inset 0 0 0 1px var(--line-strong)}
-.ftile .rk{color:var(--muted);opacity:1}
-.ftile.open{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong)}
-.ftile.late{background:transparent}
-.fform input{border-color:var(--line-strong);background:#fff}
-.fform input:focus{border-color:var(--zr)}
+.card h2{color:var(--zr)}
+.helps-note b{color:var(--zr)}
+.primary{background:var(--zr);color:#fff;box-shadow:inset 0 2px 0 rgba(255,255,255,.22),0 6px 0 var(--zr-deep),0 10px 18px rgba(80,10,24,.18)}
+.primary:active{box-shadow:inset 0 2px 0 rgba(255,255,255,.22),0 2px 0 var(--zr-deep)}
+.mode.is-on{background:var(--zr);color:#fff;box-shadow:0 5px 0 var(--zr-deep)}
+.seg button[aria-pressed="true"]{background:var(--zr);color:#fff;box-shadow:0 3px 0 var(--zr-deep)}
+.switch input{accent-color:var(--zr)}
+.team-row input{background:var(--field)}
+.catpick[aria-pressed="true"]{background:var(--zr);color:#fff;box-shadow:inset 0 2px 0 rgba(255,255,255,.2),0 5px 0 var(--zr-deep)}
+.catpick[aria-pressed="true"] .fresh{color:#fff;opacity:.8}
+.catpick[aria-pressed="true"] .ico{background:rgba(255,255,255,.16)}
+.helps .help,.phelps .help{background:#fff;color:var(--zr);box-shadow:inset 0 0 0 2px var(--zr),0 4px 0 var(--zr-deep)}
+.helps .help.on,.helps .help[aria-pressed="true"],.phelps .help.on,.phelps .help[aria-pressed="true"]{background:var(--zr);color:#fff;box-shadow:0 0 0 3px var(--ink),0 4px 0 var(--zr-deep)}
+button.cell{background:
+  linear-gradient(180deg,transparent 0 9px,var(--zr) 9px 13px,transparent 13px 17px,var(--zr) 17px 21px,transparent 21px),
+  linear-gradient(#fff,#F4EEEE);padding-top:14px}
+.cell.used{background:rgba(27,18,20,.07);box-shadow:inset 0 3px 8px rgba(27,18,20,.12)}
+.score.is-turn{box-shadow:0 0 0 4px var(--ink),0 0 30px rgba(200,16,46,.25),0 6px 0 rgba(0,0,0,.18)}
+.score .hl span,.score .adj button{background:rgba(255,255,255,.2)}
+.score .adj button:hover{background:rgba(255,255,255,.34)}
+.qcard,.fstage{background:linear-gradient(180deg,transparent 0 22px,var(--zr) 22px 30px,transparent 30px 38px,var(--zr) 38px 46px,transparent 46px),#fff;padding-top:clamp(66px,7vw,86px)}
+.qv,.qcard .qv{color:var(--zr)}
+.qtimer .prg{stroke:var(--zr)}
+.qcard .fb[aria-pressed="true"],.qcard .fb-v[aria-pressed="true"]{background:var(--zr);border-color:var(--zr);color:#fff}
+.ftile.open{background:#fff;box-shadow:inset 0 0 0 3px var(--zr),0 4px 0 var(--tile-edge)}
+.ropt.right{box-shadow:0 0 0 5px var(--ink),0 0 24px rgba(200,16,46,.3)}
+.endcard .rank li:first-child{box-shadow:0 0 0 4px var(--ink),0 4px 0 rgba(0,0,0,.18)}
+.end-w span{box-shadow:0 5px 0 rgba(0,0,0,.14)}
+/* phones */
+.pv,.pv.used{background:rgba(27,18,20,.07)}
+button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge),0 4px 0 var(--tile-edge)}
+.buzzbtn{background:radial-gradient(circle at 40% 30%,#ff5a6e 0%,var(--zr) 42%,var(--zr-deep) 100%);color:#fff}
+#v-buzz .qtext,#v-q .qtext{box-shadow:0 0 0 3px var(--zr)}
+.bar i{background:var(--zr)}
+#g-scores li.mine,#w-scores li.mine,#f-rank li.mine{box-shadow:0 0 0 3px var(--ink),0 4px 0 rgba(0,0,0,.18)}
 
 /* the game screen on a phone-sized window: the board fits the width instead of scrolling sideways
    (after the brand theme, so it wins over the theme's larger sizes) */
 @media (max-width:560px){
   .board-wrap{overflow-x:visible;padding-inline:0}
   .board{min-width:0;gap:5px}
-  .cat{min-height:60px;padding-inline:4px}
-  .cat-name{font-size:.9rem;line-height:1.25}
+  .cat{min-height:60px;padding-inline:2px}
+  .cat-name{font-size:.78rem;line-height:1.25}
   .cell{height:56px;font-size:1.3rem}
   .cell .mark{width:24px;height:24px}
-  .score{padding:10px 12px;column-gap:10px}
+  .cat-ico{display:none}
+  .cat{border-width:3px;border-radius:12px;box-shadow:0 0 0 2px var(--sign)}
+  button.cell,.cell.used{border-radius:10px}
 }
 </style>
 
@@ -655,6 +972,7 @@ button.cell.plate:hover{filter:none;box-shadow:inset 0 0 0 2px var(--zr),0 4px 0
       <span class="qv" id="q-val"></span>
       <span class="dd" id="q-dd" hidden>سؤال مضاعف</span>
     </div>
+    <p class="qstamp" id="q-stamp" hidden aria-live="assertive"></p>
     <p class="qhelp" id="q-help" hidden></p>
     <p class="qtext" id="q-text"></p>
     <button class="qtimer" id="q-timer" type="button">
@@ -816,6 +1134,64 @@ function liveRoom(opts){
 
 </script>
 <script>
+/* Category and mode icons, shared by the game screen and the phones. Simple 24-unit line drawings, drawn with
+   currentColor so each brand colours them. A category without its own drawing gets one by a word in its slug,
+   or the star. */
+var ICON_D = {
+  "football": "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18Z M12 8l3.5 2.5-1.3 4h-4.4l-1.3-4Z M12 3v5 M15.5 10.5l5-1.5 M14.2 14.5l3 4 M9.8 14.5l-3 4 M8.5 10.5l-5-1.5",
+  "geography": "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18Z M3 12h18 M12 3c3 3.5 3 14.5 0 18 M12 3c-3 3.5-3 14.5 0 18",
+  "history": "M4 20h16 M5 9h14 M12 4l8 5H4Z M7 9v11 M12 9v11 M17 9v11",
+  "science": "M9 3h6 M10 3v6L5 19a1 1 0 0 0 1 1.5h12a1 1 0 0 0 1-1.5L14 9V3 M7.5 14h9",
+  "iq": "M9 18h6 M10 21h4 M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z",
+  "cars": "M4 16h16v-4l-2.5-5h-11L4 12Z M4 12h16 M7 16v2.5 M17 16v2.5 M8 14h.01 M16 14h.01",
+  "jordan": "M4 20h16 M6 20V10h12v10 M9.5 20v-5a2.5 2.5 0 0 1 5 0v5 M6 10l6-5 6 5",
+  "egypt": "M3 20h18 M5 20l7-14 7 14 M12 6l2 14",
+  "food": "M12 7a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11Z M3 4v6 M5 4v6 M3 7h2 M4 10v10 M21 4c-1.5 0-2.2 2-2.2 5H21v11",
+  "egyptian-films": "M4 9h16v11H4Z M4 9l1.5-5h15L19 9 M9 4l-1.5 5 M14 4l-1.5 5",
+  "formula-1": "M5 21V3 M5 4h14v9H5 M5 8.5h14 M9.7 4v9 M14.3 4v9",
+  "spacetoon": "M4 8h16v11H4Z M9 3l3 4 3-4 M15 12.5l-4.5 2.5v-5Z",
+  "club-history": "M12 3l8 3v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6Z M8 10.5h8 M8 13.5h8",
+  "titles": "M8 4h8v5a4 4 0 0 1-8 0Z M8 6H5a3 3 0 0 0 3 4 M16 6h3a3 3 0 0 1-3 4 M12 13v4 M8 20h8 M9 17h6",
+  "legends": "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z",
+  "coaches": "M3 13a5 5 0 0 0 10 0v-2h8V8H8a5 5 0 0 0-5 5Z M8 13h.01 M13 8V5",
+  "classic-matches": "M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4Z M13.5 7v10",
+  "derby": "M13 2L4 14h7l-1 8 9-12h-7Z",
+  "national-team": "M5 21V4 M5 4c3-1.5 5 1.5 8 0s5-1 6 0v8c-1-1-3-1.5-6 0s-5-1.5-8 0",
+  "foreigners": "M3 13l7-1 4-7.5a1.6 1.6 0 0 1 2.8 1.4L14.5 12l6.5 1-1.5 2-6 .5-2 5.5H9.5l.5-5.5-5.5-.5Z",
+  "other-sports": "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18Z M3 12h18 M12 3v18 M5.6 5.6c3.5 3.5 3.5 9.3 0 12.8 M18.4 5.6c-3.5 3.5-3.5 9.3 0 12.8",
+  "proverbs": "M4 5h16v11h-9l-5 4v-4H4Z M8 9h8 M8 12h5",
+  "ramadan": "M15.5 3.5a8.5 8.5 0 1 0 5 13.5A7 7 0 0 1 15.5 3.5Z M18.5 6.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6Z",
+  "music": "M9 18V5l11-2v13 M9 18a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z M20 16a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z",
+  "language": "M4 20l4.5-12h1L14 20 M5.7 16h6.6 M15 4h6 M18 4v9 M15.5 13h5",
+  "games": "M7 8h10a4 4 0 0 1 4 4v1a4 4 0 0 1-7 2.6l-.8-.9h-2.4l-.8.9A4 4 0 0 1 3 13v-1a4 4 0 0 1 4-4Z M7.5 10.5v3 M6 12h3 M15.5 11h.01 M17.5 13h.01",
+  "star": "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z",
+  "mode-board": "M4 4h7v7H4Z M13 4h7v7h-7Z M4 13h7v7H4Z M13 13h7v7h-7Z",
+  "mode-race": "M12 8a7 7 0 1 0 0 14a7 7 0 1 0 0-14Z M12 12v3.5 M10 2h4 M12 2v3 M18.5 6.5l1.5-1.5",
+  "mode-feud": "M3 20h18 M5 20v-6h4v6 M10 20V8h4v12 M15 20v-9h4v9"
+};
+var ICON_FOR = [
+  [/film|cinema|movie/, "egyptian-films"], [/ramadan/, "ramadan"], [/series|tv|cartoon/, "spacetoon"], [/game/, "games"],
+  [/food|cook|kitchen/, "food"], [/foot|ball|match|league/, "football"], [/history/, "history"], [/geo|map|countr|capital/, "geography"],
+  [/science|chem|physic|bio/, "science"], [/iq|puzzle|riddle|logic/, "iq"], [/f1|formula|race/, "formula-1"], [/car|auto/, "cars"],
+  [/proverb|mathal|saying/, "proverbs"], [/song|music|singer/, "music"], [/arabic|language|lugha|word/, "language"],
+  [/title|cup|trophy/, "titles"], [/legend|star/, "legends"]
+];
+function iconKey(slug){
+  slug = String(slug || "").toLowerCase();
+  if (ICON_D[slug]) return slug;
+  for (var i = 0; i < ICON_FOR.length; i++) if (ICON_FOR[i][0].test(slug)) return ICON_FOR[i][1];
+  return "star";
+}
+function iconEl(slug, cls){
+  var NS = "http://www.w3.org/2000/svg", s = document.createElementNS(NS, "svg"), p = document.createElementNS(NS, "path");
+  s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("class", cls || "ico");
+  s.setAttribute("aria-hidden", "true"); s.setAttribute("focusable", "false");
+  p.setAttribute("d", ICON_D[iconKey(slug)]); s.appendChild(p);
+  return s;
+}
+
+</script>
+<script>
 /* Brand settings and its verified question bank, exported from Supabase. Each question id is its id in the database. */
 const BRAND = {"storageKey": "zamalkawy:v1", "brandId": "5c46f102-194d-45c4-b482-5345b06d35cf", "bankLabel": "zamalek-v3-169", "teamColors": ["#c8102e", "#0e6f8a", "#b45309", "#6d28d9", "#15803d", "#1d4ed8"], "feudLabel": "feud-1"};
 const BANK = [{"slug": "club-history", "name": "تاريخ النادي", "qs": [{"id": "67a9a616-bf40-4e99-a988-3cced9385187", "l": 1, "q": "الزمالك اتأسس سنة كام؟", "a": "1911", "alt": ["سنة 1911"], "opts": ["1907", "1915", "1921"], "note": "النادي اتأسس في القاهرة."}, {"id": "7aa3df13-2c36-4bf1-9c66-92b9df5f9147", "l": 1, "q": "الخطين اللي على صدر قميص الزمالك الأبيض لونهم إيه؟", "a": "أحمر", "alt": ["الأحمر"], "opts": ["أزرق", "أسود", "أخضر"], "note": "الأبيض بيرمز للسلام والخطين الحمر بيرمزوا للسعي للفوز."}, {"id": "f0eb2568-d05f-48d5-8e40-e5cee3d2662d", "l": 2, "q": "الزمالك في الأربعينات اتسمى على اسم أنهي حاكم لمصر؟", "a": "الملك فاروق", "alt": ["فاروق", "فاروق الأول", "نادي فاروق"], "opts": ["الملك فؤاد", "الخديوي إسماعيل", "الخديوي عباس حلمي"], "note": "المصادر مختلفة في سنة التغيير بالظبط، بس كلها بتحطها في الأربعينات."}, {"id": "0ad62612-3f0e-497e-89e5-bdb879600dc4", "l": 2, "q": "الزمالك أخد اسمه الرسمي الحالي سنة كام؟", "a": "1952", "alt": ["سنة 1952"], "opts": ["1941", "1956", "1961"], "note": "الاسم اتغير بعد ثورة 23 يوليو 1952 وخروج الملك فاروق."}, {"id": "743c3dcc-0a4c-4702-a854-fa0e204b33af", "l": 3, "q": "الزمالك بيحتفل بذكرى تأسيسه كل سنة يوم كام؟", "a": "5 يناير", "alt": ["يوم 5 يناير", "5/1"], "opts": ["1 مارس", "15 أكتوبر", "20 ديسمبر"], "note": "ده يوم تأسيس النادي في القاهرة سنة 1911."}, {"id": "a8951a48-d0eb-494b-acce-660d23f26091", "l": 3, "q": "أول اسم اتسمى بيه الزمالك وقت تأسيسه كان إيه؟", "a": "قصر النيل", "alt": ["نادي قصر النيل"], "opts": ["نادي الجزيرة", "نادي الروضة", "نادي المنيل"], "note": "ده كان اسم النادي وقت تأسيسه سنة 1911."}, {"id": "c5ab961a-0fdf-4a32-aaeb-e6f8f69ebc18", "l": 4, "q": "تاني اسم أخده الزمالك في تاريخه كان إيه؟", "a": "المختلط", "alt": ["مختلط", "النادي المختلط", "نادي المختلط", "نادي القاهرة المختلط", "نادي القاهرة الدولي الرياضي"], "opts": ["نادي الوطني", "نادي الهلال", "نادي العاصمة"], "note": null}, {"id": "a49e4db1-cf03-4049-82e2-d14a82c71743", "l": 4, "q": "الزمالك احتفل بعيده الخمسين سنة 1961 بماتش ودي قدام أنهي نادي أوروبي؟", "a": "ريال مدريد", "alt": ["الريال"], "opts": ["برشلونة", "بنفيكا", "ميلان"], "note": "الماتش اتلعب في القاهرة يوم 10 مارس 1961 وريال مدريد كسب 4-1."}, {"id": "7d878894-c6e9-4f63-9b28-4a1bda2533b7", "l": 4, "q": "مين رئيس الزمالك اللي كان في نفس الوقت وزير الحربية قبل ثورة 1952؟", "a": "محمد حيدر باشا", "alt": ["حيدر باشا", "محمد حيدر", "حيدر"], "opts": ["الأمير عباس حليم", "عبد اللطيف أبو رجيلة", "حلمي زامورا"], "note": "حيدر باشا كان برتبة فريق في الجيش المصري."}, {"id": "7864b997-39e2-4569-9ce4-4dba1259f025", "l": 4, "q": "سنة 1997 دوري أبطال أفريقيا اتلعب لأول مرة بدور مجموعات، والزمالك كان من الفرق اللي وصلت له، كام فريق لعبوا في دور المجموعات ده؟", "a": "8 فرق", "alt": ["8", "تمن فرق", "تمانية"], "opts": ["4 فرق", "12 فريق", "16 فريق"], "note": "الزمالك خلّص تاني في مجموعته ورا جولدفيلدز الغاني."}, {"id": "709fbdd3-327d-41f4-a9ee-f2b911c19d2f", "l": 4, "q": "أول مقر لنادي الزمالك وقت تأسيسه كان على ضفة النيل في مواجهة أنهي نادي؟", "a": "نادي الجزيرة", "alt": ["الجزيرة", "نادي الجزيرة الرياضي"], "opts": ["نادي هليوبوليس", "النادي الأوليمبي", "الاتحاد السكندري"], "note": "النادي غيّر مقره بعد كده أكتر من مرة لحد ما استقر في ميت عقبة."}, {"id": "27b25c8e-c75d-4858-aa1f-75dad156cefa", "l": 4, "q": "المقر التالت للزمالك، اللي النادي انتقل له سنة 1924، كان في المكان اللي فيه دلوقتي أنهي مسرح؟", "a": "مسرح البالون", "alt": ["البالون", "مسرح البالون بالعجوزة"], "opts": ["المسرح القومي", "مسرح الجمهورية", "مسرح السلام"], "note": "المقر ده كان على كورنيش النيل في العجوزة."}, {"id": "94a2fd4e-b3f2-475f-b709-400d98be2cc6", "l": 5, "q": "جورج مرزباخ، اللي بيتنسب له تأسيس الزمالك، جنسيته كانت إيه؟", "a": "بلجيكي", "alt": ["البلجيكي", "بلجيكا"], "opts": ["فرنسي", "إنجليزي", "إيطالي"], "note": "مرزباخ كان محامي بلجيكي عايش في مصر."}, {"id": "90ba9c85-b6da-41ea-845f-43d4db306dfd", "l": 5, "q": "الزمالك اتأهل لكأس العالم للأندية 2001 بس البطولة اتلغت، كانت هتتلعب في أنهي بلد؟", "a": "إسبانيا", "alt": ["اسبانيا", "أسبانيا"], "opts": ["البرازيل", "اليابان", "الإمارات"], "note": "الزمالك اتأهل كبطل لكأس الكؤوس الأفريقية 2000، والبطولة اتلغت بسبب مشاكل في التمويل."}, {"id": "c7ed9d1f-0fe9-4b93-86b9-27f123dd9a3a", "l": 5, "q": "سنة 1913 الزمالك نقل مقره لأرض على ناصية شارع 26 يوليو مع شارع تاني، الشارع ده اسمه إيه دلوقتي؟", "a": "شارع رمسيس", "alt": ["رمسيس"], "opts": ["شارع قصر العيني", "شارع الجيش", "شارع صلاح سالم"], "note": null}, {"id": "7258bf79-72a9-407a-9f32-f7a248d55675", "l": 5, "q": "الزمالك احتفظ للأبد بكأس بطولة أفريقيا للأندية أبطال الدوري لما كسبها سنة 1993، الكأس دي كانت على اسم مين؟", "a": "أحمد سيكو توري", "alt": ["كأس أحمد سيكو توري", "سيكو توري", "كأس سيكو توري"], "opts": ["كوامي نكروما", "عبد العزيز عبد الله سالم", "هيلا سيلاسي"], "note": "الكأس اللي قبلها كانت باسم كوامي نكروما، واحتفظ بيها حافيا كوناكري الغيني سنة 1977."}]}, {"slug": "titles", "name": "البطولات", "qs": [{"id": "c71ebe73-74ec-40aa-9e75-4bc3b22d499d", "l": 1, "q": "الزمالك قابل مين في نهائي الكونفدرالية سنة 2019 وفي نهائي 2024؟", "a": "نهضة بركان", "alt": ["بركان", "نهضة بركان المغربي", "آر إس بركان"], "opts": ["الوداد البيضاوي", "اتحاد العاصمة", "الصفاقسي"], "note": "في 2024 الزمالك كسب بقاعدة الهدف خارج الأرض بعد التعادل 2-2 في مجموع المباراتين."}, {"id": "3ef6369e-c12a-42e9-b245-6b2f328ee399", "l": 1, "q": "الزمالك كسب دوري موسم 2020-2021، آخر دوري كان كسبه قبله كان في موسم كام؟", "a": "موسم 2014-2015", "alt": ["2014-2015", "2015", "دوري 2015"], "opts": ["موسم 2015-2016", "موسم 2017-2018", "موسم 2018-2019"], "note": "الزمالك حسم لقب 2020-2021 بالفوز 2-0 في الجولة قبل الأخيرة."}, {"id": "7895f509-841d-43fc-bdc9-c0e4759ee84c", "l": 1, "q": "الزمالك كسب كأس مصر موسم 2018-2019 في النهائي على حساب مين؟", "a": "بيراميدز", "alt": ["بيراميدز إف سي", "نادي بيراميدز"], "opts": ["المصري", "إنبي", "طلائع الجيش"], "note": "النهائي اتلعب يوم 8 سبتمبر 2019 وخلص 3-0 للزمالك."}, {"id": "a0d38662-bec6-4ae5-a389-84b80af58ab4", "l": 2, "q": "الزمالك كسب بطولة أفريقيا للأندية أبطال الدوري لأول مرة سنة كام؟", "a": "1984", "alt": ["سنة 1984"], "opts": ["1980", "1982", "1988"], "note": "كسب النهائي على شوتينج ستارز النيجيري 3-0 في مجموع المباراتين."}, {"id": "7809054f-8564-4c99-b42f-b20a7ec4d17c", "l": 2, "q": "في أول الألفينات الزمالك كسب الدوري موسمين ورا بعض، تاني موسم فيهم كان موسم كام؟", "a": "موسم 2003-2004", "alt": ["2003-2004", "2004", "دوري 2004"], "opts": ["موسم 2001-2002", "موسم 2004-2005", "موسم 2005-2006"], "note": "الموسمين هما 2002-2003 و2003-2004."}, {"id": "6236ae21-7b4f-4b02-92e1-ef2404be57ed", "l": 3, "q": "مين سجل هدفين للزمالك في السوبر الأفريقي قدام الترجي في الدوحة سنة 2020؟", "a": "أشرف بن شرقي", "alt": ["بن شرقي", "أشرف بنشرقي"], "opts": ["مصطفى محمد", "فرجاني ساسي", "شيكابالا"], "note": "الزمالك كسب 3-1 على استاد ثاني بن جاسم في قطر."}, {"id": "e18e9d78-f1ca-48cc-ad69-696650b5803b", "l": 3, "q": "إياب نهائي الكونفدرالية 2019 اللي الزمالك كسب فيه اللقب اتلعب في أنهي استاد؟", "a": "استاد برج العرب", "alt": ["برج العرب"], "opts": ["استاد القاهرة الدولي", "استاد السلام", "استاد بتروسبورت"], "note": "الزمالك كسب بضربات الترجيح 5-3 بعد التعادل 1-1 في مجموع المباراتين."}, {"id": "69219949-be4d-47fe-a832-39f89286cf43", "l": 3, "q": "الزمالك كسب أول نسخة من السوبر المصري سنة 2001 على حساب مين؟", "a": "غزل المحلة", "alt": ["غزل المحلة", "الغزل", "المحلة", "غزل المحلة الكبرى"], "opts": ["الإسماعيلي", "المصري", "الاتحاد السكندري"], "note": "الماتش اتلعب يوم 14 سبتمبر 2001 وخلص 2-1 للزمالك بعد وقت إضافي."}, {"id": "d2b5ea60-75ac-434b-a20a-780608164f44", "l": 3, "q": "الزمالك كسب السوبر الأفريقي اللي اتلعب سنة 2003 على حساب أنهي نادي مغربي؟", "a": "الوداد البيضاوي", "alt": ["الوداد", "الوداد الرياضي", "وداد الدار البيضاء", "الوداد المغربي"], "opts": ["الرجاء البيضاوي", "الجيش الملكي", "الكوكب المراكشي"], "note": "الماتش اتلعب في استاد القاهرة وخلص 3-1 للزمالك."}, {"id": "2b249661-2787-4274-8ee6-95f5950b83a0", "l": 4, "q": "الزمالك كسب كأس الكؤوس الأفريقية سنة 2000 في النهائي على حساب مين؟", "a": "كانون ياوندي", "alt": ["كانون", "كانون ياوندي الكاميروني"], "opts": ["تونير ياوندي", "هارتس أوف أوك", "الأفريقي التونسي"], "note": "الزمالك كسب الذهاب في القاهرة 4-1 وخسر الإياب في ياوندي 2-0، وكسب اللقب 4-3 في المجموع."}, {"id": "95f8c291-cfb8-4ca5-a14e-ac71bddff3ba", "l": 4, "q": "الزمالك كسب الدوري الممتاز لأول مرة في موسم كام؟", "a": "موسم 1959-1960", "alt": ["1959-1960", "1959-60", "موسم 59-60"], "opts": ["موسم 1948-1949", "موسم 1956-1957", "موسم 1961-1962"], "note": "اللقب التاني للزمالك في الدوري الممتاز جه موسم 1963-1964."}, {"id": "e09d8ce1-8136-46c6-8b49-c940fb8f93c5", "l": 4, "q": "الزمالك كسب كأس مصر موسم 1976-1977 في النهائي قدام مين؟", "a": "الإسماعيلي", "alt": ["الإسماعيلي", "الاسماعيلي", "الدراويش"], "opts": ["المصري", "الترسانة", "الأوليمبي"], "note": "النهائي خلص 3-1 للزمالك."}, {"id": "00288e22-50c1-42d3-8249-37e11ec6167d", "l": 4, "q": "الزمالك كسب نهائي بطولة أفريقيا للأندية أبطال الدوري سنة 1986 بضربات الترجيح، الترجيح خلص كام؟", "a": "4-2", "alt": ["4-2", "4/2", "4 مقابل 2"], "opts": ["4-3", "5-3", "3-1"], "note": "الزمالك كسب الذهاب في القاهرة 2-0 وخسر الإياب في أبيدجان بنفس النتيجة."}, {"id": "44e60f92-4b87-4052-85c8-d1361f2aaa01", "l": 4, "q": "الزمالك كسب السوبر الأفريقي اللي اتلعب سنة 1997 على حساب أنهي فريق مصري؟", "a": "المقاولون العرب", "alt": ["المقاولون", "نادي المقاولون العرب", "ذئاب الجبل"], "opts": ["الإسماعيلي", "المصري البورسعيدي", "غزل المحلة"], "note": "الماتش اتلعب في استاد القاهرة وخلص 0-0 بعد الوقت الإضافي، والزمالك كسب بضربات الترجيح 4-2."}, {"id": "db21d239-0675-43df-a738-05fda4e57500", "l": 5, "q": "الزمالك كسب الكأس الأفروآسيوية سنة 1997 في النهائي على حساب مين؟", "a": "بوهانج ستيلرز", "alt": ["بوهانج", "بوهانغ ستيلرز", "بوهانج الكوري"], "opts": ["أولسان هيونداي", "سوون سامسونج", "الهلال السعودي"], "note": "الزمالك خسر في كوريا 2-1 وكسب في القاهرة 1-0، وخد اللقب بقاعدة الهدف خارج الأرض."}, {"id": "7b32d6dc-86cd-4e43-9926-a7aed81efa56", "l": 5, "q": "الزمالك، باسمه القديم وقتها، كسب أول نهائي في تاريخ كأس مصر سنة 1922 على حساب مين؟", "a": "الاتحاد السكندري", "alt": ["الاتحاد", "اتحاد إسكندرية", "اتحاد الإسكندرية"], "opts": ["الترسانة", "السكة الحديد", "الأوليمبي"], "note": "النهائي خلص 5-0 يوم 21 أبريل 1922."}, {"id": "8227edd0-2511-4c0b-9fb7-dd73822f7d4d", "l": 5, "q": "الزمالك كسب تاني لقب في تاريخه بكأس مصر في موسم كام؟", "a": "1931-1932", "alt": ["موسم 1931-1932", "1931-32", "1932"], "opts": ["1934-1935", "1927-1928", "1937-1938"], "note": "النهائي كان قدام الأهلي وخلص 2-1 للزمالك."}, {"id": "3df08391-9d16-45ab-8e5c-b9aa7340e82b", "l": 5, "q": "الزمالك كسب كأس مصر موسم 2001-2002 في النهائي على حساب أنهي فريق؟", "a": "بلدية المحلة", "alt": ["بلدية المحلة", "البلدية", "بلدية المحلة الكبرى"], "opts": ["الإسماعيلي", "المقاولون العرب", "الاتحاد السكندري"], "note": "النهائي خلص 1-0 للزمالك."}, {"id": "faff529a-19b3-465e-ad1f-81d2d3a45b84", "l": 5, "q": "نهائي بطولة أفريقيا للأندية أبطال الدوري سنة 1996 قدام شوتينج ستارز، الزمالك حسمه بضربات الترجيح بنتيجة كام؟", "a": "5-4", "alt": ["5-4", "5/4", "5 مقابل 4"], "opts": ["4-3", "6-5", "3-2"], "note": "كل فريق كسب ماتشه على أرضه، فاللقب اتحسم بضربات الترجيح في القاهرة."}, {"id": "ec9b3a04-dbf1-4fd9-9f8c-06c75751bec6", "l": 5, "q": "الزمالك كسب نسخة 1987 من كأس الأفروآسيوية، اللي اتلعبت مباراتها سنة 1988، على حساب أنهي نادي ياباني؟", "a": "فوروكاوا إلكتريك", "alt": ["فوروكاوا", "فوروكاوا الياباني", "جيف يونايتد", "جيف يونايتد تشيبا"], "opts": ["نيسان موتورز", "ميتسوبيشي موتورز", "ياماها موتورز"], "note": "الماتش اتلعب في استاد القاهرة يوم 5 فبراير 1988 وخلص 2-0 للزمالك."}]}, {"slug": "legends", "name": "أساطير الزمالك", "qs": [{"id": "3e3d9a42-885c-46a6-983b-339dddebdcc9", "l": 1, "q": "حسن شحاتة وهو لاعب في الزمالك كان الجمهور بيلقبه بإيه؟", "a": "المعلم", "alt": ["معلم"], "opts": ["الصخرة السوداء", "البلدوزر", "الأباتشي"], "note": "جماهير الزمالك هي اللي أطلقت عليه لقب المعلم وهو لاعب."}, {"id": "ebf2ff98-ba8c-45f9-b80c-86dbe8a763a1", "l": 1, "q": "عبد الحليم علي هداف الزمالك كان الجمهور بيلقبه بإيه؟", "a": "العندليب", "alt": ["العندليب الأسمر", "عندليب الزملكاوية"], "opts": ["ملك النص", "البلدوزر", "الأباتشي"], "note": "انضم للزمالك سنة 1999 من الشرقية للدخان واعتزل سنة 2009."}, {"id": "a7936326-88ef-4fd0-acfc-49dc5fbff476", "l": 1, "q": "شيكابالا اتولد في أنهي محافظة مصرية؟", "a": "أسوان", "alt": ["اسوان", "محافظة أسوان"], "opts": ["الأقصر", "قنا", "سوهاج"], "note": "اتولد يوم 5 مارس 1986 في قرية الحصايا بمحافظة أسوان."}, {"id": "35dcf21d-d93c-4fb0-9ae2-427e8c236c88", "l": 1, "q": "التوأم حسام وإبراهيم حسن انضموا للزمالك صيف 2000، جايين من أنهي نادي مصري؟", "a": "الأهلي", "alt": ["الاهلي", "النادي الأهلي"], "opts": ["الإسماعيلي", "المقاولون العرب", "غزل المحلة"], "note": "انضموا في صفقة انتقال حر ولعبوا للزمالك من 2000 لحد 2004."}, {"id": "44dc3fc0-448e-49a7-9742-de5be0b50086", "l": 1, "q": "مصطفى محمد اتعار من الزمالك في شتاء 2021 لأنهي نادي تركي؟", "a": "جالاتا سراي", "alt": ["جالاتاسراي", "جلطة سراي", "جالطة سراي", "غلطة سراي"], "opts": ["فنربخشة", "بشكتاش", "طرابزون سبور"], "note": "الإعارة كانت لمدة سنة ونص، والنادي التركي حوّلها لانتقال نهائي في ديسمبر 2021."}, {"id": "9283a4ec-f42d-4547-be53-d2f3ea4c4a77", "l": 2, "q": "مين أسطورة الزمالك اللي كان بيتلقب بـ«ملك النص»؟", "a": "فاروق جعفر", "alt": ["فاروق"], "opts": ["علي خليل", "جمال عبد الحميد", "حمادة إمام"], "note": "فاروق جعفر لعب للزمالك في السبعينات والتمانينات."}, {"id": "257fe67c-b8e8-46dc-85b9-8702a2993f25", "l": 2, "q": "شيكابالا ساب الزمالك في يناير 2014 واحترف في البرتغال، في أنهي نادي؟", "a": "سبورتنج لشبونة", "alt": ["سبورتنج", "سبورتينج", "سبورتينج لشبونة"], "opts": ["بنفيكا", "بورتو", "براجا"], "note": "قبلها كان احترف في باوك اليوناني سنة 2005."}, {"id": "2a1cc8b3-baf4-4729-8bd0-dca7a6855b3a", "l": 2, "q": "بعد رجوع شيكابالا من البرتغال سنة 2015، الزمالك أعاره لأنهي نادي مصري؟", "a": "الإسماعيلي", "alt": ["الاسماعيلي", "النادي الإسماعيلي", "الدراويش"], "opts": ["المصري", "سموحة", "بتروجت"], "note": "الإعارة كانت لموسم 2015-2016."}, {"id": "3149b4c2-a5a3-46ad-81a5-862d54029b18", "l": 2, "q": "باسم مرسي انضم للزمالك في صيف 2014 جاي من أنهي نادي؟", "a": "الإنتاج الحربي", "alt": ["الانتاج الحربي", "نادي الإنتاج الحربي"], "opts": ["حرس الحدود", "الجونة", "اتحاد الشرطة"], "note": "وقّع عقوده مع الزمالك في يوليو 2014."}, {"id": "917b0e89-1474-4d51-a483-b873c3292101", "l": 2, "q": "محمد عبد الشافي خرج من الزمالك في 2014 معارًا لأنهي نادي سعودي؟", "a": "أهلي جدة", "alt": ["الأهلي السعودي", "الأهلي جدة", "اهلي جدة"], "opts": ["الهلال", "النصر", "الاتحاد"], "note": "الإعارة كانت لموسم واحد، موسم 2014-2015."}, {"id": "0ce635ea-f065-400d-b8d0-ddaca438eb33", "l": 3, "q": "حمادة إمام نجم الزمالك في الستينات كان لقبه إيه؟", "a": "الثعلب", "alt": ["الثعلب الأبيض", "ثعلب الكرة", "الثعلب الكبير"], "opts": ["الصخرة السوداء", "المعلم", "الأباتشي"], "note": "اتولد سنة 1943 في المنيرة بالقاهرة."}, {"id": "9e4e9187-a3f0-4dd7-b053-7d003475a593", "l": 3, "q": "عمرو زكي اتعار من الزمالك لأنهي نادي إنجليزي في موسم 2008-2009؟", "a": "ويجان", "alt": ["ويجان أتلتيك", "ويغان"], "opts": ["بولتون", "ميدلزبره", "بورتسموث"], "note": "بعدها اتعار كمان لهال سيتي في 2010."}, {"id": "e45dce75-e7cd-41a8-bfb1-599f412a5499", "l": 3, "q": "شيكابالا اتعار موسم 2012-2013 لأنهي نادي إماراتي؟", "a": "الوصل", "alt": ["الوصل الإماراتي", "نادي الوصل"], "opts": ["العين", "الجزيرة", "الشارقة"], "note": "الإعارة كانت لموسم واحد بمقابل 1.25 مليون دولار."}, {"id": "fd6ecd5a-fcc6-4d94-8d76-3d584304af7c", "l": 3, "q": "شيكابالا اتعار موسم 2017-2018 لأنهي نادي سعودي؟", "a": "الرائد", "alt": ["الرائد السعودي", "نادي الرائد"], "opts": ["الشباب", "التعاون", "الفيصلي"], "note": "الإعارة كانت لمدة موسم واحد."}, {"id": "4285aab8-f968-49b7-8b9a-7049b8c82727", "l": 3, "q": "أحمد حسام ميدو بدأ احترافه الأوروبي وهو عنده 17 سنة في أنهي نادي بلجيكي؟", "a": "جينت", "alt": ["جنت", "خنت", "جينت البلجيكي"], "opts": ["أندرلخت", "كلوب بروج", "ستاندار لييج"], "note": "ميدو اتولد سنة 1983 وراح جينت سنة 2000 ولعب هناك موسم واحد."}, {"id": "83ac41fc-3f93-42bc-983a-2afde54a0698", "l": 3, "q": "ميدو انتقل سنة 2001 من بلجيكا لأنهي نادي هولندي؟", "a": "أياكس أمستردام", "alt": ["أياكس", "اياكس", "أياكس الهولندي"], "opts": ["فينورد", "بي إس في أيندهوفن", "أيه زد ألكمار"], "note": "مضى عقد 5 سنين وجاب 21 هدف في 40 ماتش دوري هناك."}, {"id": "cd37741f-9acd-4d22-9a69-608de24fc28d", "l": 4, "q": "حسن شحاتة ساب الزمالك آخر الستينات وراح الكويت، اتعاقد مع أنهي نادي هناك؟", "a": "كاظمة", "alt": ["كاظمة الكويتي", "نادي كاظمة"], "opts": ["القادسية", "السالمية", "الجهراء"], "note": "أول ظهور له مع الفريق الأول للزمالك كان سنة 1966."}, {"id": "f41c7dc9-b2cd-4a59-a14d-b0720d96343a", "l": 4, "q": "يحيى إمام جد حازم إمام كان بيلعب للزمالك في الأربعينات في مركز إيه؟", "a": "حارس مرمى", "alt": ["حارس", "حارس المرمى", "جون"], "opts": ["قلب دفاع", "رأس حربة", "جناح أيمن"], "note": "مثّل مصر في أولمبياد لندن 1948، وهو والد حمادة إمام."}, {"id": "2f232b5c-f381-4ae1-8e9b-914294536aed", "l": 4, "q": "مين من أساطير الزمالك جه في المركز التاني في استفتاء فرانس فوتبول لأحسن لاعب في أفريقيا سنة 1984؟", "a": "إبراهيم يوسف", "alt": ["ابراهيم يوسف"], "opts": ["فاروق جعفر", "جمال عبد الحميد", "أشرف قاسم"], "note": "الجايزة كسبها الكاميروني تيوفيل أبيجا، وإبراهيم يوسف شارك المركز التاني بنفس النقط مع الكاميروني جوزيف أنطوان بيل حارس المقاولون العرب وقتها."}, {"id": "d5210c6b-54cd-4953-9340-51e22c65c175", "l": 4, "q": "مين جاب هدف الزمالك في ماتش الإياب في استاد القاهرة في نهائي الكأس الأفروآسيوية سنة 1997؟", "a": "محمد صبري", "alt": ["صبري"], "opts": ["أسامة نبيه", "أيمن عبد العزيز", "مدحت عبد الهادي"], "note": "الزمالك خسر الذهاب برا 2-1 وكسب الإياب 1-0 يوم 5 ديسمبر 1997، وخد اللقب بقاعدة الهدف برا."}, {"id": "90c3f337-35b4-425d-be3d-91c65a15a6f3", "l": 5, "q": "محمد لطيف «شيخ المعلقين» لعب للزمالك، واحترف في منتصف التلاتينات في أنهي نادي اسكتلندي؟", "a": "رينجرز", "alt": ["جلاسجو رينجرز", "غلاسكو رينجرز"], "opts": ["سيلتك", "هارتس", "أبردين"], "note": "رجع للزمالك سنة 1936 وكمل معاه لحد 1945."}, {"id": "7d499407-3e08-4c8f-a27f-b38afa450fa3", "l": 5, "q": "حازم إمام وهو لاعب في أودينيزي اتعار لأنهي نادي هولندي؟", "a": "دي جرافشاب", "alt": ["دي خرافشاب", "خرافشاب", "جرافشاب", "دي غرافشاب"], "opts": ["فيتيسه", "هيرينفين", "تفينتي"], "note": "انتقل لأودينيزي صيف 1996 واتعار لدي جرافشاب سنة 1998."}, {"id": "82ec8d33-dece-4d83-8806-f64cbec31793", "l": 5, "q": "حازم إمام نجم الزمالك وأودينيزي لعب مع منتخب مصر في كام نسخة من نهائيات كأس الأمم الأفريقية؟", "a": "5 نسخ", "alt": ["5", "خمس نسخ", "خمسة"], "opts": ["3 نسخ", "4 نسخ", "6 نسخ"], "note": "النسخ هي 1996 و1998 و2000 و2002 و2004، وكسب منها لقب 1998."}]}, {"slug": "coaches", "name": "المدربون", "qs": [{"id": "7148ed9d-f87c-41c8-82d2-b9e56f30a8a2", "l": 1, "q": "مين المدرب اللي كسب مع الزمالك الكونفدرالية الأفريقية نسخة 2023-2024؟", "a": "جوزيه جوميز", "alt": ["جوميز", "خوسيه جوميز", "جوزيه غوميز", "José Gomes"], "opts": ["كريستيان جروس", "باتريس كارتيرون", "جيسوالدو فيريرا"], "note": "الزمالك حسمها في ماتش العودة في القاهرة يوم 19 مايو 2024."}, {"id": "fd58037d-6c86-44ec-a0bd-53087b3ecae2", "l": 1, "q": "مين المدرب اللي كسب مع الزمالك أول كونفدرالية في تاريخه، نسخة 2018-2019؟", "a": "كريستيان جروس", "alt": ["جروس", "كريستيان غروس", "Christian Gross"], "opts": ["ميتشو", "باتريس كارتيرون", "جيسوالدو فيريرا"], "note": "الزمالك كسب اللقب بضربات الترجيح بعد التعادل 1-1 في مجموع المباراتين."}, {"id": "77812d8b-1f52-45aa-83a2-bfe86c92a54c", "l": 2, "q": "مين مدرب الزمالك اللي كسب السوبر الأفريقي قدام الترجي 3-1 في قطر سنة 2020؟", "a": "باتريس كارتيرون", "alt": ["كارتيرون", "باتريس كارترون", "Patrice Carteron"], "opts": ["جوزيه جوميز", "ميتشو", "جايمي باتشيكو"], "note": "الماتش اتلعب يوم 14 فبراير 2020."}, {"id": "1e967d30-529e-45a4-87b6-d50f536c5e51", "l": 2, "q": "مين المدرب اللي رجع يدرّب الزمالك سنة 2022 وكسب معاه دوري موسم 2021-2022؟", "a": "جيسوالدو فيريرا", "alt": ["جيسوالدو فيريرا", "جيزوالدو فيريرا", "جيسوالدو", "فيريرا", "Jesualdo Ferreira"], "opts": ["كريستيان جروس", "خوان كارلوس أوسوريو", "أوجوستو إيناسيو"], "note": "ده كان تاني دوري للزمالك ورا بعض."}, {"id": "382c5dfc-4ed6-444f-a55a-badb8e85affe", "l": 2, "q": "مين مدرب الزمالك اللي كسب نهائي كأس مصر قدام سموحة في يوليو 2014؟", "a": "أحمد حسام ميدو", "alt": ["ميدو", "أحمد حسام", "احمد حسام ميدو", "حسام ميدو"], "opts": ["حسام حسن", "جايمي باتشيكو", "جورفان فييرا"], "note": "النهائي اتلعب يوم 19 يوليو 2014 وخلص 1-0 للزمالك."}, {"id": "13109c13-8c18-4eea-9176-fa42345b30e2", "l": 3, "q": "مين المدرب اللي كسب مع الزمالك أول بطولة أفريقيا للأندية أبطال الدوري سنة 1984؟", "a": "محمود أبو رجيلة", "alt": ["أبو رجيلة", "محمود ابو رجيله", "أبو رجيله"], "opts": ["محمود الجوهري", "ديف ماكاي", "فيرنر أولك"], "note": "أبو رجيلة كسب مع الزمالك كمان الدوري موسم 1983-1984."}, {"id": "d2dccd80-d300-49b5-bd3d-fabf5d657f6d", "l": 3, "q": "مين المدرب اللي كسب مع الزمالك بطولة أفريقيا للأندية أبطال الدوري سنة 1993؟", "a": "محمود الجوهري", "alt": ["الجوهري", "محمود الجوهرى"], "opts": ["محمود أبو رجيلة", "فيرنر أولك", "ريتشي باركر"], "note": "الجوهري كسب مع الزمالك كمان السوبر الأفريقي 1994."}, {"id": "94b79fd3-b26c-4fe1-9b62-e624caf40dae", "l": 3, "q": "مين المدرب اللي كان ماسك الزمالك في نهائي كأس مصر قدام سموحة في مايو 2018؟", "a": "خالد جلال", "alt": ["خالد جلال", "Khaled Galal"], "opts": ["حسام حسن", "أحمد حسام ميدو", "محمد حلمي"], "note": "النهائي اتلعب يوم 15 مايو 2018 في برج العرب وخلص 1-1، والزمالك كسب بضربات الترجيح 5-4."}, {"id": "fbe39965-1bc7-4545-ba52-4b1da3297c13", "l": 3, "q": "مين المدرب اللي كان ماسك الزمالك في نهائي كأس مصر قدام بيراميدز في يونيو 2025؟", "a": "أيمن الرمادي", "alt": ["أيمن الرمادي", "أيمن الرمادى", "الرمادي", "Ayman El-Ramadi"], "opts": ["حسام حسن", "أسامة نبيه", "يانيك فيريرا"], "note": "اتعيّن مدير فني مؤقت في مايو 2025، والنهائي اتلعب يوم 5 يونيو 2025 في استاد القاهرة وخلص 1-1 والزمالك كسب بضربات الترجيح."}, {"id": "c9b2fdf4-c44c-4149-83d3-d730aea3c2ae", "l": 3, "q": "مين المدرب البرتغالي اللي رجع لتدريب الزمالك في سبتمبر 2020؟", "a": "جايمي باتشيكو", "alt": ["جايمي باتشيكو", "خايمي باتشيكو", "باتشيكو", "Jaime Pacheco"], "opts": ["نيلو فينجادا", "أوجوستو إيناسيو", "مانويل كاجودا"], "note": "كان درّب الزمالك قبل كده فترة قصيرة في آخر 2014."}, {"id": "695d213c-b715-4e40-a974-e1392a0f5dd8", "l": 3, "q": "مين المدرب البرتغالي اللي كان ماسك الزمالك لحد ما النادي عيّن مدرب مصري مؤقت في مايو 2025؟", "a": "جوزيه بيسيرو", "alt": ["جوزيه بيسيرو", "خوسيه بيسيرو", "بيسيرو", "José Peseiro"], "opts": ["جيسوالدو فيريرا", "جايمي باتشيكو", "نيلو فينجادا"], "note": "استلم الفريق في فبراير 2025 وفضل حوالي 82 يوم."}, {"id": "40e251bd-c126-4776-9d66-9aaae4148f55", "l": 3, "q": "مين المدرب اللي كسب مع الزمالك نهائي كأس مصر قدام وادي دجلة في نوفمبر 2013؟", "a": "حلمي طولان", "alt": ["طولان"], "opts": ["حسن شحاتة", "جورفان فييرا", "جايمي باتشيكو"], "note": "النهائي اتلعب في استاد الجونة يوم 9 نوفمبر 2013 وخلص 3-0 للزمالك."}, {"id": "385bee00-fed9-4cad-b97b-b52cd7193042", "l": 4, "q": "مين المدرب اللي كسب مع الزمالك كأس الكؤوس الأفريقية سنة 2000؟", "a": "أوتو فيستر", "alt": ["فيستر", "أوتو بفيستر", "Otto Pfister"], "opts": ["فيرنر أولك", "رود كرول", "كابرال"], "note": "فيستر مدرب ألماني وكسب مع الزمالك كمان الدوري موسم 2000-2001."}, {"id": "ae372fe8-f126-4a44-bfab-7e7670bf8509", "l": 4, "q": "مين المدرب اللي كان ماسك الزمالك لما كسب نهائي كأس مصر قدام إنبي في مايو 2008؟", "a": "رود كرول", "alt": ["رود كرول", "روود كرول", "كرول", "Ruud Krol"], "opts": ["راينر هولمان", "مانويل كاجودا", "ميشيل ديكاستيل"], "note": "النهائي اتلعب يوم 25 مايو 2008 والزمالك كسب 2-1."}, {"id": "39f3114b-af79-4b2e-8d30-427e7c3afaa8", "l": 4, "q": "مين المدرب المصري اللي قاد الزمالك في نهائي دوري أبطال أفريقيا 2016 قدام صن داونز؟", "a": "مؤمن سليمان", "alt": ["مؤمن سليمان", "Moamen Soliman"], "opts": ["حسام حسن", "حلمي طولان", "فاروق جعفر"], "note": "ماتش الإياب اتلعب في برج العرب يوم 23 أكتوبر 2016."}, {"id": "c1ab48d3-4fdc-46a1-8208-52e0f2769b38", "l": 5, "q": "مين المدرب اللي كسب الدوري مع الزمالك موسم 1977-1978؟", "a": "زكي عثمان", "alt": ["زكى عثمان"], "opts": ["جوزيف فاندلر", "ديف ماكاي", "محمود الجوهري"], "note": null}, {"id": "8412083a-1883-4a9f-a7ba-2ee77587c99e", "l": 5, "q": "الزمالك كسب بطولة أفريقيا للأندية أبطال الدوري سنة 1986 بضربات الترجيح، مين كان المدرب؟", "a": "ريتشي باركر", "alt": ["باركر", "ريتشارد باركر", "Richie Barker"], "opts": ["محمود أبو رجيلة", "ديف ماكاي", "محمود الجوهري"], "note": "باركر مدرب إنجليزي، والزمالك كسب النهائي قدام أفريكا سبور الإيفواري."}]}, {"slug": "classic-matches", "name": "مباريات لا تُنسى", "qs": [{"id": "0712ff5f-acfa-4df8-b151-a955a894fa50", "l": 1, "q": "مين سجل هدف الزمالك في ماتش إياب نهائي الكونفدرالية اللي اتلعب في استاد القاهرة في مايو 2024؟", "a": "أحمد حمدي", "alt": ["حمدي"], "opts": ["أحمد سيد زيزو", "مصطفى شلبي", "عبد الله السعيد"], "note": "الماتش اتلعب يوم 19 مايو 2024 وخلص 1-0، والزمالك خد اللقب بقاعدة الهدف برا بعد تعادل مجموع الماتشين 2-2."}, {"id": "ba08c6fe-c716-41e6-b300-72ee6fba3ec6", "l": 1, "q": "مين سجل هدف الزمالك في ماتش إياب نهائي الكونفدرالية سنة 2019؟", "a": "محمود علاء", "alt": [], "opts": ["طارق حامد", "فرجاني ساسي", "شيكابالا"], "note": "الهدف جه من ضربة جزاء اتحسبت بعد الرجوع للفار في الدقيقة 55 تقريبًا."}, {"id": "cbef01e4-c4c1-436b-98c7-8176847919af", "l": 1, "q": "مين سجل هدف الزمالك في ماتش ذهاب نهائي الكونفدرالية نسخة 2023-2024؟", "a": "سيف الدين الجزيري", "alt": ["الجزيري", "سيف الجزيري"], "opts": ["مصطفى شلبي", "عبد الله السعيد", "سامسون أكينيولا"], "note": "الهدف جه في بداية الشوط التاني، والماتش خلص 2-1 لأصحاب الأرض."}, {"id": "65db6652-485b-4747-8971-93dfae71dbef", "l": 2, "q": "الزمالك كسب نهائي دوري أبطال أفريقيا سنة 2002 قدام أنهي فريق؟", "a": "الرجاء البيضاوي", "alt": ["الرجاء", "رجاء الدار البيضاء", "الرجاء المغربي"], "opts": ["الوداد البيضاوي", "الترجي التونسي", "النجم الساحلي"], "note": "الذهاب في الدار البيضاء خلص 0-0، والزمالك كسب الإياب في القاهرة 1-0 يوم 13 ديسمبر 2002."}, {"id": "9ee031df-7461-492f-b45f-b53c6da9201e", "l": 2, "q": "الزمالك كسب دريمز الغاني بكام في ماتش الإياب في كوماسي، في نص نهائي الكونفدرالية نسخة 2023-2024؟", "a": "3-0", "alt": ["3-0", "0-3", "تلاتة صفر"], "opts": ["2-0", "2-1", "3-1"], "note": "ماتش الذهاب في القاهرة خلص 0-0، والإياب اتلعب على استاد بابا يارا في كوماسي يوم 28 أبريل 2024."}, {"id": "3e20cf06-9773-402c-9b2c-09c5c26cd739", "l": 2, "q": "في نهائي كأس مصر موسم 2024-2025 قدام بيراميدز، مين سجل ركلة الترجيح اللي حسمت اللقب للزمالك؟", "a": "شيكابالا", "alt": ["محمود عبد الرازق", "محمود عبد الرازق شيكابالا", "شيكا"], "opts": ["عبد الله السعيد", "عمر جابر", "أحمد سيد زيزو"], "note": "الماتش خلص 1-1 بعد الوقت الإضافي، والزمالك كسب بضربات الترجيح على استاد القاهرة."}, {"id": "aa4d5dc2-c089-4e55-a186-1169e1115f73", "l": 3, "q": "مين سجل هدف الزمالك الوحيد في نهائي دوري أبطال أفريقيا سنة 2002؟", "a": "تامر عبد الحميد", "alt": ["تامر عبدالحميد"], "opts": ["حسام حسن", "حازم إمام", "عبد الحليم علي"], "note": "الهدف جه في الوقت بدل الضايع للشوط الأول في ماتش الإياب في القاهرة، وكان الهدف الوحيد في الماتشين."}, {"id": "6463ba25-fafb-4b2c-bf29-1c452fba321e", "l": 3, "q": "مين فتح التسجيل في فوز الزمالك 4-0 على الوداد في ذهاب نص نهائي دوري أبطال أفريقيا سنة 2016؟", "a": "شيكابالا", "alt": ["محمود عبد الرازق", "شيكا"], "opts": ["محمود كهربا", "محمد إبراهيم", "معروف يوسف"], "note": "الماتش اتلعب في برج العرب، والأهداف التانية جابها أيمن حفني وباسم مرسي ومصطفى فتحي."}, {"id": "546869b2-c1f1-42f1-bdfb-ab626d7f60f6", "l": 3, "q": "في نهائي كأس مصر موسم 2017-2018، مين جاب هدف التعادل المتأخر للزمالك قدام سموحة؟", "a": "كابونجو كاسونجو", "alt": ["كاسونجو", "كابونجو", "كاسونغو"], "opts": ["باسم مرسي", "محمد عنتر", "أيمن حفني"], "note": "سموحة اتقدم في أول 5 دقايق والتعادل جه قبل النهاية بدقايق، والزمالك كسب اللقب بضربات الترجيح."}, {"id": "bd2ba327-220a-4f4e-a3c6-521570090457", "l": 3, "q": "في نهائي كأس مصر موسم 2024-2025، مين جاب هدف تعادل الزمالك قدام بيراميدز؟", "a": "ناصر منسي", "alt": ["منسي", "ناصر منسى"], "opts": ["أحمد سيد زيزو", "سيف الدين الجزيري", "عبد الله السعيد"], "note": "بيراميدز اتقدم في الشوط الأول، والتعادل جه في الدقيقة 78 من لاعب نزل بديل."}, {"id": "716e16a9-9b7e-40ec-95a6-9dc3b0185d3f", "l": 3, "q": "الزمالك كسب شوتينج ستارز في القاهرة بإياب نهائي أفريقيا 1996 بكام قبل ركلات الترجيح؟", "a": "2-1", "alt": ["2/1", "اتنين واحد"], "opts": ["1-0", "2-0", "3-2"], "note": "الماتش اتلعب على استاد القاهرة يوم 13 ديسمبر 1996، واللقب اتحسم بعده بضربات الترجيح."}, {"id": "05bb8114-8167-4e5f-9782-e245b22ce72e", "l": 4, "q": "الزمالك كسب نهائي كأس أفريقيا للأندية أبطال الدوري سنة 1993 بالترجيح 7-6، قدام أنهي فريق؟", "a": "أسانتي كوتوكو", "alt": ["كوتوكو", "أشانتي كوتوكو", "أسانتي كوتوكو الغاني"], "opts": ["هارتس أوف أوك", "شوتينج ستارز", "أفريكا سبور"], "note": "الماتشين خلصوا 0-0 في كوماسي والقاهرة، وضربات الترجيح كانت في استاد القاهرة يوم 10 ديسمبر 1993."}, {"id": "68cf188e-f5bb-4cac-94db-9dce8e6fc23e", "l": 4, "q": "مين سجل هدفين الزمالك في ذهاب نهائي أفريقيا سنة 1984 قدام شوتينج ستارز في القاهرة؟", "a": "جمال عبد الحميد", "alt": ["جمال عبدالحميد"], "opts": ["فاروق جعفر", "إبراهيم يوسف", "أشرف قاسم"], "note": "الماتش خلص 2-0 يوم 23 نوفمبر 1984 وواحد من الهدفين كان ضربة جزاء، والزمالك كسب الإياب في لاجوس 1-0 وخد أول لقب أفريقي في تاريخه."}, {"id": "d49f8ffd-e630-478e-b585-561c625a684f", "l": 4, "q": "مين سجل هدف الزمالك في إياب نهائي دوري أبطال أفريقيا 2016 قدام صن داونز؟", "a": "ستانلي أوهاويتشي", "alt": ["ستانلي", "أوهاويتشي", "ستانلي أوهاوتشي", "ستانلي أوهاوشي"], "opts": ["باسم مرسي", "إيمانويل مايوكا", "مصطفى فتحي"], "note": "الزمالك كسب الإياب 1-0 في برج العرب، بس صن داونز خد اللقب بمجموع 3-1 بعد ما كسب الذهاب 3-0."}, {"id": "8995b01d-e94f-4b79-9e4d-e985ebf271c8", "l": 4, "q": "مين فتح التسجيل للزمالك قدام دريمز في كوماسي، في إياب نص نهائي الكونفدرالية نسخة 2023-2024؟", "a": "حمزة المثلوثي", "alt": ["المثلوثي", "حمزة المثلوثي"], "opts": ["أحمد سيد زيزو", "سيف الدين الجزيري", "حسام عبد المجيد"], "note": "الهدف جه بدري في الدقيقة 12 من كورنر."}, {"id": "b7834860-0f1d-40d5-9762-c1c60f43ee62", "l": 4, "q": "مين سجل هدف الزمالك الوحيد قدام سموحة في نهائي كأس مصر اللي اتلعب في يوليو 2014؟", "a": "حازم إمام", "alt": ["حازم إمام الصغير", "حازم إمام مواليد 1988", "حازم إمام الظهير"], "opts": ["عمر جابر", "يوسف أوباما", "مؤمن زكريا"], "note": "المقصود حازم إمام الظهير مواليد 1988، مش أسطورة الزمالك اللي بنفس الاسم؛ الهدف جه في آخر دقيقة على استاد الدفاع الجوي."}, {"id": "538b5754-4943-45d1-8b51-384dd94275c3", "l": 4, "q": "مين سجل هدفين للزمالك في إياب نص نهائي دوري أبطال أفريقيا 2002 قدام مازيمبي؟", "a": "حسام حسن", "alt": ["العميد", "العميد حسام حسن"], "opts": ["تامر عبد الحميد", "جمال حمزة", "حازم إمام"], "note": "الماتش اتلعب في القاهرة يوم 15 نوفمبر 2002 وخلص 2-0، وواحد من الهدفين كان ضربة جزاء."}, {"id": "77e3b565-9456-46fd-af44-a4ed007ea51c", "l": 5, "q": "في نص نهائي أفريقيا سنة 1984 الزمالك خسر الذهاب 3-1 ورجع كسب الإياب 3-0، قدام أنهي فريق جزائري؟", "a": "شبيبة القبائل", "alt": ["شبيبة تيزي وزو", "إلكترونيك تيزي وزو", "جي إي تيزي وزو", "تيزي وزو", "شبيبة القبائل الجزائري"], "opts": ["مولودية الجزائر", "وفاق سطيف", "شباب بلوزداد"], "note": "الفريق كان اسمه وقتها إلكترونيك تيزي وزو، وده الاسم القديم لشبيبة القبائل، والزمالك عدّى بمجموع 4-3 وكسب البطولة بعدها."}, {"id": "09a01aa3-4d76-4eec-8ec0-78e33ac240fe", "l": 5, "q": "في آخر ماتش في دور مجموعات دوري أبطال أفريقيا 2002، الزمالك كسب مين 1-0 في القاهرة وطلع لنص النهائي متصدر مجموعته؟", "a": "الترجي التونسي", "alt": ["الترجي", "الترجي الرياضي التونسي", "الترجي الرياضي"], "opts": ["النجم الساحلي", "النادي الأفريقي", "النادي الصفاقسي"], "note": "الزمالك خلّص المجموعة في المركز الأول برصيد 13 نقطة."}, {"id": "a702a919-f563-463f-9907-b1cad72ebc12", "l": 5, "q": "مين سجل الهدف التاني للزمالك قدام دريمز في كوماسي، في إياب نص نهائي الكونفدرالية نسخة 2023-2024؟", "a": "سامسون أكينيولا", "alt": ["أكينيولا", "سامسون", "سامسون أكينيولي", "أكينيولي"], "opts": ["أحمد سيد زيزو", "سيف الدين الجزيري", "عبد الله السعيد"], "note": "الهدف جه في الدقيقة 27 تقريبًا بتسديدة على الأرض في الزاوية."}]}, {"slug": "derby", "name": "القمة", "qs": [{"id": "11099376-91c6-4f4f-bfe4-2dfe986429ae", "l": 1, "q": "في السوبر الأفريقي اللي اتلعب في الرياض سنة 2024، مين جاب هدف التعادل للزمالك قدام الأهلي؟", "a": "ناصر منسي", "alt": ["منسي", "ناصر منسى"], "opts": ["أحمد سيد زيزو", "سيف الجزيري", "مصطفى شلبي"], "note": "الماتش خلص 1-1 والزمالك كسب بضربات الترجيح 4-3 على ملعب المملكة أرينا يوم 27 سبتمبر 2024."}, {"id": "cf563d9b-c2fa-4dd4-9eca-9749e8959ab6", "l": 1, "q": "في نهائي دوري أبطال أفريقيا موسم 2019-2020 قدام الأهلي، مين جاب هدف الزمالك؟", "a": "شيكابالا", "alt": ["شيكا", "محمود عبد الرازق"], "opts": ["أشرف بن شرقي", "مصطفى محمد", "أحمد سيد زيزو"], "note": "الهدف جه في الدقيقة 31 والنهائي اتلعب يوم 27 نوفمبر 2020 وخلص 2-1 للأهلي."}, {"id": "a8377366-ed43-4e7f-89d5-6b918012e1d1", "l": 2, "q": "في نهائي كأس مصر موسم 2014-2015، مين جاب الهدفين للزمالك في الأهلي؟", "a": "باسم مرسي", "alt": ["باسم مرسى", "مرسي"], "opts": ["أيمن حفني", "محمد إبراهيم", "أحمد حمودي"], "note": "الزمالك كسب 2-0 يوم 21 سبتمبر 2015."}, {"id": "80dce00d-bb07-40e8-9e82-677925e56ddd", "l": 2, "q": "في نهائي كأس مصر موسم 1943-1944، الزمالك كسب الأهلي بكام؟", "a": "6-0", "alt": ["ستة صفر", "6 أهداف نظيفة"], "opts": ["5-0", "4-0", "3-0"], "note": "النهائي اتلعب يوم 2 يونيو 1944 على ملعب اتحاد الجيش."}, {"id": "7c731fda-7459-4a48-bc20-a66592875349", "l": 2, "q": "في آخر جولة من دوري موسم 2017-2018، يوم 26 أبريل 2018، الزمالك كسب الأهلي بكام؟", "a": "2-1", "alt": ["2-1 للزمالك", "1-2"], "opts": ["1-0", "3-1", "3-2"], "note": "الماتش اتلعب على استاد القاهرة، وده كان أول فوز للزمالك على الأهلي في الدوري من 11 سنة."}, {"id": "6f378e10-83cf-4710-af2d-cadd0c77afb6", "l": 2, "q": "مين سجل هدفين الزمالك في فوزه 2-1 على الأهلي في دوري موسم 2023-2024 يوم 15 أبريل 2024؟", "a": "سيف الدين الجزيري", "alt": ["الجزيري", "سيف الجزيري"], "opts": ["أحمد سيد زيزو", "شيكابالا", "سامسون أكينيولا"], "note": "الأهلي اتعادل في الشوط التاني قبل ما الزمالك يخطف هدف الفوز في آخر دقايق الماتش."}, {"id": "e547e41d-29fc-4ea6-8893-838f6148c230", "l": 2, "q": "الزمالك كسب الأهلي بنتيجة كام في نهائي كأس مصر موسم 2020-2021 اللي اتلعب في يوليو 2022؟", "a": "2-1", "alt": ["2/1", "اتنين واحد"], "opts": ["1-0", "2-0", "3-2"], "note": "النهائي اتلعب على استاد القاهرة الدولي يوم 21 يوليو 2022."}, {"id": "5d928b4f-31e0-4d60-906e-8236740ec8f8", "l": 2, "q": "مين حارس الزمالك اللي صد ضربتين ترجيح للأهلي في السوبر المصري اللي اتلعب في أبوظبي في فبراير 2017؟", "a": "محمود جنش", "alt": ["جنش"], "opts": ["أحمد الشناوي", "محمد عواد", "عبد الواحد السيد"], "note": "الماتش خلص 0-0 واتحسم بضربات الترجيح على استاد محمد بن زايد يوم 10 فبراير 2017."}, {"id": "b993a3f6-b338-4d9b-9fee-a49bb9f3695f", "l": 3, "q": "في نهائي كأس مصر موسم 2015-2016، الزمالك كسب الأهلي بكام؟", "a": "3-1", "alt": ["تلاتة واحد", "3 أهداف لهدف"], "opts": ["2-0", "2-1", "3-0"], "note": "النهائي اتلعب في إسكندرية في أغسطس 2016."}, {"id": "63e37f43-f4fd-459b-8b2c-25c599d9ba11", "l": 3, "q": "في السوبر الأفريقي سنة 1994، مين جاب هدف الزمالك الوحيد في الأهلي؟", "a": "أيمن منصور", "alt": ["ايمن منصور"], "opts": ["جمال عبد الحميد", "إسماعيل يوسف", "أيمن يونس"], "note": "الزمالك كسب الماتش 1-0."}, {"id": "a02a28f2-8a56-44e9-ae11-48223aa9ff06", "l": 3, "q": "مين سجل آخر هدف للزمالك في نهائي كأس مصر موسم 2015-2016 قدام الأهلي؟", "a": "مصطفى فتحي", "alt": ["فتحي"], "opts": ["أيمن حفني", "محمد إبراهيم", "ستانلي أوهاويتشي"], "note": "النهائي اتلعب في إسكندرية يوم 8 أغسطس 2016، والهدف جه في الدقيقة 59."}, {"id": "ab41e8ba-c97b-4c4d-a0e6-e7e354dd536c", "l": 4, "q": "السوبر الأفريقي سنة 1994 اللي الزمالك كسب فيه الأهلي اتلعب في أنهي مدينة؟", "a": "جوهانسبرج", "alt": ["جوهانسبرغ", "جوهانسبيرج"], "opts": ["نيروبي", "أبيدجان", "الدار البيضاء"], "note": "الماتش اتلعب في جنوب أفريقيا وخلص 1-0 للزمالك."}, {"id": "22f40793-dccd-4044-9f2d-8677a02cebcf", "l": 4, "q": "نهائي كأس مصر موسم 2014-2015 اللي الزمالك كسب فيه الأهلي اتلعب على أنهي استاد؟", "a": "استاد بتروسبورت", "alt": ["بتروسبورت", "بترو سبورت"], "opts": ["استاد برج العرب", "استاد القاهرة الدولي", "استاد الدفاع الجوي"], "note": "الماتش اتلعب يوم 21 سبتمبر 2015 وخلص 2-0 للزمالك."}, {"id": "9379af54-d7c9-41fe-9b18-056ea24d96fe", "l": 4, "q": "في السوبر الأفريقي قدام الأهلي في الرياض سنة 2024، مين سدد آخر ركلة ترجيح للزمالك؟", "a": "حسام عبد المجيد", "alt": ["حسام عبدالمجيد"], "opts": ["عمر جابر", "أحمد سيد زيزو", "شيكابالا"], "note": "الزمالك كسب الترجيح 4-3 يوم 27 سبتمبر 2024 على ملعب المملكة أرينا."}, {"id": "3bd14a71-5c2d-4af0-a5cd-a54c22c17097", "l": 4, "q": "في السوبر المصري اللي اتلعب في أبوظبي في فبراير 2020، الزمالك كسب الأهلي بضربات الترجيح بكام؟", "a": "4-3", "alt": ["4/3", "أربعة تلاتة"], "opts": ["3-2", "4-2", "5-4"], "note": "الماتش خلص 0-0 واتلعب على استاد محمد بن زايد يوم 20 فبراير 2020."}, {"id": "773ccf4f-870e-4a52-9ac3-c87bccd56ca5", "l": 5, "q": "مين عمل هاتريك للزمالك في الأهلي في نهائي كأس مصر موسم 1943-1944؟", "a": "زقلط", "alt": ["حافظ زقلط", "محمود حافظ", "محمد حافظ", "حسن حافظ"], "opts": ["عصام بهيج", "علاء الحامولي", "أنور البشبيشي"], "note": "النهائي اتلعب يوم 2 يونيو 1944."}, {"id": "7de0461f-38da-4d35-9be9-bf1c55940a0d", "l": 5, "q": "في نهائي كأس مصر موسم 1951-1952، الزمالك وهو لسه بيلعب باسمه القديم كسب الأهلي بكام؟", "a": "2-0", "alt": ["2-0 للزمالك"], "opts": ["1-0", "3-1", "4-2"], "note": null}, {"id": "f12a3022-9ae5-4870-824e-0294d254f43e", "l": 5, "q": "في نهائي كأس مصر موسم 1934-1935، الزمالك وهو لسه بيلعب باسمه القديم كسب الأهلي بكام؟", "a": "3-0", "alt": ["3-0 للزمالك"], "opts": ["1-0", "2-1", "4-1"], "note": null}]}, {"slug": "national-team", "name": "أبناء الزمالك في المنتخب", "qs": [{"id": "aea57cbd-4f31-4568-8e13-9c7ea765e507", "l": 1, "q": "إسماعيل يوسف وأحمد رمزي نجوم الزمالك لعبوا مع منتخب مصر كأس العالم 1990 في أنهي بلد؟", "a": "إيطاليا", "alt": ["ايطاليا", "إيطاليا 1990"], "opts": ["أمريكا", "فرنسا", "إسبانيا"], "note": "مصر اتعادلت مع هولندا 1-1 ومع أيرلندا 0-0 وخسرت من إنجلترا 1-0."}, {"id": "12fcc569-0516-4007-904c-da03483ca2c2", "l": 1, "q": "عمرو زكي مهاجم الزمالك اللي جاب هدفين لمصر في نص نهائي أمم أفريقيا 2008 كان لقبه إيه؟", "a": "البلدوزر", "alt": ["بلدوزر"], "opts": ["الفهد", "الثعلب", "الصاروخ"], "note": "جاب الهدفين قدام كوت ديفوار في الدقيقة 62 و67، والماتش خلص 4-1 لمصر."}, {"id": "0a2ad79c-8b0a-4ecd-a3ef-1c6f930116ad", "l": 2, "q": "مين حارس الزمالك اللي وقف في جول مصر في نهائي أمم أفريقيا 1998 قدام جنوب أفريقيا؟", "a": "نادر السيد", "alt": ["نادر"], "opts": ["أحمد شوبير", "عصام الحضري", "عبد الواحد السيد"], "note": "مصر كسبت النهائي 2-0 في واجادوجو، ونادر اتختار أحسن حارس في البطولة قبل ما يحترف في كلوب بروج."}, {"id": "ab846f27-1431-4ce9-b92f-5243d995e638", "l": 2, "q": "شيكابالا كان لاعب في الزمالك لما كسب كأس الأمم الأفريقية مع منتخب مصر سنة كام؟", "a": "2010", "alt": ["أنجولا 2010", "انجولا 2010"], "opts": ["1998", "2006", "2017"], "note": "كان في قايمة حسن شحاتة في أنجولا ومعاه من الزمالك عبد الواحد السيد وهاني سعيد ومحمود فتح الله ومحمد عبد الشافي."}, {"id": "8b798227-0360-42c4-b632-afb028747fb3", "l": 3, "q": "مين اللاعب اللي سجل أول هدف في تاريخ كأس الأمم الأفريقية سنة 1957، وبعدها بقى من نجوم الزمالك؟", "a": "رأفت عطية", "alt": ["رأفت عطيه", "رافت عطية"], "opts": ["علاء الحامولي", "عصام بهيج", "حنفي بسطان"], "note": "الهدف جه من ضربة جزاء في الدقيقة 21 قدام السودان في الخرطوم، ومصر كسبت 2-1 وبعدها خدت البطولة."}, {"id": "6da84677-b575-44ca-9ba7-f1de0ab26bcd", "l": 3, "q": "مين حارس الزمالك اللي بدأ ماتش مصر ومالي في أمم أفريقيا 2017 واضطر يخرج مصاب؟", "a": "أحمد الشناوي", "alt": ["أحمد الشناوي", "أحمد الشناوى", "Ahmed El-Shenawy"], "opts": ["محمود عبد الرحيم جنش", "عبد الواحد السيد", "محمد عواد"], "note": "الماتش اتلعب يوم 17 يناير 2017 وخلص 0-0، وعصام الحضري نزل مكانه."}, {"id": "b7c785c2-050f-4584-b285-513fe64b8c2d", "l": 3, "q": "مين نجم الزمالك اللي سجل الهدف التاني لمصر قدام جنوب أفريقيا في نهائي أمم أفريقيا 1998؟", "a": "طارق مصطفى", "alt": ["طارق مصطفي", "Tarek Mostafa"], "opts": ["أسامة نبيه", "مدحت عبد الهادي", "سامي الشيشيني"], "note": "مصر كسبت النهائي 2-0 في واجادوجو يوم 28 فبراير 1998، وأحمد حسن جاب الهدف الأول."}, {"id": "b911e1e6-6da7-45bf-a0e2-feab608d1806", "l": 4, "q": "مين نجم الزمالك اللي جاب هدفين مصر في ماتش السودان اللي حسم كأس الأمم الأفريقية 1959؟", "a": "عصام بهيج", "alt": ["بهيج"], "opts": ["علاء الحامولي", "صالح سليم", "محمود الجوهري"], "note": "مصر كسبت 2-1 في القاهرة وخدت ثاني لقب أفريقي في تاريخها."}, {"id": "6d1436c9-9040-48af-b159-77fb1acb0970", "l": 4, "q": "مين حارس الزمالك اللي كان في قايمة مصر في بطولتي أمم أفريقيا 2006 و2010؟", "a": "عبد الواحد السيد", "alt": ["عبدالواحد السيد", "عبد الواحد"], "opts": ["محمد عبد المنصف", "نادر السيد", "أيمن طاهر"], "note": "في قايمة 2006 كان معاه من حراس الزمالك كمان محمد عبد المنصف."}, {"id": "f2c3e2d2-4054-485a-8e11-465815fcc478", "l": 4, "q": "مين مدافع الزمالك التاني اللي كان مع علي جبر في قايمة مصر في أمم أفريقيا 2017؟", "a": "أحمد دويدار", "alt": ["أحمد دويدار", "دويدار", "Ahmed Dwidar"], "opts": ["محمود علاء", "محمود حمدي الونش", "أحمد فتوح"], "note": "القايمة النهائية اتعلنت يوم 4 يناير 2017."}, {"id": "4d710bbe-534c-4d3d-a574-9c30f0a0184c", "l": 4, "q": "مين لاعب الزمالك اللي جاب هدف لمصر بعد 23 ثانية بس من بداية ماتش في أمم أفريقيا 1994؟", "a": "أيمن منصور", "alt": ["Ayman Mansour"], "opts": ["إسماعيل يوسف", "أيمن شوقي", "خالد الغندور"], "note": "الهدف جه في ماتش مصر والجابون اللي خلص 4-0 في تونس يوم 28 مارس 1994."}, {"id": "07eb1acd-a29c-47af-a2de-2b37ce54c42e", "l": 5, "q": "مين مهاجم الزمالك وقتها اللي كان في قايمة مصر اللي كسبت أمم أفريقيا 2006 في القاهرة؟", "a": "عبد الحليم علي", "alt": ["عبدالحليم علي", "عبد الحليم"], "opts": ["عماد متعب", "أسامة حسني", "أحمد بلال"], "note": "نزل بديل في النهائي اللي مصر كسبته بالترجيح قدام كوت ديفوار، وحسام حسن كان في القايمة بس وقتها كان لاعب في المصري."}, {"id": "a77f5d69-c78c-426e-82d2-4575d3466881", "l": 5, "q": "مين نجم الزمالك اللي جاب هدفين لمصر قدام الكونغو في ماتش المركز التالت في أمم أفريقيا 1974؟", "a": "حسن شحاتة", "alt": ["شحاتة", "المعلم"], "opts": ["علي خليل", "طه بصري", "فاروق جعفر"], "note": "مصر كسبت الماتش 4-0 في القاهرة يوم 11 مارس 1974 وخدت المركز التالت."}]}, {"slug": "foreigners", "name": "الأجانب في الزمالك", "qs": [{"id": "cf4e1089-cf2a-444c-8c6e-c5e8231397b8", "l": 1, "q": "سيف الدين الجزيري، مهاجم الزمالك السابق، جنسيته إيه؟", "a": "تونسي", "alt": ["تونس", "من تونس"], "opts": ["مغربي", "جزائري", "ليبي"], "note": "الجزيري ساب الزمالك بالتراضي في صيف 2026."}, {"id": "9e84de6e-b103-4550-beef-a468d93e7ea4", "l": 1, "q": "أشرف بن شرقي لاعب الزمالك السابق جنسيته إيه؟", "a": "مغربي", "alt": ["المغرب"], "opts": ["جزائري", "تونسي", "موريتاني"], "note": null}, {"id": "af59eec5-6545-4c5d-b7f6-c1896d82d20b", "l": 2, "q": "مين المدرب الأجنبي اللي كسب مع الزمالك دوري أبطال أفريقيا سنة 2002؟", "a": "كارلوس كابرال", "alt": ["كابرال", "كابرالزينيو", "كارلوس روبرتو كابرال"], "opts": ["نيلو فينجادا", "جورفان فييرا", "روود كرول"], "note": "كابرال برازيلي، وأول فترة له مع الزمالك كانت من 2002 لـ 2003."}, {"id": "c9543f5c-f54e-4791-8b9a-97f96451b7a1", "l": 2, "q": "المهاجم بنجامين أشيمبونج اللي انضم للزمالك سنة 2017 جنسيته إيه؟", "a": "غاني", "alt": ["غانا", "من غانا", "Ghana"], "opts": ["نيجيري", "إيفواري", "كاميروني"], "note": null}, {"id": "8abca9d3-bad0-4e6a-bde2-53870743ef36", "l": 2, "q": "سيف الدين الجزيري جه الزمالك إعارة سنة 2021 من أنهي نادي مصري؟", "a": "المقاولون العرب", "alt": ["المقاولون", "المقاولين العرب", "المقاولين", "Arab Contractors", "Al Mokawloon"], "opts": ["سموحة", "المصري", "الجونة"], "note": "الإعارة كانت لمدة 6 شهور، وبعدها الزمالك اشتراه نهائي من نفس النادي في صيف 2021."}, {"id": "1022d048-ef29-44a9-9cf2-00d0eeaef98f", "l": 3, "q": "المهاجم المغربي حميد أحداد جه الزمالك سنة 2018 من أنهي نادي؟", "a": "الدفاع الحسني الجديدي", "alt": ["الدفاع الجديدي", "الدفاع الحسني"], "opts": ["الوداد", "الجيش الملكي", "نهضة بركان"], "note": null}, {"id": "646bca66-2a21-48c3-b092-2e552fe8bf4d", "l": 3, "q": "كابونجو كاسونجو انضم للزمالك سنة 2017 جاي من أنهي نادي مصري؟", "a": "الاتحاد السكندري", "alt": ["الاتحاد", "اتحاد الإسكندرية", "الاتحاد السكندرى", "Al Ittihad Alexandria"], "opts": ["المصري", "سموحة", "الإسماعيلي"], "note": "كاسونجو مهاجم من الكونغو الديمقراطية وانضم للزمالك في صيف 2017."}, {"id": "5a8345e4-8849-4fd9-9b3f-1cfdbd1a893f", "l": 3, "q": "المغربي محمد أوناجم انضم للزمالك سنة 2019 جاي من أنهي نادي؟", "a": "الوداد البيضاوي", "alt": ["الوداد", "الوداد الرياضي", "وداد الدار البيضاء", "Wydad Casablanca"], "opts": ["الرجاء البيضاوي", "نهضة بركان", "الجيش الملكي"], "note": "أوناجم انضم للزمالك في صيف 2019 بعقد 3 مواسم."}, {"id": "a0de27a6-c648-40d6-981a-e2cc3cc1ec85", "l": 3, "q": "حمزة المثلوثي انضم للزمالك سنة 2020 جاي من أنهي نادي تونسي؟", "a": "الصفاقسي", "alt": ["النادي الصفاقسي", "النادي الرياضي الصفاقسي", "صفاقس", "CS Sfaxien"], "opts": ["الترجي", "النجم الساحلي", "النادي الإفريقي"], "note": "المثلوثي انضم للزمالك في انتقال حر."}, {"id": "93556c73-f5d8-4a0e-b029-268114dbe87b", "l": 3, "q": "محمود بنتايج انضم للزمالك إعارة سنة 2024 من أنهي نادي فرنسي؟", "a": "سانت إتيان", "alt": ["سانت اتيان", "سانت إيتيان", "سانت إتيين", "Saint-Étienne"], "opts": ["مارسيليا", "ليون", "نيس"], "note": "الزمالك فعّل بند الشراء في مارس 2025 وبقى لاعب نهائي في النادي."}, {"id": "8cc22cef-a800-4b76-a4bc-6ae6a0f72b1c", "l": 3, "q": "المدافع محمد كوفي اللي لعب للزمالك من 2014 كان بيمثل منتخب أنهي بلد أفريقي؟", "a": "بوركينا فاسو", "alt": ["بوركينا", "منتخب بوركينا فاسو", "Burkina Faso"], "opts": ["مالي", "السنغال", "توجو"], "note": "كوفي اتولد في أبيدجان بكوت ديفوار، وجه الزمالك سنة 2014 من دهوك العراقي."}, {"id": "50c52ea0-6932-4bab-ad50-4ba947194390", "l": 3, "q": "المهاجم المغربي خالد بوطيب انضم للزمالك في يناير 2019 جاي من أنهي نادي تركي؟", "a": "يني ملطية سبور", "alt": ["يني مالاطيا سبور", "مالاطيا سبور", "ملطية سبور", "Yeni Malatyaspor"], "opts": ["أنطاليا سبور", "قيصري سبور", "ألانيا سبور"], "note": "بوطيب كان أول صفقة شتوية للزمالك في يناير 2019."}, {"id": "312ab8ce-f359-4d7f-ae5b-fc06ac8721ec", "l": 4, "q": "مين المدرب الأجنبي اللي كسب الدوري مع الزمالك موسمين ورا بعض، 1991-1992 و1992-1993؟", "a": "ديف ماكاي", "alt": ["ماكاي", "ديفيد ماكاي"], "opts": ["ريتشي باركر", "روود كرول", "ألفريد ريدل"], "note": "ماكاي إسكتلندي ولعب لتوتنهام قبل ما يبقى مدرب، ودرّب الزمالك من 1991 لـ 1993."}, {"id": "06d741a1-be12-44ed-95d8-b1a639b977ef", "l": 4, "q": "المدرب الصربي ميتشو جه الزمالك سنة 2019 بعد ما ساب أنهي نادي؟", "a": "أورلاندو بايرتس", "alt": ["أورلاندو", "أورلاندو بيراتس", "أورلاندو بايريتس"], "opts": ["كايزر تشيفس", "ماميلودي صن داونز", "الوداد"], "note": "ميتشو استقال من أورلاندو بايرتس الجنوب أفريقي والزمالك أعلن تعيينه بعدها بساعات في أغسطس 2019."}, {"id": "45d17206-c515-4a9e-93c4-f756769d9190", "l": 4, "q": "المهاجم بنجامين أشيمبونج جه الزمالك سنة 2017 من أنهي نادي مصري؟", "a": "الداخلية", "alt": ["داخلية", "نادي الداخلية", "El Dakhleya"], "opts": ["طلائع الجيش", "الإنتاج الحربي", "المقاولون العرب"], "note": null}, {"id": "b491d7db-3843-42f2-b89e-0ee3a735803f", "l": 4, "q": "المهاجم النيجيري ستانلي أوهاويتشي جه الزمالك سنة 2016 إعارة من أنهي نادي؟", "a": "وادي دجلة", "alt": ["دجلة", "نادي وادي دجلة", "Wadi Degla"], "opts": ["إنبي", "سموحة", "مصر المقاصة"], "note": "الإعارة كانت لموسم واحد، موسم 2016-2017."}, {"id": "6234bf13-dc66-404b-ab6f-4846b97d2967", "l": 4, "q": "إبراهيما نداي انضم للزمالك سنة 2022 جاي من أنهي نادي سويسري؟", "a": "لوزيرن", "alt": ["لوتسيرن", "لوسيرن", "لوزيرن السويسري", "FC Luzern"], "opts": ["بازل", "يانج بويز", "زيورخ"], "note": "نداي جناح سنغالي انضم للزمالك في صيف 2022."}, {"id": "ff534dc9-3e65-4f99-b132-832fc0769b23", "l": 4, "q": "أشرف بن شرقي لعب إعارة لأنهي نادي فرنسي قبل ما ينضم للزمالك سنة 2019؟", "a": "لانس", "alt": ["آر سي لانس", "راسينج لانس", "RC Lens", "Lens"], "opts": ["ليل", "نانت", "مونبلييه"], "note": "الإعارة كانت من الهلال السعودي، وبن شرقي وقّع للزمالك في يوليو 2019 على عقد 3 سنين."}, {"id": "bab06238-85bf-46fc-9c6d-21564e969dba", "l": 5, "q": "النيجيري إيمانويل أمونيكي جه الزمالك سنة 1991 من أنهي نادي؟", "a": "جوليوس بيرجر", "alt": ["جوليوس برجر", "يوليوس بيرجر"], "opts": ["شوتينج ستارز", "إنيمبا", "رينجرز إنترناشونال"], "note": "أمونيكي لعب للزمالك من 1991 لـ 1994 وكسب معاه بطولة أفريقيا للأندية أبطال الدوري 1993."}, {"id": "742fb250-04a5-4ff8-818c-67e871e0c0b4", "l": 5, "q": "المغربي زكريا الوردي انضم للزمالك سنة 2022 جاي من أنهي نادي مغربي؟", "a": "الرجاء البيضاوي", "alt": ["الرجاء", "الرجاء الرياضي", "رجاء الدار البيضاء", "Raja Casablanca"], "opts": ["الوداد البيضاوي", "نهضة بركان", "الجيش الملكي"], "note": "الوردي انضم في انتقال حر في أغسطس 2022 بعد ما عقده مع ناديه خلص."}, {"id": "17427158-f96d-4dd4-ad57-bd59a2d36340", "l": 5, "q": "فرجاني ساسي لعب في أنهي نادي فرنسي قبل ما ييجي الزمالك؟", "a": "ميتز", "alt": ["متز", "إف سي ميتز", "FC Metz", "Metz"], "opts": ["مونبلييه", "نيس", "تولوز"], "note": "ساسي وقّع للزمالك في يوليو 2018 على عقد 3 سنين."}]}, {"slug": "other-sports", "name": "ألعاب أخرى", "qs": [{"id": "e885bb88-9d47-48ce-8fbb-0488a46feb6e", "l": 1, "q": "سلة الزمالك كسبت أول نسخة من دوري السلة الأفريقي BAL سنة 2021، كسبت مين في النهائي؟", "a": "الاتحاد المنستيري", "alt": ["المنستير", "اتحاد المنستير", "يو إس موناستير", "US Monastir"], "opts": ["الأهلي", "بترو دي لواندا", "الترجي"], "note": "الزمالك كسب النهائي 76-63."}, {"id": "aa1ccf88-6d8f-4c77-8690-23943fdbe536", "l": 1, "q": "مين نجم يد الزمالك اللي شال علم مصر في افتتاح أولمبياد ريو 2016؟", "a": "أحمد الأحمر", "alt": ["الأحمر", "Ahmed El-Ahmar"], "opts": ["حسام عبدالله", "حسين زكي", "محمد ممدوح هاشم"], "note": "أحمد الأحمر اتولد سنة 1984 وبدأ مشواره مع الفريق الأول للزمالك سنة 2004."}, {"id": "2cacca1e-7b6d-4dbc-b4b4-8331766777ef", "l": 2, "q": "سلة الزمالك اتتوجت بلقب BAL سنة 2021 في أنهي عاصمة أفريقية؟", "a": "كيجالي", "alt": ["كيغالي", "Kigali"], "opts": ["داكار", "القاهرة", "لواندا"], "note": "النهائي اتلعب في صالة كيجالي أرينا في رواندا."}, {"id": "e23d6c36-e261-44ed-b376-d05154ccd4cb", "l": 2, "q": "يد الزمالك كسبت نهائي بطولة أفريقيا لأندية اليد أبطال الدوري سنة 2018 في أبيدجان على مين؟", "a": "الأهلي", "alt": ["أهلي", "النادي الأهلي"], "opts": ["سبورتنج", "الترجي", "الأفريقي"], "note": "الزمالك كسب النهائي 27-25 في كوت ديفوار."}, {"id": "840c035d-c6cc-46c2-9ac4-63e0f25a6f32", "l": 3, "q": "مين لاعب الزمالك اللي خد جايزة أحسن لاعب MVP في أول موسم لدوري BAL سنة 2021؟", "a": "والتر هودج", "alt": ["هودج", "Walter Hodge"], "opts": ["سليمان دياباتي", "مهاب ياسر", "مايكل فاكواده"], "note": "هودج اتولد في بورتوريكو سنة 1986."}, {"id": "3a2f2103-edd6-463f-9843-f4d70339b69d", "l": 3, "q": "يد الزمالك كسبت نهائي بطولة أفريقيا لأندية اليد أبطال الدوري سنة 2019 في كاب فيردي على مين؟", "a": "سبورتنج", "alt": ["نادي سبورتنج", "سبورتنج السكندري"], "opts": ["الأهلي", "الترجي", "إنتركلوب الأنجولي"], "note": "الزمالك كسب 33-31 في مدينة برايا عاصمة كاب فيردي."}, {"id": "e931ed28-4a20-4e8e-a207-0f931439b43b", "l": 3, "q": "سلة الزمالك خلصت أول موسم من BAL سنة 2021 بكام فوز ومن غير أي هزيمة؟", "a": "6 انتصارات", "alt": ["6", "ستة", "ست انتصارات", "6-0"], "opts": ["5 انتصارات", "7 انتصارات", "8 انتصارات"], "note": "الزمالك كسب ماتشات مجموعته التلاتة وبعدين كسب كل ماتشات الأدوار الإقصائية."}, {"id": "c76d5848-f685-42ae-9a4a-db1611cfede1", "l": 3, "q": "سلة الزمالك خسرت في نص نهائي BAL سنة 2022 قدام أنهي فريق تونسي؟", "a": "الاتحاد المنستيري", "alt": ["الاتحاد المنستيري", "اتحاد المنستير", "المنستيري", "المنستير", "الاتحاد الرياضي المنستيري", "US Monastir"], "opts": ["النادي الأفريقي", "الترجي الرياضي", "النجم الساحلي"], "note": "الماتش خلص 88-81، وكانت دي أول هزيمة للزمالك في تاريخ البطولة."}, {"id": "6be74794-1f43-40c9-aed8-96d363359d7d", "l": 3, "q": "مين لاعب يد الزمالك اللي جاب هدف الفوز على الأهلي في السوبر الأفريقي سنة 2021؟", "a": "يحيى الدرع", "alt": ["يحيى الدرع", "يحيي الدرع", "Yehia El-Deraa"], "opts": ["محمد سند", "حسين زكي", "أحمد العطار"], "note": "أخوه سيف الدرع كان في الفريق برضه، فلازم الاسم الأول عشان الإجابة تتحسب."}, {"id": "a059328a-8af7-4440-a2ef-93359f0a39e5", "l": 3, "q": "يد الزمالك خلصت سوبر جلوب أندية العالم سنة 2021 في المركز الكام؟", "a": "الخامس", "alt": ["الخامس", "المركز الخامس", "خامس", "5"], "opts": ["الرابع", "السادس", "التالت"], "note": "الزمالك ختم البطولة بالفوز على الوحدة السعودي 42-22."}, {"id": "b29d4b21-fabb-457b-8a75-9cd433c70909", "l": 3, "q": "سيدات طائرة الزمالك قابلوا الأهلي في نهائي بطولة أفريقيا للأندية سنة 2024، الماتش خلص بكام؟", "a": "3-2 للزمالك", "alt": ["3-2", "3-2 للزمالك", "3 أشواط مقابل 2"], "opts": ["3-0 للزمالك", "3-1 للأهلي", "3-2 للأهلي"], "note": "النهائي اتلعب في القاهرة يوم 4 مايو 2024، والفوز أهّل الزمالك لكأس العالم للأندية."}, {"id": "3d947dee-ee7e-4543-a570-33f61e3df5dc", "l": 4, "q": "الزمالك كسب أول نسخة من بطولة أفريقيا لأندية اليد أبطال الدوري، النسخة دي اتلعبت سنة كام؟", "a": "1979", "alt": ["79", "سنة 1979"], "opts": ["1975", "1983", "1985"], "note": "الزمالك كسب البطولة 3 سنين ورا بعض: 1979 و1980 و1981."}, {"id": "572ce092-6748-4cbc-ac64-4014a2589852", "l": 4, "q": "سيدات طائرة الزمالك كسبوا بطولة أفريقيا للأندية لأول مرة في تاريخهم سنة كام؟", "a": "2023", "alt": ["سنة 2023"], "opts": ["2017", "2019", "2021"], "note": "كسبوا النهائي في تونس على كينيا بايبلاين 3-1."}, {"id": "d6e9ec41-def4-428a-b39d-f0327e2b01fa", "l": 4, "q": "يد الزمالك كسبت الأهلي في السوبر الأفريقي سنة 2021 بنتيجة كام؟", "a": "28-27", "alt": ["28-27", "27-28", "28 - 27"], "opts": ["27-26", "29-28", "30-28"], "note": "الماتش اتلعب يوم 10 سبتمبر 2021، والفوز أهّل الزمالك لسوبر جلوب أندية العالم في السعودية."}, {"id": "ada6f47f-dbb8-478f-a004-b1f570e24ae8", "l": 4, "q": "مين لاعبة طائرة الزمالك اللي خدت جايزة أحسن لاعبة في بطولة أفريقيا للأندية سنة 2025؟", "a": "مريم متولي", "alt": ["مريم متولي", "متولي", "Mariam Metwally"], "opts": ["شروق محمود", "دانا إمام", "ميلكا دا سيلفا"], "note": "مريم جابت 29 نقطة في النهائي اللي الزمالك كسبه 3-1 على الأهلي."}, {"id": "8397862d-0a6f-4236-b502-f47fb0e2541d", "l": 4, "q": "سيدات طائرة الزمالك كسبوا بطولة أفريقيا للأندية سنة 2025 في أنهي عاصمة أفريقية؟", "a": "أبوجا", "alt": ["أبوجا", "أبوجا نيجيريا", "أبوچا", "Abuja"], "opts": ["القاهرة", "نيروبي", "الرباط"], "note": "النهائي اتلعب يوم 13 أبريل 2025 والزمالك كسبه 3-1."}, {"id": "2afb7b23-33c3-44c5-ac2b-af66127b2833", "l": 5, "q": "أول بطولة أفريقية لسلة الزمالك كانت كأس أفريقيا للأندية البطلة سنة كام؟", "a": "1992", "alt": ["92", "سنة 1992"], "opts": ["1975", "1976", "1998"], "note": "لقب BAL سنة 2021 كان تاني لقب أفريقي لسلة الزمالك بعد لقب 1992."}, {"id": "45ae3b11-303f-4c3a-8150-2b72d85b8c57", "l": 5, "q": "يد الزمالك خلّصت في المركز الكام في بطولة السوبر جلوب لأندية العالم سنة 2010 في الدوحة؟", "a": "المركز التالت", "alt": ["التالت", "الثالث", "المركز الثالث", "البرونزية"], "opts": ["المركز الأول", "المركز التاني", "المركز الرابع"], "note": "البطولة كسبها سيوداد ريال الإسباني."}, {"id": "db07bd61-fb79-4c12-9303-ef260e7fce53", "l": 5, "q": "سلة الزمالك كسبت بترو دي لواندا في نص نهائي BAL سنة 2021 بنتيجة كام؟", "a": "89-71", "alt": ["89-71", "71-89", "89 - 71"], "opts": ["82-75", "91-84", "79-68"], "note": "ده كان أول نص نهائي في تاريخ BAL، والفوز ودّى الزمالك للنهائي."}, {"id": "2b46e7e6-c200-4a13-8c88-4065d800e3a1", "l": 5, "q": "يد الزمالك خسرت من برشلونة بنتيجة كام في ربع نهائي سوبر جلوب 2021؟", "a": "36-32", "alt": ["36-32", "32-36", "36 - 32"], "opts": ["34-31", "35-29", "38-33"], "note": "الزمالك خلص الشوط الأول متأخر بجون واحد بس 18-17."}, {"id": "48370b66-ec85-4e47-864d-6661ac39cc76", "l": 5, "q": "مين كان مدرب يد الزمالك في سوبر جلوب أندية العالم سنة 2019 في السعودية؟", "a": "باسم السبكي", "alt": ["باسم السبكي", "السبكي", "Bassem El Sobky"], "opts": ["حسين زكي", "أوليفر روي", "كمال درويش"], "note": "السبكي كان لاعب في الزمالك 14 سنة قبل ما يبقى مدرب."}]}];
@@ -903,7 +1279,8 @@ function normalize(s){
   ["teams","picks","recent","flagged","pendingFlags","racePicks","feudRecent","feudFlagged"].forEach(k => { if (!Array.isArray(out[k])) out[k] = d[k]; });
   if (out.teams.length < 1) out.teams = d.teams;
   const OLD = ["#e6b04a","#41c7b4","#f07f66","#b195f5","#a6d15a","#62b8f0"];
-  if (BRAND.teamColors) out.teams.forEach(t => { const k = OLD.indexOf(String(t.color).toLowerCase()); if (k >= 0) t.color = COLORS[k]; });
+  const PREV = (BRAND.teamColorsPrev || []).map(c => String(c).toLowerCase());
+  if (BRAND.teamColors) out.teams.forEach(t => { const c = String(t.color).toLowerCase(); const k = OLD.indexOf(c) >= 0 ? OLD.indexOf(c) : PREV.indexOf(c); if (k >= 0) t.color = COLORS[k % COLORS.length]; });
   out.picks = out.picks.filter(p => BY_SLUG[p]);
   out.racePicks = out.racePicks.filter(p => BY_SLUG[p]);
   if (out.game && (!Array.isArray(out.game.cats) || !out.game.used)) out.game = null;
@@ -1085,6 +1462,7 @@ function show(name){
   scrLobby.hidden = name !== "lobby";
   scrFeud.hidden = name !== "feud";
   $("modes").hidden = name !== "setup";
+  document.querySelector(".app").dataset.scr = name;
   window.scrollTo(0,0);
   if (name === "board" || name === "lobby" || name === "feud") wake();
 }
@@ -1129,7 +1507,7 @@ function renderSetupInner(){
     const fresh = freshCount(c.slug);
     return h("button",{class:"catpick",type:"button","aria-pressed":String(on),disabled:(!on && full) ? true : null,
       "aria-label":c.name + "، " + qWord(fresh) + " لم تُلعب بعد",onclick:() => togglePick(c.slug)},
-      h("span",{class:"nm"}, c.name), h("span",{class:"fresh","aria-hidden":"true"}, fmt(fresh)));
+      iconEl(c.slug), h("span",{class:"nm"}, c.name), h("span",{class:"fresh","aria-hidden":"true"}, fmt(fresh)));
   }));
   $("cat-count").textContent = fmt(state.picks.length) + " من " + fmt(cols);
   const gap = cols - state.picks.length;
@@ -1216,7 +1594,7 @@ function startGame(){
   const live = [];
   cats.forEach((c,ci) => c.cells.forEach((id,ri) => { if (id && ri >= 2) live.push(ci + "-" + ri); }));
   state.game = {gid:uuid(), cats, used:{}, dd: live.length ? pickOne(live) : null, scores, turn:0, plays:[], synced:false};
-  save(); renderBoard(); setMsg($("board-msg"), "");
+  dealNext = true; save(); renderBoard(); setMsg($("board-msg"), "");
   if (phonesOn()){ bLast = null; openBoardRoom(); bPhase = "lobby"; show("lobby"); renderBoardLobby(); bPush(true); }
   else show("board");
   const g = state.game, teams = state.teams.map((t,i) => tname(t,i)), slugs = cats.map(c => c.slug);
@@ -1239,38 +1617,44 @@ function renderBoard(){
   if (!g){ boardEl.replaceChildren(); scoresEl.replaceChildren(); turnEl.replaceChildren(); return; }
   boardEl.style.setProperty("--cols", g.cats.length);
   const kids = [];
-  g.cats.forEach(c => kids.push(h("div",{class:"plate cat"}, h("span",{class:"cat-name"}, c.name))));
+  g.cats.forEach((c,ci) => kids.push(h("div",{class:"plate cat",style:"--i:" + ci}, iconEl(c.slug,"ico cat-ico"), h("span",{class:"cat-name"}, c.name))));
   VALUES.forEach((v,ri) => g.cats.forEach((c,ci) => {
-    const key = ci + "-" + ri, cell = g.used[key], hasQ = !!c.cells[ri];
+    const key = ci + "-" + ri, cell = g.used[key], hasQ = !!c.cells[ri], i = "--i:" + (ri * g.cats.length + ci + g.cats.length);
     if (cell || !hasQ){
       const idx = cell && cell.by ? state.teams.findIndex(t => t.id === cell.by) : -1;
       const team = idx >= 0 ? state.teams[idx] : null;
-      kids.push(h("div",{class:"cell used",title:!hasQ ? "لا يوجد سؤال متاح" : team ? "أجاب عنه " + tname(team,idx) : "لم يُجب عنه أحد"},
+      kids.push(h("div",{class:"cell used " + (!hasQ ? "empty" : team ? "won" : "miss"),style:i + (team ? ";--tc:" + team.color : ""),
+        title:!hasQ ? "لا يوجد سؤال متاح" : team ? "أجاب عنه " + tname(team,idx) : "لم يُجب عنه أحد"},
         h("span",{class:"v"}, fmt(v)),
         hasQ ? h("span",{class:"mark" + (team ? "" : " none"),style:team ? "--tc:" + team.color : null,"aria-hidden":"true"}) : null));
     } else {
-      kids.push(h("button",{class:"plate cell",type:"button","aria-label":c.name + "، " + fmt(v) + " نقطة",onclick:() => openQ(ci,ri)},
+      kids.push(h("button",{class:"plate cell",type:"button",style:i,"aria-label":c.name + "، " + fmt(v) + " نقطة",onclick:() => openQ(ci,ri)},
         h("span",{class:"v"}, fmt(v))));
     }
   }));
   boardEl.replaceChildren(...kids);
+  if (dealNext){ dealNext = false; boardEl.classList.remove("deal"); void boardEl.offsetWidth; boardEl.classList.add("deal"); clearTimeout(dealT); dealT = setTimeout(() => boardEl.classList.remove("deal"), 2200); }
   renderScores(); renderTurn();
 }
+let dealNext = false, dealT = 0;
 function wonBy(g, id){ return Object.values(g.used).filter(u => u && u.by === id).length; }
 function tallyEl(n){ const el = h("span",{class:"tally",role:"img","aria-label":qWord(n) + " صحيحة"}); el.innerHTML = tallySvg(n); return el; }
+let shownPts = {}, shownGid = null;
 function renderScores(){
   const g = state.game; if (!g) return;
   if (bRoom) bPush();
+  if (shownGid !== g.gid){ shownGid = g.gid; shownPts = {}; }
   scoresEl.replaceChildren(...state.teams.map((t,i) => h("div",{class:"score" + (g.turn === i ? " is-turn" : ""),style:"--tc:" + t.color},
     h("button",{class:"nm",type:"button",title:"اجعلوا الدور لهذا الفريق",onclick:() => { g.turn = i; g.armed = null; save(); renderScores(); renderTurn(); bPush(true); }},
       h("span",{class:"dot","aria-hidden":"true"}), tname(t,i)),
-    h("span",{class:"pts"}, fmt(g.scores[t.id] || 0)),
+    h("span",{class:"pts" + (shownPts[t.id] != null && shownPts[t.id] !== (g.scores[t.id] || 0) ? " bump" : "")}, fmt(g.scores[t.id] || 0)),
     tallyEl(wonBy(g, t.id)),
     helpChips(t.id),
     h("span",{class:"adj"},
       h("button",{type:"button","aria-label":"اخصم 100 من " + tname(t,i),onclick:() => adjust(t.id,-100)}, fmtS(-100)),
       h("button",{type:"button","aria-label":"أضف 100 إلى " + tname(t,i),onclick:() => adjust(t.id,100)}, fmtS(100)))
   )));
+  state.teams.forEach(t => { shownPts[t.id] = g.scores[t.id] || 0; });
 }
 function renderTurn(){
   const g = state.game; if (!g) return;
@@ -1342,6 +1726,13 @@ function renderQHelp(){
   if (cur.dblBack) bits.push("رجع الدبل إلى " + tnm(cur.dblBack) + ".");
   if (cur.two) bits.push(tnm(cur.two) + " يجيب جوابين.");
   $("q-help").textContent = bits.join(" ");
+  const stamp = $("q-stamp"), so = cur.steal ? teamOf(cur.steal) : null;
+  if (!so){ stamp.hidden = true; stamp.replaceChildren(); }
+  else if (stamp.hidden || stamp.dataset.k !== cur.key + cur.steal){
+    stamp.dataset.k = cur.key + cur.steal; stamp.style.setProperty("--tc", so.t.color);
+    stamp.replaceChildren(h("b",null,"سرقة!"), h("span",null,tname(so.t, so.i)));
+    stamp.hidden = false;
+  }
   $("q-help").hidden = false;
   const who = cur.revealed || cur.two ? null : cur.answerer, btn = $("q-two");
   btn.hidden = !(who && hasHelp(who, "two"));
@@ -1356,6 +1747,28 @@ function startAnswering(){
   bPush(true);
 }
 function adjust(id, d){ const g = state.game; g.scores[id] = (g.scores[id] || 0) + d; save(); renderScores(); }
+
+/* ===== the show: confetti for a right answer, a buzzer and a big X for a wrong one ===== */
+const calm = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch(e){ return false; } };
+function party(color, n){
+  if (calm()) return;
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--confetti").split(",").map(x => x.trim()).filter(Boolean);
+  const cols = (color ? [color, color] : []).concat(css.length ? css : ["#FFC93C","#F2672E","#D6336C","#FFF4DC","#4FA3E0"]);
+  const box = h("div",{class:"confetti","aria-hidden":"true"});
+  for (let k = 0; k < (n || 70); k++){
+    const x = Math.random() * 100, dx = (Math.random() - .5) * 30, r = Math.round(Math.random() * 720 - 360);
+    box.append(h("i",{style:"--x:" + x.toFixed(1) + "vw;--dx:" + dx.toFixed(1) + "vw;--r:" + r + "deg;--d:" + (Math.random() * .35).toFixed(2) + "s;--t:" + (1.3 + Math.random() * .9).toFixed(2) + "s;--c:" + cols[k % cols.length] + ";--w:" + (7 + Math.random() * 7).toFixed(0) + "px"}));
+  }
+  document.body.append(box);
+  setTimeout(() => box.remove(), 2800);
+}
+function chime(){ beep(784, .12, .13); setTimeout(() => beep(1047, .14, .13), 100); setTimeout(() => beep(1568, .28, .11), 210); }
+let bigT = 0;
+function bigX(){
+  beep(140, .6, .25);
+  const b = $("f-big"); b.hidden = false; b.style.animation = "none"; void b.offsetWidth; b.style.animation = "";
+  clearTimeout(bigT); bigT = setTimeout(() => { b.hidden = true; }, 950);
+}
 
 /* ===== sound + screen ===== */
 let actx = null;
@@ -1400,11 +1813,12 @@ function openQ(ci, ri){
   cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, swapped:false, skipped:null,
     owner, answerer:owner, steal:null, used:a || null, dbl:a ? a.team : null, dblBack:null, two:null};
   qover.querySelector(".qcard").append($("qflag")); flagCtx = "board"; $("flag-open").textContent = "في السؤال خطأ؟";
-  $("q-cat").textContent = g.cats[ci].name;
+  $("q-cat").replaceChildren(iconEl(g.cats[ci].slug), g.cats[ci].name);
   $("q-val").textContent = fmt(cur.value) + " نقطة";
   $("q-dd").hidden = !dd;
   fillQuestion();
   $("q-answer").hidden = true; $("q-pre").hidden = false; $("q-post").hidden = true;
+  qover.querySelector(".qcard").classList.remove("revealed");
   qover.hidden = false;
   startTimer();
   save(); renderScores();
@@ -1469,6 +1883,7 @@ function reveal(){
   stopTimer(); drawTimer();
   $("q-answer").hidden = false; $("q-pre").hidden = true; $("q-post").hidden = false;
   { const g = state.game, qid = g.cats[cur.ci].cells[cur.ri]; fbOpen("b:" + g.gid + ":" + cur.key + ":" + qid, qid, "board", g, $("q-post")); }
+  qover.querySelector(".qcard").classList.add("revealed");
   renderJudge(); renderQHelp();
   if (bRoom){ bPhase = "reveal"; bPush(true); }
   const first = document.querySelector("#judge .jt-ok"); if (first) first.focus();
@@ -1498,6 +1913,7 @@ function award(id){
   g.used[cur.key] = {by:id};
   passTurn(g);
   bLast = {team:id, pts:valFor(id)};
+  { const o = teamOf(id); party(o ? o.t.color : null, 70); chime(); }
   finish("correct", id);
   closeQ();
 }
@@ -1508,6 +1924,7 @@ function wrongAnswer(){
   g.used[cur.key] = {by:null};
   passTurn(g);
   bLast = {team:null, wrong:id, pts:cost};
+  bigX();
   finish("wrong", id);
   closeQ();
 }
@@ -1628,6 +2045,7 @@ function showEnd(){
   endMode = "board";
   endover.hidden = false;
   $("end-new").focus();
+  if (done){ party(ranked[0].t.color, 140); chime(); }
   if (done){ const scores = ranked.map(r => ({team: tname(r.t,r.i), points: r.p})); queue(() => store.ended(g, scores)); if (bRoom){ bPhase = "final"; bPush(true); } }
 }
 
@@ -1657,6 +2075,7 @@ function rankList(){
 function renderModes(){
   document.querySelectorAll("#modes [data-mode]").forEach(b => {
     const on = b.dataset.mode === state.mode;
+    if (!b.querySelector("svg")) b.prepend(iconEl("mode-" + b.dataset.mode));
     b.classList.toggle("is-on", on);
     b.setAttribute("aria-pressed", String(on));
     if (b.dataset.mode === "race" && !RACE_OK){ b.disabled = true; b.title = "متاح في نسخة الموقع"; }
@@ -1695,7 +2114,7 @@ function renderRaceSetup(){
   catsEl.replaceChildren(...BANK.map(c => {
     const on = state.racePicks.includes(c.slug), fresh = freshCount(c.slug);
     return h("button",{class:"catpick",type:"button","aria-pressed":String(on),"aria-label":c.name + "، " + qWord(fresh) + " لم تُلعب بعد",onclick:() => togglePick(c.slug)},
-      h("span",{class:"nm"}, c.name), h("span",{class:"fresh","aria-hidden":"true"}, fmt(fresh)));
+      iconEl(c.slug), h("span",{class:"nm"}, c.name), h("span",{class:"fresh","aria-hidden":"true"}, fmt(fresh)));
   }));
   $("cat-count").textContent = state.racePicks.length ? fmt(state.racePicks.length) + " مختارة" : "كل الفئات";
   const pool = racePool().length;
@@ -2124,12 +2543,12 @@ function bPublic(){
   if (g){
     // the board as phones see it: "" open, "x" no question, "-" nobody answered, or the id of the team that won it
     s.turn = state.teams[g.turn] ? state.teams[g.turn].id : null;
-    s.board = {gid:g.gid.slice(0, 8), cats:g.cats.map(c => c.name), vals:VALUES,
+    s.board = {gid:g.gid.slice(0, 8), cats:g.cats.map(c => c.name), slugs:g.cats.map(c => c.slug), vals:VALUES,
       cells:g.cats.map((c,ci) => VALUES.map((v,ri) => { const u = g.used[ci + "-" + ri]; return !c.cells[ri] ? "x" : u ? (u.by || "-") : ""; }))};
   }
   if (cur && g && (bPhase === "open" || bPhase === "reveal")){
     const rec = BY_ID[g.cats[cur.ci].cells[cur.ri]];
-    s.q = {key:bKey(), cat:g.cats[cur.ci].name, val:cur.value, text:rec.q.q, owner:cur.owner, answerer:cur.answerer, steal:cur.steal || null,
+    s.q = {key:bKey(), cat:g.cats[cur.ci].name, slug:g.cats[cur.ci].slug, val:cur.value, text:rec.q.q, owner:cur.owner, answerer:cur.answerer, steal:cur.steal || null,
       dbl:cur.dbl || null, dblBack:cur.dblBack || null, two:cur.two || null};
     if (bPhase === "reveal") s.q.answer = rec.q.a;
   }
@@ -2221,7 +2640,7 @@ function showBoardLobby(){ openBoardRoom(); show("lobby"); renderBoardLobby(); }
    Rounds ship inside the page (FEUD). Their rankings are an estimate, not a survey, and the setup card says so.
    The host types each guess; the screen matches it against every answer and its other spellings. */
 const scrFeud = $("scr-feud");
-let fUndo = [], fNew = new Set(), fBigT = 0;
+let fUndo = [], fNew = new Set();
 const AR_DIAC = /[ً-ٰٟـ]/g, ADIG = "٠١٢٣٤٥٦٧٨٩";
 function fnorm(s){
   s = String(s || "").toLowerCase().replace(AR_DIAC, "")
@@ -2342,11 +2761,7 @@ function fOpen(k, by){
   F.open[k] = by; F.bank += r.a[k].p * fMult(); fNew.add(k);
   beep(784, .12, .12); setTimeout(() => beep(1175, .22, .12), 110);
 }
-function fBuzz(){
-  beep(140, .6, .25);
-  const b = $("f-big"); b.hidden = false; b.style.animation = "none"; void b.offsetWidth; b.style.animation = "";
-  clearTimeout(fBigT); fBigT = setTimeout(() => { b.hidden = true; }, 950);
-}
+function fBuzz(){ bigX(); }
 function fGuess(text){
   const F = state.feud, r = fRound(); if (!F || !r || (F.phase !== "play" && F.phase !== "steal")) return;
   const said = String(text || "").trim().slice(0, 40);
