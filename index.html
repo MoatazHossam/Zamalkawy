@@ -1490,11 +1490,13 @@ function finish(outcome, teamId){
   entries.push({qid, outcome, value:teamId ? valFor(teamId) : cur.value, team: ti >= 0 ? tname(state.teams[ti], ti) : null, at});
   recordPlays(entries);
 }
+// teams take turns choosing: after every question the next team chooses, whoever answered it
+function passTurn(g){ g.turn = (g.turn + 1) % state.teams.length; }
 function award(id){
   const g = state.game; if (!g || !cur) return;
   g.scores[id] = (g.scores[id] || 0) + valFor(id);
   g.used[cur.key] = {by:id};
-  g.turn = Math.max(0, state.teams.findIndex(t => t.id === id));
+  passTurn(g);
   bLast = {team:id, pts:valFor(id)};
   finish("correct", id);
   closeQ();
@@ -1502,7 +1504,7 @@ function award(id){
 function nobody(){
   const g = state.game; if (!g || !cur) return;
   g.used[cur.key] = {by:null};
-  g.turn = (g.turn + 1) % state.teams.length;
+  passTurn(g);
   bLast = {team:null};
   finish("none", null);
   closeQ();
