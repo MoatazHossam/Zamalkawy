@@ -1003,9 +1003,15 @@ const store = {
     return rows.map(x => typeof x === "string" ? x : (x && x.inactive_feud_ids)).filter(Boolean);
   },
   async ended(g, scores){
-    if (!g.synced || !IN_CLAUDE) return;
-    const db = await dbPromise; if (!db) return;
-    await db.doc("games/" + g.gid).update({ended_at:new Date().toISOString(), scores});
+    if (!g.synced || g.endSent) return;
+    if (IN_CLAUDE){
+      const db = await dbPromise; if (!db) return;
+      await db.doc("games/" + g.gid).update({ended_at:new Date().toISOString(), scores});
+    } else {
+      const r = await fetch(SB.url + "/rpc/end_game", {method:"POST", headers:{"apikey":SB.key, "Content-Type":"application/json"}, body:JSON.stringify({p_game:g.gid, p_scores:scores})});
+      if (!r.ok) throw new Error("supabase " + r.status);
+    }
+    g.endSent = true; save();
   },
   async feedback(f){
     if (IN_CLAUDE){
@@ -2041,6 +2047,7 @@ function finishRace(){
     w.replaceChildren(...(winners.length === 1 ? ["مبروك يا ", h("span", null, winners[0].name), "!"] : ["تعادل بين " + winners.map(x => x.name).join(" و")]));
   }
   $("rank").replaceChildren(...ranked.map((r,k) => h("li", null, h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"nm"}, r.name), h("span",{class:"p"}, fmt(r.score)))));
+  { const scores = ranked.map(r => ({player:r.name, points:r.score})); queue(() => store.ended(R, scores)); }
   $("end-new").textContent = "سباق جديد بنفس الغرفة";
   $("end-back").textContent = "أغلقوا الغرفة";
   endMode = "race";
