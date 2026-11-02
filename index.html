@@ -479,6 +479,33 @@ body{
 .cb-del .linkish{color:var(--muted)}
 .clubbar .msg{flex-basis:100%;margin:0}
 .clubbar .msg:empty{display:none}
+/* the room bar: invite, regulars, the game-night history */
+.cb-invite,.cb-hist{flex-basis:100%;display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:2px dashed var(--line)}
+.cb-invite[hidden],.cb-hist[hidden]{display:none}
+.cb-inv-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.cb-k{color:var(--muted);font-weight:600}
+.cb-code{font-family:var(--f-show);font-weight:700;font-size:1.5rem;line-height:1.2;letter-spacing:.12em;background:var(--led);color:var(--led-ink);text-shadow:0 0 12px var(--led-glow);padding:4px 14px 2px;border-radius:10px;box-shadow:inset 0 0 0 2px var(--led-rim)}
+.cb-hist h3{margin:0;font-family:var(--f-show);font-weight:700;font-size:1.1rem;color:var(--cream)}
+.cb-wins{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;color:var(--muted)}
+.cb-win{padding:2px 12px 3px;border-radius:999px;background:var(--wash);box-shadow:inset 0 0 0 1.5px var(--line);color:var(--cream);font-weight:600}
+.cb-win.top{background:var(--hot);color:var(--hot-ink);box-shadow:none}
+.cb-win b{font-family:var(--f-show)}
+.cb-games{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.cb-games li{display:grid;grid-template-columns:minmax(0,11em) minmax(0,8em) minmax(0,1fr);gap:4px 14px;align-items:baseline;font-size:.95rem;padding:4px 0;border-bottom:1px solid var(--line)}
+.cb-games li:last-child{border-bottom:0}
+.cb-games .d{color:var(--muted)}
+.cb-games .m{color:var(--muted)}
+.cb-games .r{font-weight:600}
+@media (max-width:560px){.cb-games li{grid-template-columns:minmax(0,1fr) auto}.cb-games .r{grid-column:1 / -1}}
+.invcard{align-items:center}
+.invcard .qr{width:min(260px,100%)}
+.invcard .join-url{color:var(--card-muted)}
+/* the lobby: remove a player, regulars who have not come in yet */
+.players li{gap:6px}
+.players .rm{border:0;background:none;color:var(--muted);font:inherit;font-size:1.15rem;line-height:1;padding:2px 6px;border-radius:999px;cursor:pointer}
+.players .rm:hover{color:var(--bad);background:var(--wash)}
+.players li.reg{opacity:.62;box-shadow:inset 0 0 0 2px var(--line);background:transparent}
+
 /* the account dialog */
 .acctcard{text-align:start;gap:14px}
 .acctcard .end-w{text-align:center;font-size:clamp(1.6rem,4vw,2.2rem)}
@@ -877,6 +904,8 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
         <button class="primary" type="submit" id="club-make">أنشئوا الغرفة</button>
         <button class="linkish" type="button" id="club-new-x">إلغاء</button>
       </form>
+      <div class="cb-invite" id="club-invite" hidden></div>
+      <div class="cb-hist" id="club-hist" hidden></div>
       <div class="cb-del" id="club-del" hidden>
         <button class="linkish" type="button" id="club-del-ask"></button>
         <span id="club-del-q" hidden></span>
@@ -1118,6 +1147,18 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
       </form>
       <p class="flag-done" id="flag-done" hidden></p>
     </div>
+  </div>
+</div>
+
+<!-- ROOM INVITE -->
+<div class="over" id="inviteover" hidden role="dialog" aria-modal="true" aria-labelledby="inv-h" dir="rtl" lang="ar">
+  <div class="endcard invcard">
+    <h2 class="end-w" id="inv-h"></h2>
+    <p class="end-k">امسحوا الكود بكاميرا الموبايل، أو افتحوا الرابط. احفظوه، فهو نفسه كل سهرة.</p>
+    <div class="qr" id="inv-qr" role="img" aria-label="رمز QR لرابط الدعوة"></div>
+    <p class="join-url" id="inv-url"></p>
+    <p class="room-code" id="inv-code"></p>
+    <button class="ghost" type="button" id="inv-close">إغلاق</button>
   </div>
 </div>
 
@@ -1393,7 +1434,7 @@ function defaults(){
     feudRecent:[],
     feudFlagged:[],
     club:null,
-    clubs:{list:[], seen:{}, pending:[]}
+    clubs:{list:[], seen:{}, pending:[], hist:{}}
   };
 }
 function normalize(s){
@@ -1416,6 +1457,7 @@ function normalize(s){
   }
   const C = out.clubs;
   out.clubs = (C && typeof C === "object" && Array.isArray(C.list) && C.seen && typeof C.seen === "object" && Array.isArray(C.pending)) ? C : d.clubs;
+  if (!out.clubs.hist || typeof out.clubs.hist !== "object") out.clubs.hist = {};
   if (!(out.club && typeof out.club === "object" && typeof out.club.id === "string" && out.clubs.list.some(r => r.id === out.club.id))) out.club = null;
   out.raceSettings = Object.assign({}, d.raceSettings, s.raceSettings || {});
   if (out.mode !== "race" && out.mode !== "feud") out.mode = "board";
@@ -1425,12 +1467,12 @@ function normalize(s){
     && Number.isInteger(F.i) && F.i >= 0 && F.i < F.rounds.length && F.scores && typeof F.scores === "object" && F.open && typeof F.open === "object";
   if (!feudOk) out.feud = null; else if (!Array.isArray(F.logged)) F.logged = [];
   const r = out.race;
-  const raceOk = r && typeof r === "object" && /^\d{4}$/.test(r.code || "") && Array.isArray(r.rounds) && r.rounds.every(x => x && BY_ID[x.qid] && (r.style === "buzz" || Array.isArray(x.opts)))
+  const raceOk = r && typeof r === "object" && /^\d{4}(\d{2})?$/.test(r.code || "") && Array.isArray(r.rounds) && r.rounds.every(x => x && BY_ID[x.qid] && (r.style === "buzz" || Array.isArray(x.opts)))
     && r.players && typeof r.players === "object" && r.phase !== "closed" && (Date.now() - (r.createdAt || 0)) < 12 * 3600 * 1000;
   if (!raceOk) out.race = null;
   else if (!Array.isArray(r.out)) Object.assign(r, {buzz:null, out:[], round:0, openAt:0, left:0});
   const B = out.broom;
-  if (!(B && typeof B === "object" && /^\d{4}$/.test(B.code || "") && B.players && typeof B.players === "object" && (Date.now() - (B.createdAt || 0)) < 12 * 3600 * 1000)) out.broom = null;
+  if (!(B && typeof B === "object" && /^\d{4}(\d{2})?$/.test(B.code || "") && B.players && typeof B.players === "object" && (Date.now() - (B.createdAt || 0)) < 12 * 3600 * 1000)) out.broom = null;
   return out;
 }
 let state = defaults();
@@ -1472,6 +1514,7 @@ function queue(fn){ chain = chain.then(fn).catch(() => {}); return chain; }
 const store = {
   async gameStarted(g, teams, cats, mode){
     mode = mode || "board";
+    noteClubGame(g, mode);
     if (IN_CLAUDE){
       const db = await dbPromise; if (!db) return;
       await db.doc("games/" + g.gid).set({started_at:new Date().toISOString(), mode, bank:BRAND.bankLabel, teams, categories:cats, plays:[]});
@@ -1608,6 +1651,9 @@ let refreshing = null;
 function refreshSess(){
   if (!refreshing) refreshing = (async () => {
     if (!sess || !sess.refresh) throw new Error("no-session");
+    // another tab of this page may have renewed the session already: its refresh token replaced ours
+    const st = readSess();
+    if (st && st.refresh !== sess.refresh){ sess = st; if (Date.now() < sess.exp - 60000) return; }
     try { keepSess(await authCall("token?grant_type=refresh_token", {refresh_token:sess.refresh})); }
     catch(e){ if (e.status === 400 || e.status === 401 || e.status === 403) signedOut(); throw e; }   // the session is over
   })().finally(() => { refreshing = null; });
@@ -1627,7 +1673,7 @@ async function api(path, opts){
 }
 function signedOut(){
   sess = null; writeSess();
-  state.club = null; state.clubs = {list:[], seen:{}, pending:[]};
+  state.club = null; state.clubs = {list:[], seen:{}, pending:[], hist:{}};
   save(); renderAcct(); renderSetup();
 }
 function authMsg(e){
@@ -1679,8 +1725,8 @@ let clubBusy = null, clubErr = "";
 async function loadClubs(){
   if (!HOSTED || !sess) return;
   try {
-    const rows = await api("/rooms?brand_id=eq." + SB.brand + "&select=id,name,teams&order=last_played_at.desc.nullslast,created_at.desc");
-    state.clubs.list = rows.map(r => ({id:r.id, name:r.name, teams:Array.isArray(r.teams) ? r.teams : null}));
+    const rows = await api("/rooms?brand_id=eq." + SB.brand + "&select=id,name,teams,invite,players&order=last_played_at.desc.nullslast,created_at.desc");
+    state.clubs.list = rows.map(clubRow);
     if (state.club){
       const c = state.clubs.list.find(r => r.id === state.club.id);
       if (c) state.club.name = c.name; else state.club = null;   // deleted on another device
@@ -1690,8 +1736,109 @@ async function loadClubs(){
     flushSeen();
   } catch(e){ clubErr = sess ? "list" : ""; renderSetup(); }
 }
+const clubRow = r => ({id:r.id, name:r.name, teams:Array.isArray(r.teams) ? r.teams : null, invite:/^\d{6}$/.test(r.invite || "") ? r.invite : null,
+  players:Array.isArray(r.players) ? r.players.filter(x => x && typeof x.name === "string").slice(0, 60) : []});
+const clubOf = id => state.clubs.list.find(r => r.id === id) || null;
+/* the room's games, newest first, for the game-night history; what this device just played is kept until the database has it */
+async function loadClubHist(id){
+  try {
+    const rows = await api("/games?room_id=eq." + id + "&select=id,mode,started_at,ended_at,scores&order=started_at.desc&limit=200");
+    const got = rows.map(r => ({id:r.id, mode:r.mode, at:r.started_at, ended:!!r.ended_at, scores:Array.isArray(r.scores) ? r.scores : null}));
+    const known = new Set(got.map(x => x.id));
+    const mine = (state.clubs.hist[id] || []).filter(x => !known.has(x.id) && Date.now() - Date.parse(x.at) < 2 * 86400000);
+    state.clubs.hist[id] = mine.concat(got).sort((a,b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 200);
+    save(); renderSetup();
+  } catch(e){}
+}
+function noteClubGame(g, mode){
+  if (!g.club) return;
+  const h = state.clubs.hist[g.club] = state.clubs.hist[g.club] || [];
+  if (!h.some(x => x.id === g.gid)) h.unshift({id:g.gid, mode, at:new Date().toISOString(), ended:false, scores:null});
+  save();
+}
+function noteClubEnd(g, mode, scores){
+  if (!g.club) return;
+  noteClubGame(g, mode);
+  const x = state.clubs.hist[g.club].find(y => y.id === g.gid);
+  x.ended = true; x.scores = scores; save();
+}
+// who won a finished game: the one top score, or nobody on a tie
+function gameWinner(x){
+  if (!x.ended || !Array.isArray(x.scores) || !x.scores.length) return null;
+  const s = x.scores.slice().sort((a,b) => (b.points || 0) - (a.points || 0));
+  if (s.length > 1 && (s[0].points || 0) === (s[1].points || 0)) return null;
+  return String(s[0].team || s[0].player || "") || null;
+}
+function clubWins(id){
+  const w = {};
+  (state.clubs.hist[id] || []).forEach(x => { const n = gameWinner(x); if (n) w[n] = (w[n] || 0) + 1; });
+  return Object.entries(w).sort((a,b) => b[1] - a[1]);
+}
+function clubWinLine(g){
+  if (!g || !g.club) return "";
+  const c = clubOf(g.club), x = (state.clubs.hist[g.club] || []).find(y => y.id === g.gid), who = x && gameWinner(x);
+  if (!c || !who) return "";
+  const n = (clubWins(g.club).find(([k]) => k === who) || [0, 0])[1];
+  return n === 1 ? "أول فوز لـ«" + who + "» في «" + c.name + "»" : "الفوز رقم " + fmt(n) + " لـ«" + who + "» في «" + c.name + "»";
+}
+/* the room's regular players: remembered by the phone's id or, from a new phone, by name; with the team's place */
+const sameName = (a, b) => fnorm(a) === fnorm(b);
+function clubMember(club, pid, name){
+  const c = clubOf(club); if (!c) return null;
+  return c.players.find(x => x.pid === pid) || c.players.find(x => sameName(x.name, name)) || null;
+}
+function rememberPlayer(club, pid, name, teamId){
+  const c = clubOf(club); if (!c || !name) return;
+  const idx = state.teams.findIndex(t => t.id === teamId), team = idx >= 0 ? idx : null;
+  let x = c.players.find(y => y.pid === pid) || c.players.find(y => sameName(y.name, name));
+  if (x){ if (x.pid === pid && x.name === name && x.team === team) return; Object.assign(x, {pid, name, team}); }
+  else { c.players.push({pid, name, team}); if (c.players.length > 60) c.players.shift(); }
+  saveClubPlayers(club);
+}
+function forgetPlayer(club, pid, name){
+  const c = clubOf(club); if (!c) return;
+  c.players = c.players.filter(y => y.pid !== pid && !sameName(y.name, name));
+  saveClubPlayers(club);
+}
+const playerSaves = {};
+function saveClubPlayers(club){
+  save();
+  if (!sess) return;
+  clearTimeout(playerSaves[club]);
+  playerSaves[club] = setTimeout(() => {
+    const c = clubOf(club); if (!c) return;
+    const list = c.players.map(x => ({pid:String(x.pid).slice(0, 64), name:String(x.name).slice(0, 16), team:x.team}));
+    queue(() => api("/rooms?id=eq." + club, {method:"PATCH", prefer:"return=minimal", body:{players:list}}));
+  }, 1200);
+}
+function inviteUrl(){ const c = clubOn() && clubOf(state.club.id); return c && c.invite ? joinUrl(c.invite) : ""; }
+async function shareInvite(){
+  const c = clubOf(state.club.id), url = inviteUrl(); if (!url) return;
+  try {
+    if (navigator.share){ await navigator.share({title:document.title, text:"ادخلوا غرفة «" + c.name + "»", url}); return; }
+    await navigator.clipboard.writeText(url);
+    setMsg($("club-msg"), "اتنسخ رابط الدعوة. ابعتوه للشلة مرة واحدة، وكل سهرة يفتحوه بس.");
+  } catch(e){ if (!(e && e.name === "AbortError")) showInvite(); }
+}
+function showInvite(){
+  const c = clubOf(state.club.id), url = inviteUrl(); if (!url) return;
+  $("inv-h").textContent = "دعوة «" + c.name + "»";
+  $("inv-code").textContent = c.invite;
+  $("inv-code").setAttribute("aria-label", "رقم الغرفة " + c.invite.split("").join(" "));
+  $("inv-url").textContent = url.replace(/^https?:\/\//, "");
+  const box = $("inv-qr");
+  try { const qr = qrcode(0, "M"); qr.addData(url); qr.make(); box.innerHTML = qr.createSvgTag({cellSize:4, margin:2, scalable:true}); box.hidden = false; }
+  catch(e){ box.hidden = true; }
+  invBack = document.activeElement;
+  $("inviteover").hidden = false; $("inv-close").focus();
+}
+let invBack = null;
+function closeInvite(){ $("inviteover").hidden = true; if (invBack && invBack.focus) invBack.focus(); }
+const MODE_NAME = {board:"لوحة الفئات", speed_race:"سباق السرعة", feud:"أشهر إجابة"};
+const dayFmt = new Intl.DateTimeFormat("ar-EG", {weekday:"long", day:"numeric", month:"long"});
 async function loadClubSeen(id){
   clubBusy = id; renderSetup();
+  loadClubHist(id);
   try {
     const s = {q:[], f:[]}, page = 1000;
     for (let from = 0; ; from += page){
@@ -1720,10 +1867,11 @@ function pickClub(id){
 }
 async function createClub(name){
   const first = !state.clubs.list.length;
-  const rows = await api("/rooms?select=id,name,teams", {method:"POST", prefer:"return=representation",
+  const rows = await api("/rooms?select=id,name,teams,invite,players", {method:"POST", prefer:"return=representation",
     body:{brand_id:SB.brand, name, teams:state.teams.map((t,i) => tname(t,i)).slice(0, 6)}});
   const r = rows[0];
-  state.clubs.list.unshift({id:r.id, name:r.name, teams:Array.isArray(r.teams) ? r.teams : null});
+  state.clubs.list.unshift(clubRow(r));
+  state.clubs.hist[r.id] = [];
   state.clubs.seen[r.id] = {q:[], f:[]};
   state.club = {id:r.id, name:r.name};
   // the first room takes over what this device has played, so nothing repeats right after signing in
@@ -1765,7 +1913,7 @@ function renderClub(){
   if (!sess){
     hint.textContent = "تلعبون كضيوف: الأسئلة التي لُعبت محفوظة على هذا الجهاز فقط. سجّلوا الدخول لتنشئوا غرفة لشلتكم لا تتكرر فيها الأسئلة على أي جهاز.";
     pick.replaceChildren(h("button",{class:"cb-chip cb-add",type:"button",onclick:() => openAcct()}, "تسجيل الدخول"));
-    $("club-del").hidden = true;
+    $("club-del").hidden = true; renderClubExtras(null);
     return;
   }
   const list = state.clubs.list, cur = clubOn() ? state.club : null;
@@ -1787,11 +1935,38 @@ function renderClub(){
     clubForm ? null : h("button",{class:"cb-chip cb-add",type:"button",onclick:() => { clubForm = true; renderClub(); $("club-name").focus(); }}, "+ غرفة جديدة")
   ].filter(Boolean));
   $("club-del").hidden = !cur || clubForm;
+  renderClubExtras(cur);
   if (cur){
     $("club-del-ask").textContent = "احذفوا «" + cur.name + "»";
     $("club-del-q").textContent = "سيُحذف سجلها كله. متأكدون؟";
     $("club-del-ask").hidden = clubDel; ["club-del-q","club-del-yes","club-del-no"].forEach(x => { $(x).hidden = !clubDel; });
   }
+}
+
+function renderClubExtras(cur){
+  const inv = $("club-invite"), hist = $("club-hist"), c = cur && clubOf(cur.id);
+  inv.hidden = !c || clubForm; hist.hidden = !c || clubForm;
+  if (!c || clubForm){ inv.replaceChildren(); hist.replaceChildren(); return; }
+  const regs = c.players.map(x => x.name);
+  inv.replaceChildren(
+    h("div",{class:"cb-inv-row"},
+      h("span",{class:"cb-k"}, "دعوة اللاعبين"),
+      c.invite ? h("b",{class:"cb-code",dir:"ltr"}, c.invite) : h("span",{class:"cb-k"}, "…"),
+      c.invite ? h("button",{class:"cb-chip cb-add",type:"button",onclick:shareInvite}, navigator.share ? "شاركوا رابط الدعوة" : "انسخوا رابط الدعوة") : null,
+      c.invite ? h("button",{class:"cb-chip",type:"button",onclick:showInvite}, "اعرضوا الكود") : null),
+    h("p",{class:"hint"}, regs.length
+      ? "اللاعبون المعتادون (" + fmt(regs.length) + "): " + regs.slice(0, 8).join("، ") + (regs.length > 8 ? "…" : "") + ". يدخلون فرقهم وحدهم."
+      : "ابعتوا الرابط للشلة مرة واحدة: كل سهرة يفتحونه فيدخلون وحدهم أول ما تبدأ اللعبة، ويتذكرهم كل واحد في فريقه."));
+  const games = state.clubs.hist[c.id] || [], wins = clubWins(c.id);
+  if (!games.length){ hist.replaceChildren(h("h3", null, "آخر السهرات"), h("p",{class:"hint"}, "لم تُلعب في هذه الغرفة لعبة بعد.")); return; }
+  hist.replaceChildren(
+    h("h3", null, "آخر السهرات"),
+    wins.length ? h("p",{class:"cb-wins"}, "الأكثر فوزًا: ", ...wins.slice(0, 4).map(([n,k], i) => h("span",{class:"cb-win" + (i ? "" : " top")}, n + " ", h("b", null, fmt(k))))) : null,
+    h("ol",{class:"cb-games"}, ...games.slice(0, 5).map(x => {
+      const who = gameWinner(x), s = Array.isArray(x.scores) ? x.scores.slice().sort((a,b) => (b.points || 0) - (a.points || 0)) : [];
+      return h("li", null, h("span",{class:"d"}, dayFmt.format(new Date(x.at))), h("span",{class:"m"}, MODE_NAME[x.mode] || ""),
+        h("span",{class:"r"}, !x.ended ? "لم تكتمل" : who ? "فاز «" + who + "»" + (s.length > 1 ? " (" + s.slice(0, 3).map(y => fmt(y.points || 0)).join(" – ") + ")" : "") : "تعادل"));
+    })));
 }
 
 /* the account dialog */
@@ -1834,7 +2009,7 @@ async function submitAcct(e){
       keepSess(j);
     } else keepSess(await authCall("token?grant_type=password", {email, password}));
     $("acct-pass").value = "";
-    state.clubs = {list:[], seen:{}, pending:[]};
+    state.clubs = {list:[], seen:{}, pending:[], hist:{}};
     closeAcct(); renderAcct(); renderSetup();
     queue(loadClubs);
   } catch(err){ setMsg(msg, authMsg(err), true); }
@@ -1867,6 +2042,8 @@ function bindClubs(){
     } catch(err){ setMsg($("club-msg"), err && err.info && /room limit/.test(err.info.message || "") ? "وصلتم إلى أقصى عدد من الغرف." : err instanceof TypeError ? "لا يوجد اتصال بالإنترنت." : "تعذّر إنشاء الغرفة. جرّبوا مرة أخرى.", true); }
     finally { $("club-make").disabled = false; }
   });
+  $("inv-close").addEventListener("click", closeInvite);
+  $("inviteover").addEventListener("click", e => { if (e.target === $("inviteover")) closeInvite(); });
   $("club-del-ask").addEventListener("click", () => { clubDel = true; renderClub(); $("club-del-no").focus(); });
   $("club-del-no").addEventListener("click", () => { clubDel = false; renderClub(); $("club-del-ask").focus(); });
   $("club-del-yes").addEventListener("click", async () => {
@@ -2565,7 +2742,7 @@ function showEnd(){
   endMode = "board";
   endover.hidden = false;
   $("end-new").focus();
-  if (done){ party(ranked[0].t.color, 140); chime(); }
+  if (done){ party(ranked[0].t.color, 140); chime(); noteClubEnd(g, "board", ranked.map(r => ({team:tname(r.t,r.i), points:r.p}))); const l = clubWinLine(g); if (l) $("end-k").textContent += " · " + l; }
   if (done){ const scores = ranked.map(r => ({team: tname(r.t,r.i), points: r.p})); queue(() => store.ended(g, scores)); if (bRoom){ bPhase = "final"; bPush(true); } }
 }
 
@@ -2681,9 +2858,16 @@ function openRoom(){
   const pool = racePool();
   if (pool.length < 4){ setMsg($("setup-msg"), "لا توجد أسئلة كافية في هذه الفئات.", true); return; }
   primeAudio();
-  state.race = newRace(String(1000 + Math.floor(Math.random() * 9000)), {});
+  const code = clubCode() || String(1000 + Math.floor(Math.random() * 9000));
+  if (bRoom && state.broom && state.broom.code === code) closeBoardRoom(true);
+  if (room){ room.close(); room = null; }
+  state.race = newRace(code, {});
   save();
   connectRoom(); renderLobby(); show("lobby");
+}
+// a race still listening on the saved room's code steps aside for the board, without telling the phones it closed
+function quietRace(code){
+  if (state.race && state.race.code === code && room){ room.close(); room = null; clearInterval(rPulse); clearInterval(rTick); }
 }
 function connectRoom(){
   const R = state.race; if (!R) return;
@@ -2985,7 +3169,7 @@ function finishRace(){
     w.replaceChildren(...(winners.length === 1 ? ["مبروك يا ", h("span", null, winners[0].name), "!"] : ["تعادل بين " + winners.map(x => x.name).join(" و")]));
   }
   $("rank").replaceChildren(...ranked.map((r,k) => h("li", null, h("span",{class:"pos"}, fmt(k + 1)), h("span",{class:"nm"}, r.name), h("span",{class:"p"}, fmt(r.score)))));
-  { const scores = ranked.map(r => ({player:r.name, points:r.score})); queue(() => store.ended(R, scores)); }
+  { const scores = ranked.map(r => ({player:r.name, points:r.score})); noteClubEnd(R, "speed_race", scores); const l = clubWinLine(R); if (l) $("end-k").textContent += " · " + l; queue(() => store.ended(R, scores)); }
   $("end-new").textContent = "سباق جديد بنفس الغرفة";
   $("end-back").textContent = "أغلقوا الغرفة";
   endMode = "race";
@@ -3027,10 +3211,15 @@ function drawJoin(code){
   try { const qr = qrcode(0, "M"); qr.addData(url); qr.make(); box.innerHTML = qr.createSvgTag({cellSize:4, margin:2, scalable:true}); box.hidden = false; }
   catch(e){ box.hidden = true; }
 }
+function clubCode(){ const c = clubOn() && clubOf(state.club.id); return c && c.invite ? c.invite : null; }
 function openBoardRoom(){
   if (!RACE_OK) return null;
   let R = state.broom;
-  if (!R){ R = state.broom = {code:String(1000 + Math.floor(Math.random() * 9000)), rid:uuid().slice(0, 8), createdAt:Date.now(), players:{}}; save(); }
+  // in a saved room the phones use its invite code; a one-off game gets a fresh 4-digit code
+  const want = clubCode();
+  if (R && (want ? R.code !== want : !!R.club)){ closeBoardRoom(true); R = null; }
+  if (want) quietRace(want);
+  if (!R){ R = state.broom = {code:want || String(1000 + Math.floor(Math.random() * 9000)), rid:uuid().slice(0, 8), createdAt:Date.now(), players:{}, club:want ? state.club.id : null, kicked:[]}; save(); }
   if (!bRoom){
     bConn = "connecting";
     bRoom = liveRoom({topic:raceTopic(R.code), onMessage:onBoardPhone, onStatus:s => { bConn = s; renderConn(); if (s === "open") bPush(true); }});
@@ -3038,8 +3227,9 @@ function openBoardRoom(){
   }
   return R;
 }
-function closeBoardRoom(){
-  if (bRoom && state.broom){ bPhase = "closed"; const r = bRoom; r.send("state", bPublic()); setTimeout(() => r.close(), 600); }
+function closeBoardRoom(quiet){
+  // quiet: the same invite code is about to carry another game, so the phones are not told the room closed
+  if (bRoom && state.broom){ const r = bRoom; if (!quiet){ bPhase = "closed"; r.send("state", bPublic()); setTimeout(() => r.close(), 600); } else r.close(); }
   bRoom = null; clearInterval(bPulse); clearTimeout(bSendT); bSendT = 0;
   state.broom = null; save(); renderRoomChip(); renderBuzz();
 }
@@ -3058,7 +3248,7 @@ function bPublic(){
     teams:state.teams.map((t,i) => ({id:t.id, name:tname(t,i), color:t.color, score:g ? (g.scores[t.id] || 0) : 0, won:g ? wonBy(g, t.id) : 0,
       helps:g ? HELP_KINDS.filter(k => hasHelp(t.id, k)) : []})),
     players:R ? Object.entries(R.players).map(([id,p]) => ({id, name:p.name, team:p.team || null})) : [], last:bLast,
-    helps:helpsOn(), armed:armedNow()};
+    helps:helpsOn(), armed:armedNow(), kicked:R && R.kicked ? R.kicked : [], roomName:R && R.club && clubOf(R.club) ? clubOf(R.club).name : null};
   if (g){
     // the board as phones see it: "" open, "x" no question, "-" nobody answered, or the id of the team that won it
     s.turn = state.teams[g.turn] ? state.teams[g.turn].id : null;
@@ -3096,8 +3286,15 @@ function onBoardPhone(ev, p){
     const fresh = Date.now() - (seen[p.pid] || 0) > 6000;
     seen[p.pid] = Date.now();
     const pl = R.players[p.pid];
-    if (!pl){ if (Object.keys(R.players).length >= 40) return; R.players[p.pid] = {name, team}; save(); beep(1046, .08, .08); }
-    else if (pl.name !== name || (!pl.team && team)){ pl.name = name; if (!pl.team) pl.team = team; save(); }
+    if ((R.kicked || []).includes(p.pid)){ bPush(); return; }
+    if (!pl){
+      if (Object.keys(R.players).length >= 40) return;
+      // a regular of this room goes straight into their usual team
+      const mem = R.club ? clubMember(R.club, p.pid, name) : null, mt = mem && mem.team != null && state.teams[mem.team] ? state.teams[mem.team].id : null;
+      R.players[p.pid] = {name, team:mt || team}; save(); beep(1046, .08, .08);
+      if (R.club && (mt || team)) rememberPlayer(R.club, p.pid, name, mt || team);
+    }
+    else if (pl.name !== name || (!pl.team && team)){ pl.name = name; if (!pl.team) pl.team = team; save(); if (R.club && pl.team) rememberPlayer(R.club, p.pid, pl.name, pl.team); }
     else if (!fresh) return;
     renderBoardLobby(); renderRoomChip(); bPush();
     return;
@@ -3143,14 +3340,23 @@ function renderBoardLobby(){
   drawJoin(R.code);
   $("r-plan").textContent = "كل واحد يدخل باسمه ويختار فريقه، واللوحة تظهر على موبايله. الفريق اللي عليه الدور يختار السؤال من الموبايل." +
     (autoOn() ? " وبعدها يختار الإجابة من ٤ اختيارات، والنظام يحكم." : " ويقدر يكتب إجابته من الموبايل.") +
-    (helpsOn() ? " وأي فريق معاه «سرقة السؤال» يقدر يسرقه من موبايله أول ما يظهر." : "") + " لو حد اختار فريق غلط، اضغطوا على اسمه هنا لنقله.";
+    (helpsOn() ? " وأي فريق معاه «سرقة السؤال» يقدر يسرقه من موبايله أول ما يظهر." : "") + " لو حد اختار فريق غلط، اضغطوا على اسمه هنا لنقله." +
+    (R.club ? " واللي لعبوا في الغرفة قبل كده بيدخلوا فرقهم لوحدهم." : "");
   const now = Date.now(), list = Object.entries(R.players);
+  const c = R.club ? clubOf(R.club) : null;
+  const away = c ? c.players.filter(x => !R.players[x.pid] && !list.some(([,p]) => sameName(p.name, x.name))) : [];
   $("r-players").replaceChildren(...list.map(([id,p]) => {
     const tm = teamOf(p.team);
     return h("li",{class:now - (seen[id] || 0) < 12000 ? null : "off",style:tm ? "--tc:" + tm.t.color : null},
       h("button",{class:"mv",type:"button","aria-label":p.name + "، " + (tm ? tname(tm.t, tm.i) : "بدون فريق") + ". اضغطوا لنقله إلى فريق آخر",onclick:() => movePlayer(id)},
         tm ? h("span",{class:"dot","aria-hidden":"true"}) : null, p.name,
-        h("span",{class:"tm"}, tm ? tname(tm.t, tm.i) : "لسه ما اختارش فريق")));
+        h("span",{class:"tm"}, tm ? tname(tm.t, tm.i) : "لسه ما اختارش فريق")),
+      h("button",{class:"rm",type:"button","aria-label":"شيلوا " + p.name + " من الغرفة",title:"شيلوه من الغرفة",onclick:() => removePlayer(id)}, "×"));
+  }), ...away.map(x => {
+    const tm = x.team != null && state.teams[x.team] ? {t:state.teams[x.team], i:x.team} : null;
+    return h("li",{class:"off reg",style:tm ? "--tc:" + tm.t.color : null},
+      h("span",{class:"mv"}, tm ? h("span",{class:"dot","aria-hidden":"true"}) : null, x.name, h("span",{class:"tm"}, (tm ? tname(tm.t, tm.i) + "، " : "") + "لسه ما دخلش")),
+      h("button",{class:"rm",type:"button","aria-label":"انسوا " + x.name + " في هذه الغرفة",title:"انسوه في الغرفة",onclick:() => { forgetPlayer(R.club, x.pid, x.name); renderBoardLobby(); }}, "×"));
   }));
   $("r-pcount").textContent = fmt(list.length);
   $("r-start").textContent = state.game && Object.keys(state.game.used).length ? "ارجعوا إلى اللوحة" : "ابدأوا اللعب";
@@ -3161,6 +3367,14 @@ function movePlayer(id){
   const R = state.broom, pl = R && R.players[id]; if (!pl || !state.teams.length) return;
   const i = state.teams.findIndex(t => t.id === pl.team);
   pl.team = state.teams[(i + 1) % state.teams.length].id;
+  if (R.club) rememberPlayer(R.club, id, pl.name, pl.team);
+  save(); renderBoardLobby(); renderRoomChip(); bPush(true);
+}
+function removePlayer(id){
+  const R = state.broom, pl = R && R.players[id]; if (!pl) return;
+  delete R.players[id];
+  R.kicked = (R.kicked || []).concat(id).slice(-60);
+  if (R.club) forgetPlayer(R.club, id, pl.name);
   save(); renderBoardLobby(); renderRoomChip(); bPush(true);
 }
 function renderRoomChip(){
@@ -3418,7 +3632,7 @@ function showFeudEnd(){
   $("end-new").textContent = "لعبة جديدة";
   endMode = "feud";
   endover.hidden = false; $("end-new").focus();
-  if (done){ const scores = ranked.map(x => ({team: tname(x.t,x.i), points: x.p})); queue(() => store.ended(F, scores)); }
+  if (done){ const scores = ranked.map(x => ({team: tname(x.t,x.i), points: x.p})); noteClubEnd(F, "feud", scores); const l = clubWinLine(F); if (l) $("end-k").textContent += " · " + l; queue(() => store.ended(F, scores)); }
 }
 
 /* ===== wiring ===== */
@@ -3510,6 +3724,7 @@ function bind(){
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
     if (!$("acctover").hidden){ closeAcct(); return; }
+    if (!$("inviteover").hidden){ closeInvite(); return; }
     if (!qover.hidden && cur && !cur.revealed) cancelQ();
     else if (!endover.hidden && endMode !== "race") endover.hidden = true;
   });
