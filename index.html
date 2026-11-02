@@ -454,6 +454,47 @@ body{
 .actions .primary{font-size:1.6rem;padding:17px 40px 15px}
 .fest{border-inline-start-color:var(--tile)}
 
+/* the account button and the room bar */
+.acct{display:inline-flex;align-items:center;gap:8px;font:inherit;font-weight:600;font-size:.95rem;padding:8px 16px 9px;border-radius:999px;border:0;cursor:pointer;
+  background:var(--wash);color:var(--cream);box-shadow:inset 0 0 0 2px var(--line)}
+.acct:hover{box-shadow:inset 0 0 0 2px var(--line-strong)}
+.acct .ico{width:20px;height:20px}
+.clubbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:14px 20px;border-radius:20px;background:var(--panel);box-shadow:inset 0 0 0 2px var(--line),0 10px 24px rgba(0,0,0,.14)}
+.clubbar[hidden]{display:none}
+.cb-text{flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cb-text h2{margin:0;font-family:var(--f-show);font-weight:700;font-size:1.35rem;line-height:1.3;color:var(--tile)}
+.cb-text .hint{max-width:none}
+.cb-pick{display:flex;flex-wrap:wrap;gap:8px}
+.cb-chip{font:inherit;font-weight:600;font-size:1rem;padding:8px 16px 9px;border-radius:999px;border:0;cursor:pointer;background:var(--wash);color:var(--cream);box-shadow:inset 0 0 0 2px var(--line)}
+.cb-chip:hover{box-shadow:inset 0 0 0 2px var(--line-strong)}
+.cb-chip[aria-pressed="true"]{background:var(--hot);color:var(--hot-ink);box-shadow:0 4px 0 var(--hot-deep)}
+.cb-chip.cb-add{background:linear-gradient(var(--tile-hi),var(--tile) 55%,var(--tile-lo));color:var(--tile-ink);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 var(--tile-edge)}
+.cb-new{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.cb-new[hidden],.cb-del[hidden]{display:none}
+.cb-new label{color:var(--muted);font-size:.92rem}
+.cb-new input{flex:1 1 220px;min-width:0;font-size:1.1rem;padding:10px 14px;border-radius:12px;border:0;background:var(--night);box-shadow:inset 0 0 0 2px var(--line-strong)}
+.cb-new input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--tile)}
+.cb-new .primary{font-size:1.15rem;padding:11px 22px 10px}
+.cb-del{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;font-size:.9rem;color:var(--muted)}
+.cb-del .linkish{color:var(--muted)}
+.clubbar .msg{flex-basis:100%;margin:0}
+.clubbar .msg:empty{display:none}
+/* the account dialog */
+.acctcard{text-align:start;gap:14px}
+.acctcard .end-w{text-align:center;font-size:clamp(1.6rem,4vw,2.2rem)}
+.acctcard .end-k{text-align:center}
+.acct-seg{align-self:center;display:flex;justify-content:center;width:max-content;margin:0 auto}
+.acctform{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.acctform label{font-size:.95rem;color:var(--card-muted)}
+.acctform label[hidden],.acctform input[hidden]{display:none}
+.acctform input{width:100%;font-size:1.15rem;padding:11px 14px;border-radius:12px;border:2px solid var(--card-line);background:var(--field);color:var(--card-ink)}
+.acctform input:focus{outline:none;border-color:var(--sign)}
+.acctform .primary{margin-top:8px}
+.acct-in{display:flex;flex-direction:column;align-items:center;gap:12px}
+.acctcard .msg{text-align:center;color:var(--card-muted);min-height:1.6em}
+.acctcard .msg.is-err{color:var(--bad)}
+.acctcard .linkish{align-self:center;color:var(--card-muted)}
+
 /* ---------- game screen: the board ---------- */
 /* during a game the header shrinks and the board and podiums share one screen */
 .app[data-scr="board"],.app[data-scr="feud"]{gap:12px;padding-block:12px 20px}
@@ -764,6 +805,11 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
 #v-buzz .qtext,#v-q .qtext{box-shadow:0 0 0 3px var(--zr)}
 .bar i{background:var(--zr)}
 #g-scores li.mine,#w-scores li.mine,#f-rank li.mine{box-shadow:0 0 0 3px var(--ink),0 4px 0 rgba(0,0,0,.18)}
+/* the room bar */
+.cb-text h2{color:var(--zr)}
+.cb-chip.cb-add{background:#fff;color:var(--zr);box-shadow:inset 0 0 0 2px var(--zr),0 4px 0 var(--zr-deep)}
+.cb-new input:focus{box-shadow:inset 0 0 0 2px var(--zr)}
+.cb-new input{background:var(--field)}
 
 /* the game screen on a phone-sized window: the board fits the width instead of scrolling sideways
    (after the brand theme, so it wins over the theme's larger sizes) */
@@ -791,10 +837,31 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
       <button class="mode" type="button" data-mode="race">سباق السرعة</button>
       <button class="mode" type="button" data-mode="feud">أشهر إجابة</button>
     </nav>
+    <button class="acct" id="acct" type="button" hidden></button>
   </header>
 
   <!-- SETUP -->
   <main id="scr-setup" class="setup">
+    <section class="clubbar" id="clubbar" hidden aria-labelledby="h-club">
+      <div class="cb-text">
+        <h2 id="h-club">الغرفة</h2>
+        <p class="hint" id="club-hint"></p>
+      </div>
+      <div class="cb-pick" id="club-pick" role="group" aria-labelledby="h-club"></div>
+      <form class="cb-new" id="club-new" hidden>
+        <label for="club-name">اسم الغرفة</label>
+        <input id="club-name" maxlength="40" autocomplete="off" placeholder="مثلًا: قعدة الخميس">
+        <button class="primary" type="submit" id="club-make">أنشئوا الغرفة</button>
+        <button class="linkish" type="button" id="club-new-x">إلغاء</button>
+      </form>
+      <div class="cb-del" id="club-del" hidden>
+        <button class="linkish" type="button" id="club-del-ask"></button>
+        <span id="club-del-q" hidden></span>
+        <button class="linkish" type="button" id="club-del-yes" hidden>نعم، احذفوها</button>
+        <button class="linkish" type="button" id="club-del-no" hidden>إلغاء</button>
+      </div>
+      <p class="msg" id="club-msg" role="status"></p>
+    </section>
     <section class="resume" id="resume" hidden>
       <p id="resume-text"></p>
       <button class="secondary" id="resume-go" type="button">أكملوا اللعب</button>
@@ -1027,6 +1094,34 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
   </div>
 </div>
 
+<!-- ACCOUNT -->
+<div class="over" id="acctover" hidden role="dialog" aria-modal="true" aria-labelledby="acct-h" dir="rtl" lang="ar">
+  <div class="endcard acctcard">
+    <h2 class="end-w" id="acct-h"></h2>
+    <div class="acct-out" id="acct-outv">
+      <div class="seg acct-seg" role="group" aria-label="دخول أو حساب جديد">
+        <button type="button" id="acct-m-in" aria-pressed="true">دخول</button>
+        <button type="button" id="acct-m-up" aria-pressed="false">حساب جديد</button>
+      </div>
+      <form class="acctform" id="acct-form" novalidate>
+        <label for="acct-name" id="acct-name-l" hidden>اسمكم (يظهر في الحساب)</label>
+        <input id="acct-name" maxlength="30" autocomplete="nickname" hidden>
+        <label for="acct-email">الإيميل</label>
+        <input id="acct-email" type="email" autocomplete="email" dir="ltr" spellcheck="false">
+        <label for="acct-pass">كلمة السر</label>
+        <input id="acct-pass" type="password" autocomplete="current-password" dir="ltr">
+        <button class="primary" type="submit" id="acct-go">ادخلوا</button>
+      </form>
+    </div>
+    <div class="acct-in" id="acct-inv" hidden>
+      <p class="end-k" id="acct-who"></p>
+      <button class="ghost" type="button" id="acct-signout">تسجيل الخروج</button>
+    </div>
+    <p class="msg" id="acct-msg" role="status" aria-live="polite"></p>
+    <button class="linkish" type="button" id="acct-close">إغلاق</button>
+  </div>
+</div>
+
 <!-- END -->
 <div class="over" id="endover" hidden role="dialog" aria-modal="true" aria-labelledby="end-w" dir="rtl" lang="ar">
   <div class="endcard">
@@ -1165,6 +1260,7 @@ var ICON_D = {
   "language": "M4 20l4.5-12h1L14 20 M5.7 16h6.6 M15 4h6 M18 4v9 M15.5 13h5",
   "games": "M7 8h10a4 4 0 0 1 4 4v1a4 4 0 0 1-7 2.6l-.8-.9h-2.4l-.8.9A4 4 0 0 1 3 13v-1a4 4 0 0 1 4-4Z M7.5 10.5v3 M6 12h3 M15.5 11h.01 M17.5 13h.01",
   "star": "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z",
+  "account": "M12 12a4 4 0 1 0 0-8a4 4 0 1 0 0 8Z M4.5 21a7.5 7.5 0 0 1 15 0",
   "mode-board": "M4 4h7v7H4Z M13 4h7v7h-7Z M4 13h7v7H4Z M13 13h7v7h-7Z",
   "mode-race": "M12 8a7 7 0 1 0 0 14a7 7 0 1 0 0-14Z M12 12v3.5 M10 2h4 M12 2v3 M18.5 6.5l1.5-1.5",
   "mode-feud": "M3 20h18 M5 20v-6h4v6 M10 20V8h4v12 M15 20v-9h4v9"
@@ -1268,7 +1364,9 @@ function defaults(){
     feud:null,
     feudSettings:{n:5,dbl:true},
     feudRecent:[],
-    feudFlagged:[]
+    feudFlagged:[],
+    club:null,
+    clubs:{list:[], seen:{}, pending:[]}
   };
 }
 function normalize(s){
@@ -1289,6 +1387,9 @@ function normalize(s){
     const A = out.game.armed;
     if (!(A && typeof A === "object" && A.kind === "dbl" && out.teams.some(t => t.id === A.team))) out.game.armed = null;
   }
+  const C = out.clubs;
+  out.clubs = (C && typeof C === "object" && Array.isArray(C.list) && C.seen && typeof C.seen === "object" && Array.isArray(C.pending)) ? C : d.clubs;
+  if (!(out.club && typeof out.club === "object" && typeof out.club.id === "string" && out.clubs.list.some(r => r.id === out.club.id))) out.club = null;
   out.raceSettings = Object.assign({}, d.raceSettings, s.raceSettings || {});
   if (out.mode !== "race" && out.mode !== "feud") out.mode = "board";
   out.feudSettings = Object.assign({}, d.feudSettings, s.feudSettings || {});
@@ -1315,7 +1416,7 @@ const total = g => g.cats.reduce((n,c) => n + c.cells.filter(Boolean).length, 0)
 const remaining = g => total(g) - Object.keys(g.used).length;
 const isDone = g => !!g && remaining(g) <= 0;
 function freshCount(slug){
-  const recent = new Set(state.recent), flagged = new Set(state.flagged);
+  const recent = new Set(seenQ()), flagged = new Set(state.flagged);
   return BY_SLUG[slug].qs.filter(q => !recent.has(q.id) && !flagged.has(q.id)).length;
 }
 
@@ -1348,7 +1449,10 @@ const store = {
       const db = await dbPromise; if (!db) return;
       await db.doc("games/" + g.gid).set({started_at:new Date().toISOString(), mode, bank:BRAND.bankLabel, teams, categories:cats, plays:[]});
     } else {
-      await sbPost("/games", {id:g.gid, brand_id:SB.brand, mode, settings:mode === "feud" ? {bank:BRAND.feudLabel || "", teams, rounds:cats} : {bank:BRAND.bankLabel, teams, categories:cats}});
+      const row = {id:g.gid, brand_id:SB.brand, mode, settings:mode === "feud" ? {bank:BRAND.feudLabel || "", teams, rounds:cats} : {bank:BRAND.bankLabel, teams, categories:cats}};
+      // a game in a room carries the room, which only the signed-in owner may write; if that fails it is logged without it
+      if (g.club && sess){ try { await api("/games", {method:"POST", prefer:"return=minimal", body:Object.assign({room_id:g.club}, row)}); } catch(e){ await sbPost("/games", row); } }
+      else await sbPost("/games", row);
     }
     g.synced = true; save();
   },
@@ -1448,6 +1552,305 @@ function syncFlagsIn(){
   });
 }
 
+/* ===== accounts and rooms =====
+   Signing in is optional. A signed-in host can make rooms, one per group of friends: a room remembers in the
+   database which questions and «أشهر إجابة» rounds it has played, so the group gets no repeats on any device, and it
+   remembers the team names. Without a room, what was played is kept in this browser, as before.
+   In claude.ai there are no accounts. */
+const HOSTED = !IN_CLAUDE;
+const AUTH = SB.url.replace(/\/rest\/v1$/, "/auth/v1");
+const AK = KEY + ":account";
+let sess = null;   // {access, refresh, exp, uid, email, name}
+function readSess(){ try { const s = JSON.parse(localStorage.getItem(AK) || "null"); return s && s.refresh ? s : null; } catch(e){ return null; } }
+function writeSess(){ try { if (sess) localStorage.setItem(AK, JSON.stringify(sess)); else localStorage.removeItem(AK); } catch(e){} }
+async function authCall(path, body, bearer){
+  const headers = {"apikey":SB.key, "Content-Type":"application/json"};
+  if (bearer) headers.Authorization = "Bearer " + bearer;
+  const r = await fetch(AUTH + "/" + path, {method:"POST", headers, body:JSON.stringify(body || {})});
+  let j = null; try { j = await r.json(); } catch(e){}
+  if (!r.ok){ const e = new Error((j && (j.error_code || j.code || j.error)) || ("http " + r.status)); e.status = r.status; e.info = j; throw e; }
+  return j || {};
+}
+function keepSess(j){
+  const u = j.user || {}, old = sess || {};
+  sess = {access:j.access_token, refresh:j.refresh_token, exp:Date.now() + (Number(j.expires_in) || 3600) * 1000,
+    uid:u.id || old.uid || "", email:u.email || old.email || "", name:String((u.user_metadata || {}).name || old.name || "").trim()};
+  writeSess();
+}
+let refreshing = null;
+function refreshSess(){
+  if (!refreshing) refreshing = (async () => {
+    if (!sess || !sess.refresh) throw new Error("no-session");
+    try { keepSess(await authCall("token?grant_type=refresh_token", {refresh_token:sess.refresh})); }
+    catch(e){ if (e.status === 400 || e.status === 401 || e.status === 403) signedOut(); throw e; }   // the session is over
+  })().finally(() => { refreshing = null; });
+  return refreshing;
+}
+async function bearer(){ if (!sess) throw new Error("no-session"); if (Date.now() > sess.exp - 60000) await refreshSess(); if (!sess) throw new Error("no-session"); return sess.access; }
+async function api(path, opts){
+  opts = opts || {};
+  const go = async () => fetch(SB.url + path, {method:opts.method || "GET",
+    headers:Object.assign({"apikey":SB.key, "Authorization":"Bearer " + await bearer(), "Content-Type":"application/json"}, opts.prefer ? {"Prefer":opts.prefer} : {}),
+    body:opts.body == null ? undefined : JSON.stringify(opts.body)});
+  let r = await go();
+  if (r.status === 401){ await refreshSess(); r = await go(); }
+  if (!r.ok){ const e = new Error("api " + r.status); e.status = r.status; try { e.info = await r.json(); } catch(_){} throw e; }
+  if (r.status === 204) return null;
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+function signedOut(){
+  sess = null; writeSess();
+  state.club = null; state.clubs = {list:[], seen:{}, pending:[]};
+  save(); renderAcct(); renderSetup();
+}
+function authMsg(e){
+  const c = String((e && e.message) || "");
+  if (e instanceof TypeError) return "لا يوجد اتصال بالإنترنت. جرّبوا مرة أخرى.";
+  if (c === "invalid_credentials" || /invalid login/i.test(c)) return "الإيميل أو كلمة السر غير صحيحة.";
+  if (c === "user_already_exists" || c === "email_exists") return "على هذا الإيميل حساب بالفعل. ادخلوا من «دخول».";
+  if (c === "weak_password") return "كلمة السر ضعيفة. اختاروا ٨ حروف أو أكثر.";
+  if (c === "email_address_invalid" || c === "validation_failed") return "الإيميل غير صحيح.";
+  if (c === "email_not_confirmed") return "هذا الحساب لم يُؤكَّد بعد.";
+  if (c === "signup_disabled") return "إنشاء الحسابات متوقف الآن.";
+  if (/rate_limit/.test(c) || e.status === 429) return "محاولات كثيرة. انتظروا قليلًا ثم جرّبوا.";
+  if (e.status >= 500) return "تعذّر ذلك الآن. جرّبوا بعد قليل.";
+  return "حدثت مشكلة. جرّبوا مرة أخرى.";
+}
+
+/* rooms: state.club is the room picked on this device; state.clubs keeps the host's list of rooms, each room's
+   history (so a room still works offline) and the history not yet sent */
+const clubOn = () => HOSTED && !!sess && !!state.club;
+const clubSeen = id => (state.clubs.seen[id] = state.clubs.seen[id] || {q:[], f:[]});
+function seenQ(){ return clubOn() ? clubSeen(state.club.id).q : state.recent; }
+function seenF(){ return clubOn() ? clubSeen(state.club.id).f : state.feudRecent; }
+function markSeen(club, kind, ids){
+  ids = ids.filter(Boolean); if (!ids.length) return;
+  if (!club){
+    const k = kind === "f" ? "feudRecent" : "recent";
+    ids.forEach(id => { if (!state[k].includes(id)) state[k].push(id); });
+    state[k] = state[k].slice(-300);
+    return;
+  }
+  const list = clubSeen(club)[kind];
+  ids.forEach(id => { if (!list.includes(id)) list.push(id); });
+  state.clubs.pending.push({club, kind, ids});
+  save(); flushSeen();
+}
+function flushSeen(){
+  queue(async () => {
+    while (state.clubs.pending.length && sess){
+      const p = state.clubs.pending[0];
+      try {
+        await api("/room_seen?on_conflict=room_id,kind,item_id", {method:"POST", prefer:"resolution=ignore-duplicates,return=minimal",
+          body:p.ids.map(id => ({room_id:p.club, kind:p.kind === "f" ? "feud" : "q", item_id:id}))});
+      } catch(e){ if (!(e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 408 && e.status !== 429)) throw e; }   // a room that is gone: drop it
+      state.clubs.pending.shift(); save();
+    }
+  });
+}
+let clubBusy = null, clubErr = "";
+async function loadClubs(){
+  if (!HOSTED || !sess) return;
+  try {
+    const rows = await api("/rooms?brand_id=eq." + SB.brand + "&select=id,name,teams&order=last_played_at.desc.nullslast,created_at.desc");
+    state.clubs.list = rows.map(r => ({id:r.id, name:r.name, teams:Array.isArray(r.teams) ? r.teams : null}));
+    if (state.club){
+      const c = state.clubs.list.find(r => r.id === state.club.id);
+      if (c) state.club.name = c.name; else state.club = null;   // deleted on another device
+    }
+    save(); renderSetup();
+    if (state.club) await loadClubSeen(state.club.id);
+    flushSeen();
+  } catch(e){ clubErr = sess ? "list" : ""; renderSetup(); }
+}
+async function loadClubSeen(id){
+  clubBusy = id; renderSetup();
+  try {
+    const s = {q:[], f:[]}, page = 1000;
+    for (let from = 0; ; from += page){
+      const rows = await api("/room_seen?room_id=eq." + id + "&select=kind,item_id&order=seen_at.asc,item_id.asc&limit=" + page + "&offset=" + from);
+      rows.forEach(r => (r.kind === "feud" ? s.f : s.q).push(r.item_id));
+      if (rows.length < page) break;
+    }
+    // what was played here but has not reached the database yet still counts
+    state.clubs.pending.filter(p => p.club === id).forEach(p => p.ids.forEach(x => { const l = s[p.kind]; if (!l.includes(x)) l.push(x); }));
+    state.clubs.seen[id] = s; clubErr = "";
+  } catch(e){ clubErr = "seen"; }
+  if (clubBusy === id) clubBusy = null;
+  save(); renderSetup();
+}
+function pickClub(id){
+  const c = state.clubs.list.find(r => r.id === id);
+  setMsg($("club-msg"), "");
+  if (!c){ state.club = null; save(); renderSetup(); return; }
+  state.club = {id:c.id, name:c.name};
+  // the room's teams come back, unless a game is still going with the teams on screen
+  if (Array.isArray(c.teams) && c.teams.length >= 2 && !(state.game && !isDone(state.game)) && !state.feud){
+    state.teams = c.teams.slice(0, 6).map((n,i) => ({id:(state.teams[i] && state.teams[i].id) || ("t" + (i + 1)), name:String(n || "").slice(0, 24), color:(state.teams[i] && state.teams[i].color) || COLORS[i % COLORS.length]}));
+  }
+  save(); renderSetup();
+  loadClubSeen(c.id);
+}
+async function createClub(name){
+  const first = !state.clubs.list.length;
+  const rows = await api("/rooms?select=id,name,teams", {method:"POST", prefer:"return=representation",
+    body:{brand_id:SB.brand, name, teams:state.teams.map((t,i) => tname(t,i)).slice(0, 6)}});
+  const r = rows[0];
+  state.clubs.list.unshift({id:r.id, name:r.name, teams:Array.isArray(r.teams) ? r.teams : null});
+  state.clubs.seen[r.id] = {q:[], f:[]};
+  state.club = {id:r.id, name:r.name};
+  // the first room takes over what this device has played, so nothing repeats right after signing in
+  if (first){
+    markSeen(r.id, "q", state.recent.filter(id => BY_ID[id]));
+    markSeen(r.id, "f", state.feudRecent.filter(id => FEUD_BY[id]));
+  }
+  save();
+  return first;
+}
+async function deleteClub(id){
+  await api("/rooms?id=eq." + id, {method:"DELETE", prefer:"return=minimal"});
+  state.clubs.list = state.clubs.list.filter(r => r.id !== id);
+  delete state.clubs.seen[id];
+  state.clubs.pending = state.clubs.pending.filter(p => p.club !== id);
+  if (state.club && state.club.id === id) state.club = null;
+  save();
+}
+function resetClub(id, kind){
+  clubSeen(id)[kind] = [];
+  state.clubs.pending = state.clubs.pending.filter(p => !(p.club === id && p.kind === kind));
+  save();
+  queue(() => api("/room_seen?room_id=eq." + id + "&kind=eq." + (kind === "f" ? "feud" : "q"), {method:"DELETE", prefer:"return=minimal"}));
+}
+function saveClubTeams(club, names){
+  if (!club || !sess) return;
+  const c = state.clubs.list.find(r => r.id === club); if (c) c.teams = names.slice(0, 6);
+  queue(() => api("/rooms?id=eq." + club, {method:"PATCH", prefer:"return=minimal", body:{teams:names.slice(0, 6)}}));
+}
+
+/* the room bar on the setup screen */
+let clubForm = false, clubDel = false;
+function renderClub(){
+  const bar = $("clubbar");
+  bar.hidden = !HOSTED;
+  if (!HOSTED) return;
+  const hint = $("club-hint"), pick = $("club-pick");
+  $("club-new").hidden = !(sess && clubForm);
+  if (!sess){
+    hint.textContent = "تلعبون كضيوف: الأسئلة التي لُعبت محفوظة على هذا الجهاز فقط. سجّلوا الدخول لتنشئوا غرفة لشلتكم لا تتكرر فيها الأسئلة على أي جهاز.";
+    pick.replaceChildren(h("button",{class:"cb-chip cb-add",type:"button",onclick:() => openAcct()}, "تسجيل الدخول"));
+    $("club-del").hidden = true;
+    return;
+  }
+  const list = state.clubs.list, cur = clubOn() ? state.club : null;
+  if (!list.length){
+    hint.textContent = clubErr === "list" ? "تعذّر تحميل غرفكم. تأكدوا من الاتصال ثم أعيدوا فتح الصفحة."
+      : "أنشئوا غرفة لشلتكم: تُحفظ فيها الأسئلة التي لُعبت فلا تتكرر على أي جهاز، وتُحفظ أسماء الفرق." + (state.recent.length || state.feudRecent.length ? " وستنتقل إليها الأسئلة التي لُعبت على هذا الجهاز." : "");
+  } else if (!cur){
+    hint.textContent = "بدون غرفة: الأسئلة التي لُعبت تُحفظ على هذا الجهاز فقط.";
+  } else if (clubBusy === cur.id){
+    hint.textContent = "جارٍ تحميل سجل «" + cur.name + "»…";
+  } else {
+    const s = clubSeen(cur.id), q = s.q.filter(id => BY_ID[id]).length, f = s.f.filter(id => FEUD_BY[id]).length;
+    hint.textContent = (clubErr === "seen" ? "تعذّر تحميل سجل الغرفة، والمعروض آخر ما حُفظ على هذا الجهاز. " : "")
+      + (q || f ? "لُعب في «" + cur.name + "» " + (q ? qWord(q) : "") + (q && f ? " و" : "") + (f ? roundWord(f) + " من «أشهر إجابة»" : "") + "، ولن تتكرر." : "لم يُلعب في «" + cur.name + "» شيء بعد.");
+  }
+  pick.replaceChildren(...[
+    ...list.map(c => h("button",{class:"cb-chip",type:"button","aria-pressed":String(!!cur && cur.id === c.id),onclick:() => pickClub(c.id)}, c.name)),
+    list.length ? h("button",{class:"cb-chip",type:"button","aria-pressed":String(!cur),onclick:() => pickClub(null)}, "بدون غرفة") : null,
+    clubForm ? null : h("button",{class:"cb-chip cb-add",type:"button",onclick:() => { clubForm = true; renderClub(); $("club-name").focus(); }}, "+ غرفة جديدة")
+  ].filter(Boolean));
+  $("club-del").hidden = !cur || clubForm;
+  if (cur){
+    $("club-del-ask").textContent = "احذفوا «" + cur.name + "»";
+    $("club-del-q").textContent = "سيُحذف سجلها كله. متأكدون؟";
+    $("club-del-ask").hidden = clubDel; ["club-del-q","club-del-yes","club-del-no"].forEach(x => { $(x).hidden = !clubDel; });
+  }
+}
+
+/* the account dialog */
+let acctMode = "in";
+function renderAcct(){
+  const b = $("acct");
+  b.replaceChildren(iconEl("account"), sess ? (sess.name || sess.email.split("@")[0]) : "تسجيل الدخول");
+  b.setAttribute("aria-label", sess ? "حسابكم: " + (sess.name || sess.email) : "تسجيل الدخول");
+  const inside = !!sess;
+  $("acct-h").textContent = inside ? "حسابكم" : acctMode === "up" ? "حساب جديد" : "تسجيل الدخول";
+  $("acct-outv").hidden = inside; $("acct-inv").hidden = !inside;
+  if (inside) $("acct-who").textContent = "داخلون باسم " + (sess.name || "—") + " (" + sess.email + ").";
+  const up = acctMode === "up";
+  $("acct-m-in").setAttribute("aria-pressed", String(!up)); $("acct-m-up").setAttribute("aria-pressed", String(up));
+  $("acct-name").hidden = !up; $("acct-name-l").hidden = !up;
+  $("acct-pass").autocomplete = up ? "new-password" : "current-password";
+  $("acct-go").textContent = up ? "أنشئوا الحساب" : "ادخلوا";
+}
+let acctBack = null;
+function openAcct(){
+  acctBack = document.activeElement;
+  setMsg($("acct-msg"), ""); renderAcct();
+  $("acctover").hidden = false;
+  (sess ? $("acct-signout") : (acctMode === "up" ? $("acct-name") : $("acct-email"))).focus();
+}
+function closeAcct(){ $("acctover").hidden = true; if (acctBack && acctBack.focus) acctBack.focus(); }
+async function submitAcct(e){
+  e.preventDefault();
+  const up = acctMode === "up", msg = $("acct-msg");
+  const email = $("acct-email").value.trim().toLowerCase(), password = $("acct-pass").value, name = $("acct-name").value.trim().slice(0, 30);
+  if (up && !name){ setMsg(msg, "اكتبوا اسمًا يظهر في الحساب.", true); $("acct-name").focus(); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ setMsg(msg, "اكتبوا إيميلًا صحيحًا.", true); $("acct-email").focus(); return; }
+  if (!password){ setMsg(msg, "اكتبوا كلمة السر.", true); $("acct-pass").focus(); return; }
+  if (up && password.length < 8){ setMsg(msg, "كلمة السر ٨ حروف على الأقل.", true); $("acct-pass").focus(); return; }
+  $("acct-go").disabled = true; setMsg(msg, up ? "جارٍ إنشاء الحساب…" : "جارٍ الدخول…");
+  try {
+    if (up){
+      const j = await authCall("signup", {email, password, data:{name}});
+      if (!j.access_token){ acctMode = "in"; renderAcct(); setMsg(msg, "أُرسلت رسالة تأكيد إلى الإيميل. افتحوها، ثم ادخلوا من هنا."); return; }
+      keepSess(j);
+    } else keepSess(await authCall("token?grant_type=password", {email, password}));
+    $("acct-pass").value = "";
+    state.clubs = {list:[], seen:{}, pending:[]};
+    closeAcct(); renderAcct(); renderSetup();
+    queue(loadClubs);
+  } catch(err){ setMsg(msg, authMsg(err), true); }
+  finally { $("acct-go").disabled = false; }
+}
+async function signOut(){
+  const t = sess && sess.access;
+  signedOut(); closeAcct();
+  if (t) authCall("logout", {}, t).catch(() => {});
+}
+function bindClubs(){
+  $("acct").addEventListener("click", openAcct);
+  $("acct-close").addEventListener("click", closeAcct);
+  $("acct-m-in").addEventListener("click", () => { acctMode = "in"; setMsg($("acct-msg"), ""); renderAcct(); $("acct-email").focus(); });
+  $("acct-m-up").addEventListener("click", () => { acctMode = "up"; setMsg($("acct-msg"), ""); renderAcct(); $("acct-name").focus(); });
+  $("acct-form").addEventListener("submit", submitAcct);
+  $("acct-signout").addEventListener("click", signOut);
+  $("acctover").addEventListener("click", e => { if (e.target === $("acctover")) closeAcct(); });
+  $("club-new-x").addEventListener("click", () => { clubForm = false; setMsg($("club-msg"), ""); renderClub(); });
+  $("club-new").addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = $("club-name").value.trim().slice(0, 40);
+    if (!name){ setMsg($("club-msg"), "اكتبوا اسمًا للغرفة.", true); $("club-name").focus(); return; }
+    $("club-make").disabled = true; setMsg($("club-msg"), "جارٍ إنشاء الغرفة…");
+    try {
+      const first = await createClub(name);
+      clubForm = false; $("club-name").value = "";
+      setMsg($("club-msg"), "أُنشئت «" + name + "»" + (first && (state.recent.length || state.feudRecent.length) ? " وانتقلت إليها الأسئلة التي لُعبت على هذا الجهاز." : "."));
+      renderSetup();
+    } catch(err){ setMsg($("club-msg"), err && err.info && /room limit/.test(err.info.message || "") ? "وصلتم إلى أقصى عدد من الغرف." : err instanceof TypeError ? "لا يوجد اتصال بالإنترنت." : "تعذّر إنشاء الغرفة. جرّبوا مرة أخرى.", true); }
+    finally { $("club-make").disabled = false; }
+  });
+  $("club-del-ask").addEventListener("click", () => { clubDel = true; renderClub(); $("club-del-no").focus(); });
+  $("club-del-no").addEventListener("click", () => { clubDel = false; renderClub(); $("club-del-ask").focus(); });
+  $("club-del-yes").addEventListener("click", async () => {
+    const c = state.club; if (!c) return;
+    clubDel = false;
+    try { await deleteClub(c.id); setMsg($("club-msg"), "حُذفت «" + c.name + "»."); }
+    catch(e){ setMsg($("club-msg"), "تعذّر حذف الغرفة.", true); }
+    renderSetup();
+  });
+}
+
 /* ===== elements ===== */
 const scrSetup = $("scr-setup"), scrBoard = $("scr-board"), scrLobby = $("scr-lobby");
 const teamsEl = $("teams"), catsEl = $("cats");
@@ -1462,6 +1865,7 @@ function show(name){
   scrLobby.hidden = name !== "lobby";
   scrFeud.hidden = name !== "feud";
   $("modes").hidden = name !== "setup";
+  $("acct").hidden = name !== "setup" || !HOSTED;
   document.querySelector(".app").dataset.scr = name;
   window.scrollTo(0,0);
   if (name === "board" || name === "lobby" || name === "feud") wake();
@@ -1481,7 +1885,7 @@ function renderSetup(){ keepFocus(renderSetupInner); }
 function renderSetupInner(){
   const g = state.game, st = state.settings, cols = st.cols;
   const left = g ? remaining(g) : 0;
-  renderModes();
+  renderModes(); renderClub();
   $("card-feud").hidden = state.mode !== "feud"; $("card-cats").hidden = state.mode === "feud"; $("board-rules").hidden = state.mode !== "board";
   if (state.mode === "race"){ renderRaceSetup(); return; }
   if (state.mode === "feud"){ renderFeudSetup(); return; }
@@ -1530,12 +1934,12 @@ function renderBankNote(){
 }
 /* Questions (or «أشهر إجابة» rounds) already played on this device are kept out of new games. This row puts them back,
    after a second confirming click. */
-function playedHere(){ return state.mode === "feud" ? state.feudRecent.filter(id => FEUD_BY[id]) : state.recent.filter(id => BY_ID[id]); }
+function playedHere(){ return state.mode === "feud" ? seenF().filter(id => FEUD_BY[id]) : seenQ().filter(id => BY_ID[id]); }
 function renderReset(confirming){
   const feud = state.mode === "feud", n = playedHere().length;
   $("bank-reset").hidden = !n;
-  $("reset-ask").textContent = feud ? "أعِد الجولات التي لُعبت" : "أعِد الأسئلة التي لُعبت";
-  $("reset-q").textContent = (feud ? "الجولات" : "الأسئلة") + " التي لُعبت على هذا الجهاز (" + (feud ? roundWord(n) : qWord(n)) + ") ستظهر في الألعاب القادمة من جديد.";
+  $("reset-ask").textContent = (feud ? "أعِد الجولات التي لُعبت" : "أعِد الأسئلة التي لُعبت") + (clubOn() ? " في الغرفة" : "");
+  $("reset-q").textContent = (feud ? "الجولات" : "الأسئلة") + " التي لُعبت " + (clubOn() ? "في «" + state.club.name + "»" : "على هذا الجهاز") + " (" + (feud ? roundWord(n) : qWord(n)) + ") ستظهر في الألعاب القادمة من جديد.";
   $("reset-ask").hidden = !!confirming;
   ["reset-q","reset-yes","reset-no"].forEach(id => { $(id).hidden = !confirming; });
 }
@@ -1571,7 +1975,7 @@ function fixNames(){ state.teams.forEach((t,i) => { if (!(t.name || "").trim()) 
 /* ===== build a board from the bank ===== */
 function buildCats(){
   const cols = state.settings.cols;
-  const recent = new Set(state.recent), flagged = new Set(state.flagged);
+  const recent = new Set(seenQ()), flagged = new Set(state.flagged);
   const slugs = state.picks.filter(s => BY_SLUG[s]).slice(0, cols);
   const others = BANK.map(c => c.slug).filter(s => !slugs.includes(s));
   // fill the open slots, preferring categories with the most unplayed questions
@@ -1593,21 +1997,19 @@ function startGame(){
   const scores = {}; state.teams.forEach(t => scores[t.id] = 0);
   const live = [];
   cats.forEach((c,ci) => c.cells.forEach((id,ri) => { if (id && ri >= 2) live.push(ci + "-" + ri); }));
-  state.game = {gid:uuid(), cats, used:{}, dd: live.length ? pickOne(live) : null, scores, turn:0, plays:[], synced:false};
+  state.game = {gid:uuid(), cats, used:{}, dd: live.length ? pickOne(live) : null, scores, turn:0, plays:[], synced:false, club:clubOn() ? state.club.id : null};
   dealNext = true; save(); renderBoard(); setMsg($("board-msg"), "");
   if (phonesOn()){ bLast = null; openBoardRoom(); bPhase = "lobby"; show("lobby"); renderBoardLobby(); bPush(true); }
   else show("board");
   const g = state.game, teams = state.teams.map((t,i) => tname(t,i)), slugs = cats.map(c => c.slug);
   queue(() => store.gameStarted(g, teams, slugs));
+  saveClubTeams(g.club, teams);
   return g;
 }
 function recordPlays(entries){
   const g = state.game; if (!g || !entries.length) return;
-  entries.forEach(e => {
-    g.plays.push(e);
-    if (!state.recent.includes(e.qid)) state.recent.push(e.qid);
-  });
-  state.recent = state.recent.slice(-300);
+  entries.forEach(e => g.plays.push(e));
+  markSeen(g.club || null, "q", entries.map(e => e.qid));
   queue(() => store.played(g, entries));
 }
 
@@ -2124,7 +2526,7 @@ function renderRaceSetup(){
 
 /* pick the questions: unplayed first, spread over the categories, easy to hard */
 function pickRace(n){
-  const recent = new Set(state.recent);
+  const recent = new Set(seenQ());
   const byL = [[],[],[],[],[]];
   shuffle(racePool()).sort((a,b) => recent.has(a.q.id) - recent.has(b.q.id))
     .forEach(x => byL[Math.min(5, Math.max(1, x.q.l)) - 1].push(x));
@@ -2320,6 +2722,7 @@ function startRace(){
   if (!Object.keys(R.players).length){ setMsg($("r-msg"), "لم يدخل أي لاعب بعد.", true); return; }
   primeAudio();
   const names = rankList().map(x => x.name), cats = [...new Set(R.rounds.map(r => BY_ID[r.qid].cat.slug))];
+  R.club = clubOn() ? state.club.id : null;
   queue(() => store.gameStarted(R, names, cats, "speed_race"));
   nextRaceQ();
 }
@@ -2374,8 +2777,7 @@ function revealRace(){
   });
   R.results = res; R.phase = "reveal";
   R.plays.push(...entries);
-  if (!state.recent.includes(rd.qid)) state.recent.push(rd.qid);
-  state.recent = state.recent.slice(-300);
+  markSeen(R.club || null, "q", [rd.qid]);
   save(); pushState(true);
   if (entries.length) queue(() => store.played(R, entries));
   beep(784, .12, .1);
@@ -2389,8 +2791,7 @@ function revealRaceBuzz(){
   if (!Object.values(R.answers).some(a => a.ok)) entries.push({qid:rd.qid, outcome:"none", team:null, at});
   R.results = Object.assign({}, R.answers); R.phase = "reveal"; R.buzz = null;
   R.plays.push(...entries);
-  if (!state.recent.includes(rd.qid)) state.recent.push(rd.qid);
-  state.recent = state.recent.slice(-300);
+  markSeen(R.club || null, "q", [rd.qid]);
   save(); pushState(true);
   queue(() => store.played(R, entries));
   beep(784, .12, .1);
@@ -2689,9 +3090,9 @@ const tIdx = id => state.teams.findIndex(t => t.id === id);
 const tLabel = id => { const i = tIdx(id); return i >= 0 ? tname(state.teams[i], i) : ""; };
 const tColor = id => { const i = tIdx(id); return i >= 0 ? state.teams[i].color : "var(--cream)"; };
 function roundWord(n){ return n === 1 ? "جولة واحدة" : n === 2 ? "جولتان" : (n >= 3 && n <= 10) ? fmt(n) + " جولات" : fmt(n) + " جولة"; }
-function feudFresh(){ const rec = new Set(state.feudRecent), fl = new Set(state.feudFlagged); return FEUD.filter(r => !rec.has(r.id) && !fl.has(r.id)).length; }
+function feudFresh(){ const rec = new Set(seenF()), fl = new Set(state.feudFlagged); return FEUD.filter(r => !rec.has(r.id) && !fl.has(r.id)).length; }
 function pickFeud(n){
-  const rec = state.feudRecent, fl = new Set(state.feudFlagged);
+  const rec = seenF(), fl = new Set(state.feudFlagged);
   const pool = FEUD.filter(r => !fl.has(r.id));
   const fresh = shuffle(pool.filter(r => !rec.includes(r.id)));
   const old = pool.filter(r => rec.includes(r.id)).sort((a,b) => rec.indexOf(a.id) - rec.indexOf(b.id));   // longest ago first
@@ -2720,11 +3121,12 @@ function startFeud(){
   const ids = pickFeud(state.feudSettings.n);
   if (!ids.length){ setMsg($("setup-msg"), "لا توجد جولات متاحة الآن.", true); return; }
   const scores = {}; state.teams.forEach(t => scores[t.id] = 0);
-  state.feud = Object.assign({gid:uuid(), rounds:ids, i:0, scores, dbl:!!state.feudSettings.dbl, starter:0, synced:false, logged:[]}, freshRound());
+  state.feud = Object.assign({gid:uuid(), rounds:ids, i:0, scores, dbl:!!state.feudSettings.dbl, starter:0, synced:false, logged:[], club:clubOn() ? state.club.id : null}, freshRound());
   fUndo = []; fNew = new Set();
   save(); enterFeud();
   const F = state.feud, teams = state.teams.map((t,i) => tname(t,i));
   queue(() => store.gameStarted(F, teams, ids, "feud"));
+  saveClubTeams(F.club, teams);
 }
 function enterFeud(){
   show("feud");
@@ -2807,8 +3209,7 @@ function fNext(){
   const entry = {rid:r.id, revealed:Object.values(F.open).filter(v => v !== "end").length, total:r.a.length, points:F.bank,
     team:F.bank > 0 ? tLabel(F.winner) || null : null, stolen:!!F.stolen, at:new Date().toISOString()};
   F.logged.push(entry);
-  if (!state.feudRecent.includes(r.id)) state.feudRecent.push(r.id);
-  state.feudRecent = state.feudRecent.slice(-300);
+  markSeen(F.club || null, "f", [r.id]);
   queue(() => store.feudPlayed(F, entry));
   fUndo = [];
   if (F.i + 1 >= F.rounds.length){ F.phase = "over"; save(); renderFeud(); showFeudEnd(); return; }
@@ -2889,10 +3290,13 @@ function showFeudEnd(){
 
 /* ===== wiring ===== */
 function bind(){
+  bindClubs();
   $("reset-ask").addEventListener("click", () => { renderReset(true); $("reset-no").focus(); });
   $("reset-no").addEventListener("click", () => { renderReset(false); $("reset-ask").focus(); });
   $("reset-yes").addEventListener("click", () => {
-    if (state.mode === "feud") state.feudRecent = []; else state.recent = [];
+    const kind = state.mode === "feud" ? "f" : "q";
+    if (clubOn()) resetClub(state.club.id, kind);
+    else if (kind === "f") state.feudRecent = []; else state.recent = [];
     save(); renderSetup(); $("go").focus();
   });
   $("add-team").addEventListener("click", addTeam);
@@ -2972,6 +3376,7 @@ function bind(){
 
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
+    if (!$("acctover").hidden){ closeAcct(); return; }
     if (!qover.hidden && cur && !cur.revealed) cancelQ();
     else if (!endover.hidden && endMode !== "race") endover.hidden = true;
   });
@@ -2979,11 +3384,15 @@ function bind(){
 
 function boot(data){
   state = normalize((data && data.state) || load());
+  sess = HOSTED ? readSess() : null;
+  if (!sess){ state.club = null; }
   bind();
+  renderAcct();
   if ((!RACE_OK && state.mode === "race") || (!FEUD.length && state.mode === "feud")) state.mode = "board";
   renderSetup(); renderBoard(); renderSound();
   show("setup");
   syncFlagsIn();
+  if (sess) queue(loadClubs);
 }
 try { const hot = window.claude && window.claude.hot; if (hot && typeof hot.snapshot === "function") hot.snapshot(() => ({state})); } catch(e){}
 const hot = window.claude && window.claude.hot;
