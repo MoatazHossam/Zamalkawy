@@ -619,6 +619,29 @@ button.cell:active{transform:translateY(5px);box-shadow:inset 0 3px 0 rgba(255,2
 .qcard .qflag label,.qcard .linkish{color:var(--card-muted)}
 .qcard .qflag textarea{background:var(--field);color:var(--card-ink);border-color:var(--card-line)}
 .qcard .flag-done{background:rgba(16,34,42,.07);color:var(--card-ink)}
+/* the system runs the game: the choices on the card, and what a team answered from its phone */
+.qcard .qopts{width:100%;gap:12px}
+.qopts .ropt{padding:0;min-height:0}
+.ropt-b{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:12px 20px;background:none;border:0;color:inherit;font:inherit;text-align:start;cursor:pointer;border-radius:inherit}
+.ropt-b:disabled{cursor:default}
+.ropt-b:focus-visible{outline:3px solid var(--card-ink);outline-offset:3px}
+.qopts .ropt.cut{opacity:.16}
+.qopts .ropt.picked{box-shadow:0 0 0 5px var(--card-ink),0 6px 0 rgba(0,0,0,.3)}
+.qcard .ropts.revealed .ropt.right{opacity:1;box-shadow:0 0 0 5px var(--good),0 0 24px rgba(47,179,107,.45)}
+.qsub{margin:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;font-size:clamp(1.1rem,2.1vw,1.55rem);font-weight:600;color:var(--card-ink);text-wrap:balance}
+.qsub .who{background:var(--tc);color:var(--team-ink);padding:1px 14px 4px;border-radius:999px;font-family:var(--f-show);font-weight:700}
+.qsub b{font-family:var(--f-show);font-weight:700;padding:1px 14px 4px;border-radius:999px}
+.qsub b.ok{background:var(--good);color:var(--on-good)}
+.qsub b.bad{background:var(--bad);color:var(--on-bad)}
+.qsub b.ask{background:var(--tile);color:var(--tile-ink);box-shadow:0 3px 0 var(--tile-edge)}
+/* phones: the choices and the typed answer */
+.bopts .opt.cut{opacity:.15}
+.bopts .opt.picked{box-shadow:0 0 0 4px var(--bulb),0 5px 0 rgba(0,0,0,.3);opacity:1}
+.bopts .opt:disabled:not(.cut):not(.picked){opacity:.72}
+.bform{display:flex;flex-direction:column;gap:8px;background:var(--panel);border-radius:18px;padding:14px;box-shadow:inset 0 0 0 2px var(--line)}
+.bform label{font-weight:600;color:var(--cream)}
+.bform input{font-size:1.2rem}
+
 /* the steal: a stamp on the card */
 .qstamp{
   position:absolute;top:-30px;inset-inline-end:clamp(18px,4vw,48px);margin:0;z-index:2;
@@ -876,13 +899,15 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
         <div class="rules" id="board-rules">
         <h2 class="gap">القواعد</h2>
         <div class="field"><span class="lbl" id="l-cols">عدد الفئات</span><div class="seg" id="seg-cols" role="group" aria-labelledby="l-cols"></div></div>
+        <div class="field" id="manage-row"><span class="lbl" id="l-manage">من يدير اللعبة</span><div class="seg" id="seg-manage" role="group" aria-labelledby="l-manage"></div></div>
+        <p class="hint" id="manage-hint"></p>
         <div class="field"><span class="lbl" id="l-time">وقت الإجابة</span><div class="seg" id="seg-time" role="group" aria-labelledby="l-time"></div></div>
         <p class="hint" id="turn-rule">كل فريق يختار سؤالًا ويجيب عنه، ثم ينتقل الدور إلى الفريق التالي سواء أجاب صحًا أو خطأ.</p>
         <label class="switch" for="opt-deduct"><input type="checkbox" id="opt-deduct"><span>الإجابة الخاطئة تخصم النقاط</span></label>
         <label class="switch" for="opt-helps"><input type="checkbox" id="opt-helps"><span>وسائل المساعدة، كل فريق يستخدم كل واحدة مرة واحدة</span></label>
         <ul class="helps-note" id="helps-note">
           <li><b>دبل:</b> يُستخدم قبل اختيار السؤال، ونقاطه تتضاعف للفريق.</li>
-          <li><b>جاوب جوابين:</b> يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.</li>
+          <li id="help-two-note"><b>جاوب جوابين:</b> يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.</li>
           <li><b>سرقة السؤال:</b> أول ما يظهر السؤال، وقبل أن يجيب صاحب الدور، يأخذه فريق آخر ويجيب هو. وإن كان صاحب الدور لعب دبل يرجع له.</li>
         </ul>
         <label class="switch" for="opt-phones" id="opt-phones-row"><input type="checkbox" id="opt-phones"><span>اللاعبين يدخلوا من موبايلاتهم وتظهر لهم اللوحة، والفريق اللي عليه الدور يختار السؤال</span></label>
@@ -1042,6 +1067,8 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
     <p class="qstamp" id="q-stamp" hidden aria-live="assertive"></p>
     <p class="qhelp" id="q-help" hidden></p>
     <p class="qtext" id="q-text"></p>
+    <ol class="ropts qopts" id="q-opts" hidden></ol>
+    <p class="qsub" id="q-sub" hidden aria-live="assertive"></p>
     <button class="qtimer" id="q-timer" type="button">
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <circle class="trk" cx="50" cy="50" r="44" fill="none" stroke-width="7"></circle>
@@ -1350,7 +1377,7 @@ function qWord(n){ return n === 1 ? "سؤال واحد" : n === 2 ? "سؤالا�
 function defaults(){
   return {
     teams:[{id:"t1",name:ORD[0],color:COLORS[0]},{id:"t2",name:ORD[1],color:COLORS[1]}],
-    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true,helps:true},
+    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true,helps:true,manage:"host"},
     picks:[],
     game:null,
     recent:[],
@@ -1898,11 +1925,24 @@ function renderSetupInner(){
   renderTeamRows();
 
   renderSeg($("seg-cols"), [[4,fmt(4)],[5,fmt(5)],[6,fmt(6)]], cols, v => { st.cols = v; if (state.picks.length > v) state.picks.length = v; save(); renderSetup(); });
-  renderSeg($("seg-time"), [[20,fmt(20) + " ث"],[30,fmt(30) + " ث"],[45,fmt(45) + " ث"],[0,"مفتوح"]], st.time, v => { st.time = v; save(); renderSetup(); });
+  // who runs the game: the host (who reads and judges), or the system (the team picks from four choices on a phone)
+  $("manage-row").hidden = !RACE_OK;
+  if (!RACE_OK && st.manage === "auto") st.manage = "host";
+  renderSeg($("seg-manage"), [["host","المقدّم"],["auto","النظام"]], st.manage === "auto" ? "auto" : "host", v => {
+    st.manage = v; if (v === "auto"){ st.phones = true; if (!st.time) st.time = 30; }
+    save(); renderSetup(); if (state.game) renderBoard(); bPush(true);
+  });
+  const auto = st.manage === "auto" && RACE_OK;
+  $("manage-hint").textContent = !RACE_OK ? "" : auto
+    ? "النظام يحكم: الفريق صاحب الدور يختار الإجابة من ٤ اختيارات على موبايله فتُحسب وحدها، وينتقل الدور وحده إذا انتهى الوقت. يدخل اللاعبون من موبايلاتهم."
+    : "المقدّم يقرأ ويحكم. وإن دخل اللاعبون من موبايلاتهم، يستطيع الفريق أن يكتب إجابته فتظهر على الشاشة، وإن طابقت الإجابة تُحسب وحدها.";
+  renderSeg($("seg-time"), [[20,fmt(20) + " ث"],[30,fmt(30) + " ث"],[45,fmt(45) + " ث"]].concat(auto ? [] : [[0,"مفتوح"]]), st.time, v => { st.time = v; save(); renderSetup(); });
+  $("help-two-note").replaceChildren(h("b", null, helpName("two") + ":"), auto ? " يُستخدم بعد ظهور السؤال، فتختفي إجابتان خاطئتان من اختيارات الفريق." :" يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.");
   $("opt-deduct").checked = !!st.deduct;
   $("opt-helps").checked = st.helps !== false;
   $("helps-note").hidden = st.helps === false;
   $("opt-phones").checked = !!st.phones;
+  $("opt-phones").disabled = auto;
   $("opt-phones-row").hidden = !RACE_OK;
 
   const full = state.picks.length >= cols;
@@ -2077,6 +2117,9 @@ function renderTurn(){
 const HELP = {dbl:"دبل", two:"جاوب جوابين", steal:"سرقة السؤال"};
 const HELP_KINDS = ["dbl","two","steal"];
 const helpsOn = () => state.settings.helps !== false;
+const autoOn = () => phonesOn() && state.settings.manage === "auto";
+// with choices on the phones, «جاوب جوابين» becomes «احذف إجابتين»: two wrong choices disappear
+const helpName = k => k === "two" && autoOn() ? "احذف إجابتين" : HELP[k];
 function hasHelp(id, k){ const g = state.game; return helpsOn() && !!g && !!id && !((g.helps || {})[id] || {})[k]; }
 function spendHelp(id, k, back){ const g = state.game; g.helps = g.helps || {}; g.helps[id] = Object.assign({}, g.helps[id], {[k]:!back}); }
 function turnTeam(){ const g = state.game; return g && state.teams[g.turn] ? state.teams[g.turn] : null; }
@@ -2097,7 +2140,7 @@ function renderHelps(){
 function helpChips(id){
   if (!helpsOn()) return null;
   const left = HELP_KINDS.filter(k => hasHelp(id, k));
-  return left.length ? h("span",{class:"hl",role:"img","aria-label":"باقي له: " + left.map(k => HELP[k]).join("، ")}, ...left.map(k => h("span",null,HELP[k]))) : null;
+  return left.length ? h("span",{class:"hl",role:"img","aria-label":"باقي له: " + left.map(helpName).join("، ")}, ...left.map(k => h("span",null,helpName(k)))) : null;
 }
 const valFor = id => cur ? cur.value * (cur.dbl && cur.dbl === id ? 2 : 1) : 0;
 const answeringTeam = () => cur ? cur.answerer : null;
@@ -2105,6 +2148,7 @@ const tnm = id => { const o = teamOf(id); return o ? tname(o.t, o.i) : ""; };
 function useTwo(id){
   if (!cur || cur.revealed || cur.two || id !== cur.answerer || !hasHelp(id, "two")) return;
   cur.two = id; spendHelp(id, "two");
+  if (cur.opts){ const wrong = cur.opts.map((o,k) => o.ok ? -1 : k).filter(k => k >= 0); cur.cut = shuffle(wrong).slice(0, 2); renderOpts(); }
   save(); renderQHelp(); renderScores();
   bPush(true);
 }
@@ -2114,7 +2158,7 @@ function steal(id){
   cur.steal = id; cur.answerer = id;
   // the owner's دبل and جاوب جوابين come back: the question is no longer theirs
   if (cur.dbl){ spendHelp(cur.dbl, "dbl", true); cur.dblBack = cur.dbl; cur.dbl = null; cur.used = null; }
-  if (cur.two){ spendHelp(cur.two, "two", true); cur.two = null; }
+  if (cur.two){ spendHelp(cur.two, "two", true); cur.two = null; cur.cut = []; renderOpts(); }
   beep(1318, .16, .16);
   startTimer();
   save(); renderQHelp(); renderScores();
@@ -2126,7 +2170,7 @@ function renderQHelp(){
   bits.push(cur.steal ? tnm(cur.steal) + " سرق السؤال من " + tnm(cur.owner) + " ويجيب هو." : "يجيب " + tnm(cur.owner) + ".");
   if (cur.dbl) bits.push(tnm(cur.dbl) + " لعب دبل: " + fmt(valFor(cur.dbl)) + " نقطة إن أجاب صح" + (state.settings.deduct ? "، وتُخصم إن أخطأ." : "."));
   if (cur.dblBack) bits.push("رجع الدبل إلى " + tnm(cur.dblBack) + ".");
-  if (cur.two) bits.push(tnm(cur.two) + " يجيب جوابين.");
+  if (cur.two) bits.push(cur.opts ? tnm(cur.two) + " حذف إجابتين." : tnm(cur.two) + " يجيب جوابين.");
   $("q-help").textContent = bits.join(" ");
   const stamp = $("q-stamp"), so = cur.steal ? teamOf(cur.steal) : null;
   if (!so){ stamp.hidden = true; stamp.replaceChildren(); }
@@ -2136,10 +2180,10 @@ function renderQHelp(){
     stamp.hidden = false;
   }
   $("q-help").hidden = false;
-  const who = cur.revealed || cur.two ? null : cur.answerer, btn = $("q-two");
+  const who = cur.revealed || cur.two || cur.sub ? null : cur.answerer, btn = $("q-two");
   btn.hidden = !(who && hasHelp(who, "two"));
-  if (!btn.hidden) btn.textContent = "جاوب جوابين، " + tnm(who);
-  const thieves = cur.revealed || cur.steal ? [] : state.teams.map((t,i) => ({t, i})).filter(x => x.t.id !== cur.owner && hasHelp(x.t.id, "steal"));
+  if (!btn.hidden) btn.textContent = helpName("two") + "، " + tnm(who);
+  const thieves = cur.revealed || cur.steal || cur.sub ? [] : state.teams.map((t,i) => ({t, i})).filter(x => x.t.id !== cur.owner && hasHelp(x.t.id, "steal"));
   $("q-steal").hidden = !thieves.length;
   $("q-steal-teams").replaceChildren(...thieves.map(x => h("button",{class:"help tgt",type:"button",style:"--tc:" + x.t.color,"aria-label":tname(x.t,x.i) + " يسرق السؤال",onclick:() => steal(x.t.id)}, tname(x.t,x.i))));
 }
@@ -2213,7 +2257,8 @@ function openQ(ci, ri){
   if (a) spendHelp(a.team, a.kind);
   const owner = turnTeam() ? turnTeam().id : null;
   cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, swapped:false, skipped:null,
-    owner, answerer:owner, steal:null, used:a || null, dbl:a ? a.team : null, dblBack:null, two:null};
+    owner, answerer:owner, steal:null, used:a || null, dbl:a ? a.team : null, dblBack:null, two:null, opts:null, cut:[], sub:null};
+  makeOpts();
   qover.querySelector(".qcard").append($("qflag")); flagCtx = "board"; $("flag-open").textContent = "في السؤال خطأ؟";
   $("q-cat").replaceChildren(iconEl(g.cats[ci].slug), g.cats[ci].name);
   $("q-val").textContent = fmt(cur.value) + " نقطة";
@@ -2221,6 +2266,7 @@ function openQ(ci, ri){
   fillQuestion();
   $("q-answer").hidden = true; $("q-pre").hidden = false; $("q-post").hidden = true;
   qover.querySelector(".qcard").classList.remove("revealed");
+  renderOpts(); renderSub();
   qover.hidden = false;
   startTimer();
   save(); renderScores();
@@ -2235,13 +2281,13 @@ function swapQ(){
   if (!alt) return;
   cur.skipped = g.cats[cur.ci].cells[cur.ri];
   g.cats[cur.ci].cells[cur.ri] = alt.id;
-  cur.swapped = true;
+  cur.swapped = true; makeOpts();
   save(); fillQuestion(); startTimer();
   startAnswering(); renderQHelp();
 }
 function startTimer(){
   stopTimer();
-  const tot = Number(state.settings.time) || 0;
+  const tot = Number(state.settings.time) || (autoOn() ? 30 : 0);
   $("q-timer").hidden = !tot;
   if (!tot){ T = null; return; }
   T = {total:tot, left:tot, endAt:performance.now() + tot * 1000, running:true, lastSec:tot, iv:0};
@@ -2255,7 +2301,7 @@ function tick(){
   if (s !== T.lastSec){
     T.lastSec = s;
     if (s > 0 && s <= 3) beep(660, .09, .12);
-    if (s === 0){ beep(330, .55, .2); T.running = false; clearInterval(T.iv); }
+    if (s === 0){ beep(330, .55, .2); T.running = false; clearInterval(T.iv); if (autoOn()) timeUp(); }
   }
   drawTimer();
 }
@@ -2283,12 +2329,82 @@ function reveal(){
   cur.revealed = true;
   if (T){ T.left = Math.max(0, (T.endAt - performance.now()) / 1000); }
   stopTimer(); drawTimer();
-  $("q-answer").hidden = false; $("q-pre").hidden = true; $("q-post").hidden = false;
+  $("q-answer").hidden = false; $("q-pre").hidden = true; $("q-post").hidden = !!autoT;
   { const g = state.game, qid = g.cats[cur.ci].cells[cur.ri]; fbOpen("b:" + g.gid + ":" + cur.key + ":" + qid, qid, "board", g, $("q-post")); }
   qover.querySelector(".qcard").classList.add("revealed");
-  renderJudge(); renderQHelp();
+  renderJudge(); renderQHelp(); renderOpts(); renderSub();
   if (bRoom){ bPhase = "reveal"; bPush(true); }
   const first = document.querySelector("#judge .jt-ok"); if (first) first.focus();
+}
+/* the choices (when the system runs the game) and a team's answer from a phone */
+function makeOpts(){
+  cur.opts = null; cur.cut = []; cur.sub = null;
+  if (!autoOn()) return;
+  const q = cellQ(state.game, cur.ci, cur.ri).q;
+  if (!Array.isArray(q.opts) || q.opts.length < 3) return;
+  cur.opts = shuffle([{t:q.a, ok:true}].concat(q.opts.slice(0, 3).map(t => ({t, ok:false}))));
+}
+function renderOpts(){
+  const box = $("q-opts"), on = !!(cur && cur.opts);
+  box.hidden = !on;
+  if (!on){ box.replaceChildren(); return; }
+  box.classList.toggle("revealed", !!cur.revealed);
+  box.replaceChildren(...cur.opts.map((o,k) => {
+    const cut = cur.cut.includes(k), picked = !!cur.sub && cur.sub.c === k;
+    return h("li",{class:"ropt" + (cur.revealed && o.ok ? " right" : "") + (picked ? " picked" : "") + (cut ? " cut" : ""),style:"--oc:var(--o" + k + ")"},
+      h("button",{class:"ropt-b",type:"button",disabled:(cur.revealed || cut || cur.sub) ? true : null,
+        "aria-label":o.t + "، اختيار " + tnm(cur.answerer),onclick:() => takeAnswer(cur.answerer, {c:k})},
+        h("span",{class:"sh","aria-hidden":"true"}, SHAPES[k]), h("span",{class:"tx"}, o.t)));
+  }));
+}
+function renderSub(){
+  const el = $("q-sub"), x = cur && cur.sub;
+  el.hidden = !x; if (!x) return;
+  const said = x.c != null && cur.opts ? "اختار «" + cur.opts[x.c].t + "»" : x.texts ? "كتب «" + x.texts.join("» و«") + "»" : "لم يُجب في الوقت";
+  el.replaceChildren(h("span",{class:"who",style:"--tc:" + ((teamOf(x.team) || {t:{color:"var(--brass)"}}).t.color)}, tnm(x.team)), " " + said,
+    x.none ? null : h("b",{class:x.ok ? "ok" : x.c != null ? "bad" : "ask"}, x.ok ? "صحيحة" : x.c != null ? "خاطئة" : "غير مطابقة، احكموا أنتم"));
+}
+/* a typed answer counts by itself only when it clearly is the answer: the same words (ignoring ال, hamzas, ة/ه, ى/ي)
+   or a small typo in a long word. Anything else goes to the host. */
+function answerMatches(q, text){
+  const g = fnorm(text); if (!g) return false;
+  const gs = g.replace(/ /g, "");
+  return [q.a].concat(q.alt || []).some(raw => {
+    const c = fnorm(raw); if (!c) return false;
+    const cs = c.replace(/ /g, "");
+    if (c === g || cs === gs) return true;
+    const tol = cs.length >= 10 ? 2 : cs.length >= 7 ? 1 : 0;
+    return tol > 0 && gs[0] === cs[0] && lev(gs, cs) <= tol;
+  });
+}
+let autoT = 0;
+function takeAnswer(team, a){
+  if (!cur || cur.revealed || cur.sub || !team || team !== cur.answerer) return;
+  const q = cellQ(state.game, cur.ci, cur.ri).q, key = cur.key;
+  if (cur.opts){
+    const c = Number(a.c);
+    if (!Number.isInteger(c) || c < 0 || c >= cur.opts.length || cur.cut.includes(c)) return;
+    cur.sub = {team, c, ok:cur.opts[c].ok};
+  } else {
+    const texts = (Array.isArray(a.texts) ? a.texts : []).map(t => String(t || "").replace(/\s+/g, " ").trim().slice(0, 60)).filter(Boolean).slice(0, cur.two === team ? 2 : 1);
+    if (!texts.length) return;
+    cur.sub = {team, texts, ok:texts.some(t => answerMatches(q, t))};
+  }
+  beep(880, .1, .12);
+  // the system judges a choice either way; a typed answer only when it matches, otherwise the host decides
+  if (cur.opts || cur.sub.ok){
+    const sub = cur.sub;
+    autoT = setTimeout(() => { autoT = 0; if (!cur || cur.key !== key || cur.sub !== sub) return; if (sub.ok) award(team); else wrongAnswer(); }, 2600);
+  }
+  reveal();
+}
+function timeUp(){
+  // the system runs the game: time is up with no answer, so the question closes and the turn moves on
+  if (!cur || cur.revealed || cur.sub) return;
+  const key = cur.key;
+  cur.sub = {team:cur.answerer, none:true, ok:false};
+  autoT = setTimeout(() => { autoT = 0; if (cur && cur.key === key) nobody(); }, 2600);
+  reveal();
 }
 function renderJudge(){
   // only the team answering is judged: right, wrong (with the deduction if it is on), or no answer
@@ -2339,6 +2455,7 @@ function nobody(){
   closeQ();
 }
 function closeQ(){
+  clearTimeout(autoT); autoT = 0;
   fbFlush();
   stopTimer(); qover.hidden = true; cur = null;
   save(); renderBoard();
@@ -2356,6 +2473,7 @@ function cancelQ(){
     if (cur.steal) spendHelp(cur.steal, "steal", true);
     save();
   }
+  clearTimeout(autoT); autoT = 0;
   stopTimer(); qover.hidden = true; cur = null; renderBoard();
   if (bRoom){ bPhase = "idle"; bPush(true); }
 }
@@ -2950,8 +3068,15 @@ function bPublic(){
   if (cur && g && (bPhase === "open" || bPhase === "reveal")){
     const rec = BY_ID[g.cats[cur.ci].cells[cur.ri]];
     s.q = {key:bKey(), cat:g.cats[cur.ci].name, slug:g.cats[cur.ci].slug, val:cur.value, text:rec.q.q, owner:cur.owner, answerer:cur.answerer, steal:cur.steal || null,
-      dbl:cur.dbl || null, dblBack:cur.dblBack || null, two:cur.two || null};
-    if (bPhase === "reveal") s.q.answer = rec.q.a;
+      dbl:cur.dbl || null, dblBack:cur.dblBack || null, two:cur.two || null,
+      // "pick": the answering team picks one of the choices; "type": it can type its answer for the host
+      style:cur.opts ? "pick" : "type", opts:cur.opts ? cur.opts.map(o => o.t) : null, cut:cur.cut,
+      sub:cur.sub ? {team:cur.sub.team, c:cur.sub.c != null ? cur.sub.c : null, texts:cur.sub.texts || null, none:!!cur.sub.none} : null};
+    if (bPhase === "reveal"){
+      s.q.answer = rec.q.a;
+      if (cur.opts) s.q.correct = cur.opts.findIndex(o => o.ok);
+      if (cur.sub && (cur.opts || cur.sub.ok)) s.q.ok = !!cur.sub.ok;
+    }
   }
   return s;
 }
@@ -2989,6 +3114,13 @@ function onBoardPhone(ev, p){
     openQ(ci, ri);
     return;
   }
+  if (ev === "banswer"){
+    const pl = R.players[p.pid];
+    if (!state.game || !cur || !pl || !pl.team || p.key !== bKey()) return;
+    seen[p.pid] = Date.now();
+    takeAnswer(pl.team, {c:p.c, texts:p.texts});
+    return;
+  }
   if (ev === "help"){
     const g = state.game, pl = R.players[p.pid];
     if (!g || !helpsOn() || !pl || !pl.team || !teamOf(pl.team)) return;
@@ -3010,6 +3142,7 @@ function renderBoardLobby(){
   const R = state.broom; if (!R || state.mode !== "board" || scrLobby.hidden) return;
   drawJoin(R.code);
   $("r-plan").textContent = "كل واحد يدخل باسمه ويختار فريقه، واللوحة تظهر على موبايله. الفريق اللي عليه الدور يختار السؤال من الموبايل." +
+    (autoOn() ? " وبعدها يختار الإجابة من ٤ اختيارات، والنظام يحكم." : " ويقدر يكتب إجابته من الموبايل.") +
     (helpsOn() ? " وأي فريق معاه «سرقة السؤال» يقدر يسرقه من موبايله أول ما يظهر." : "") + " لو حد اختار فريق غلط، اضغطوا على اسمه هنا لنقله.";
   const now = Date.now(), list = Object.entries(R.players);
   $("r-players").replaceChildren(...list.map(([id,p]) => {
