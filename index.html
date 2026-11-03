@@ -680,7 +680,16 @@ button.cell:active{transform:translateY(5px);box-shadow:inset 0 3px 0 rgba(255,2
 .qstamp span{font-weight:700;font-size:1rem}
 .qstamp span::before{content:"";display:inline-block;width:.7em;height:.7em;border-radius:50%;background:var(--tc);margin-inline-end:6px;box-shadow:0 0 0 2px var(--hot-ink)}
 @keyframes stamp{from{opacity:0;transform:rotate(-8deg) scale(2.2)}}
-@media (max-width:640px){.qstamp{position:static;transform:rotate(-3deg);margin-top:-6px}@keyframes stamp{from{opacity:0;transform:rotate(-3deg) scale(1.8)}}}
+/* the surprises: a stamp on the other corner */
+.qstamp.qsurprise{inset-inline-end:auto;inset-inline-start:clamp(18px,4vw,48px);transform:rotate(7deg);background:var(--tile);color:var(--tile-ink);
+  box-shadow:0 0 0 4px var(--card),0 0 0 7px var(--tile-edge),0 12px 26px rgba(0,0,0,.35);animation:stamp2 .55s cubic-bezier(.2,1.6,.4,1)}
+.qstamp.qsurprise.minus{background:var(--bad);color:var(--on-bad);box-shadow:0 0 0 4px var(--card),0 0 0 7px var(--bad),0 12px 26px rgba(0,0,0,.35)}
+.qstamp.qsurprise span::before{display:none}
+@keyframes stamp2{from{opacity:0;transform:rotate(7deg) scale(2.4)}}
+.dd.minus{background:var(--bad);color:var(--on-bad)}
+.qunsteal{align-self:center}
+.score .adj .giveback{font-size:.72rem;white-space:nowrap}
+@media (max-width:640px){.qstamp,.qstamp.qsurprise{position:static;transform:rotate(-3deg);margin-top:-6px}@keyframes stamp{from{opacity:0;transform:rotate(-3deg) scale(1.8)}}}
 
 /* ---------- the end of a game ---------- */
 .endcard{background:var(--card);color:var(--card-ink);border:0;border-radius:28px;width:min(640px,calc(100% - 28px));
@@ -994,11 +1003,14 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
         <div class="field"><span class="lbl" id="l-time">وقت الإجابة</span><div class="seg" id="seg-time" role="group" aria-labelledby="l-time"></div></div>
         <p class="hint" id="turn-rule">كل فريق يختار سؤالًا ويجيب عنه، ثم ينتقل الدور إلى الفريق التالي سواء أجاب صحًا أو خطأ.</p>
         <label class="switch" for="opt-deduct"><input type="checkbox" id="opt-deduct"><span>الإجابة الخاطئة تخصم النقاط</span></label>
+        <label class="switch" for="opt-dd"><input type="checkbox" id="opt-dd"><span>سؤال مضاعف مفاجئ: سؤال مخفي في اللوحة نقاطه مضاعفة، لا يعرف أحد مكانه حتى يُختار</span></label>
+        <label class="switch" for="opt-minus"><input type="checkbox" id="opt-minus"><span>سؤال الخصم المفاجئ: سؤال مخفي، من يختاره يُخصم منه ١٠٠ نقطة فورًا، ثم يجيب عنه كالمعتاد</span></label>
         <label class="switch" for="opt-helps"><input type="checkbox" id="opt-helps"><span>وسائل المساعدة، كل فريق يستخدم كل واحدة مرة واحدة</span></label>
         <ul class="helps-note" id="helps-note">
           <li><b>دبل:</b> يُستخدم قبل اختيار السؤال، ونقاطه تتضاعف للفريق.</li>
           <li id="help-two-note"><b>جاوب جوابين:</b> يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.</li>
-          <li><b>سرقة السؤال:</b> أول ما يظهر السؤال، وقبل أن يجيب صاحب الدور، يأخذه فريق آخر ويجيب هو. وإن كان صاحب الدور لعب دبل يرجع له.</li>
+          <li><b>سرقة السؤال:</b> أول ما يظهر السؤال، وقبل أن يجيب صاحب الدور، يأخذه فريق آخر ويجيب هو. وإن كان صاحب الدور لعب دبل يرجع له. وإن ضُغطت بالخطأ يلغيها المقدّم من بطاقة السؤال، أو يعيدها للفريق من لوحة النقاط.</li>
+          <li id="help-opts-note"><b>الاختيارات:</b> تُستخدم بعد ظهور السؤال، فتظهر للفريق أربعة اختيارات يختار منها. وبعد ظهورها لا يستطيع أحد سرقة السؤال.</li>
         </ul>
         <label class="switch" for="opt-phones" id="opt-phones-row"><input type="checkbox" id="opt-phones"><span>اللاعبين يدخلوا من موبايلاتهم وتظهر لهم اللوحة، والفريق اللي عليه الدور يختار السؤال</span></label>
         </div>
@@ -1171,8 +1183,10 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
       <span class="qc" id="q-cat"></span>
       <span class="qv" id="q-val"></span>
       <span class="dd" id="q-dd" hidden>سؤال مضاعف</span>
+      <span class="dd minus" id="q-minus" hidden>خصم ١٠٠ نقطة</span>
     </div>
     <p class="qstamp" id="q-stamp" hidden aria-live="assertive"></p>
+    <p class="qstamp qsurprise" id="q-surprise" hidden aria-live="assertive"></p>
     <p class="qhelp" id="q-help" hidden></p>
     <p class="qtext" id="q-text"></p>
     <div class="qparty" id="q-party" hidden>
@@ -1194,6 +1208,7 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
       <span class="lbl" id="q-steal-l">سرقة السؤال:</span>
       <span class="qsteal-teams" id="q-steal-teams"></span>
     </div>
+    <button class="linkish qunsteal" id="q-unsteal" type="button" hidden></button>
     <div class="qanswer" id="q-answer" hidden>
       <span class="lbl">الإجابة</span>
       <strong id="q-a"></strong>
@@ -1206,6 +1221,7 @@ button.pv,button.pv:not(:disabled){box-shadow:inset 0 0 0 1.5px var(--tile-edge)
       <button class="ghost" id="qp-no" type="button" hidden>ما خمّنوهاش</button>
       <button class="ghost" id="qp-go" type="button" hidden>ابدأوا الوقت</button>
       <button class="help" id="q-two" type="button" hidden></button>
+      <button class="help" id="q-ch" type="button" hidden></button>
       <button class="ghost" id="q-swap" type="button" hidden>سؤال آخر</button>
       <button class="ghost" id="q-cancel" type="button">العودة إلى اللوحة</button>
     </div>
@@ -1555,7 +1571,7 @@ function qWord(n){ return n === 1 ? "سؤال واحد" : n === 2 ? "سؤالا�
 function defaults(){
   return {
     teams:[{id:"t1",name:ORD[0],color:COLORS[0]},{id:"t2",name:ORD[1],color:COLORS[1]}],
-    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true,helps:true,manage:"host"},
+    settings:{cols:5,time:30,deduct:false,sound:true,buzz:true,helps:true,manage:"host",dd:true,minus:false},
     picks:[],
     game:null,
     recent:[],
@@ -1591,6 +1607,7 @@ function normalize(s){
   if (out.game && (!Array.isArray(out.game.cats) || !out.game.used)) out.game = null;
   if (out.game){
     if (!out.game.helps || typeof out.game.helps !== "object") out.game.helps = {};
+    if (typeof out.game.minus !== "string") out.game.minus = null;
     const A = out.game.armed;
     if (!(A && typeof A === "object" && A.kind === "dbl" && out.teams.some(t => t.id === A.team))) out.game.armed = null;
   }
@@ -2258,8 +2275,11 @@ function renderSetupInner(){
   renderSeg($("seg-time"), [[20,fmt(20) + " ث"],[30,fmt(30) + " ث"],[45,fmt(45) + " ث"]].concat(auto ? [] : [[0,"مفتوح"]]), st.time, v => { st.time = v; save(); renderSetup(); });
   $("help-two-note").replaceChildren(h("b", null, helpName("two") + ":"), auto ? " يُستخدم بعد ظهور السؤال، فتختفي إجابتان خاطئتان من اختيارات الفريق." :" يُستخدم بعد ظهور السؤال، والفريق يقول إجابتين.");
   $("opt-deduct").checked = !!st.deduct;
+  $("opt-dd").checked = st.dd !== false;
+  $("opt-minus").checked = !!st.minus;
   $("opt-helps").checked = st.helps !== false;
   $("helps-note").hidden = st.helps === false;
+  $("help-opts-note").hidden = auto;
   $("opt-phones").checked = !!st.phones;
   $("opt-phones").disabled = auto;
   $("opt-phones-row").hidden = !RACE_OK;
@@ -2356,7 +2376,8 @@ function startGame(){
   const scores = {}; state.teams.forEach(t => scores[t.id] = 0);
   const live = [];
   cats.forEach((c,ci) => c.cells.forEach((id,ri) => { if (id && ri >= 2) live.push(ci + "-" + ri); }));
-  state.game = {gid:uuid(), cats, used:{}, dd: live.length ? pickOne(live) : null, scores, turn:0, plays:[], synced:false, club:clubOn() ? state.club.id : null};
+  state.game = {gid:uuid(), cats, used:{}, dd:null, minus:null, scores, turn:0, plays:[], synced:false, club:clubOn() ? state.club.id : null};
+  placeSurprises(state.game);
   dealNext = true; save(); renderBoard(); setMsg($("board-msg"), "");
   if (phonesOn()){ bLast = null; openBoardRoom(); bPhase = "lobby"; show("lobby"); renderBoardLobby(); bPush(true); }
   else show("board");
@@ -2364,6 +2385,18 @@ function startGame(){
   queue(() => store.gameStarted(g, teams, slugs));
   saveClubTeams(g.club, teams);
   return g;
+}
+/* Surprises: a hidden question worth double (300 and up), and a hidden one that costs the team that picks it 100
+   points before it answers. Nobody sees where they are until the cell is opened. */
+const MINUS_PTS = 100;
+function placeSurprises(g){
+  const st = state.settings, played = k => !!g.used[k] || !!(cur && cur.key === k);
+  const open = [];
+  g.cats.forEach((c,ci) => c.cells.forEach((id,ri) => { const k = ci + "-" + ri; if (id && !played(k)) open.push({k, ri}); }));
+  if (st.dd === false){ if (g.dd && !played(g.dd)) g.dd = null; }
+  else if (!g.dd){ const c = open.filter(x => x.ri >= 2 && x.k !== g.minus); g.dd = c.length ? pickOne(c).k : null; }
+  if (!st.minus){ if (g.minus && !played(g.minus)) g.minus = null; }
+  else if (!g.minus){ const c = open.filter(x => x.k !== g.dd); g.minus = c.length ? pickOne(c).k : null; }
 }
 function recordPlays(entries){
   const g = state.game; if (!g || !entries.length) return;
@@ -2413,7 +2446,9 @@ function renderScores(){
     helpChips(t.id),
     h("span",{class:"adj"},
       h("button",{type:"button","aria-label":"اخصم 100 من " + tname(t,i),onclick:() => adjust(t.id,-100)}, fmtS(-100)),
-      h("button",{type:"button","aria-label":"أضف 100 إلى " + tname(t,i),onclick:() => adjust(t.id,100)}, fmtS(100)))
+      h("button",{type:"button","aria-label":"أضف 100 إلى " + tname(t,i),onclick:() => adjust(t.id,100)}, fmtS(100)),
+      helpsOn() && !hasHelp(t.id, "steal") && !(cur && cur.steal === t.id)
+        ? h("button",{type:"button",class:"giveback","aria-label":"أعيدوا «سرقة السؤال» إلى " + tname(t,i),title:"لو ضُغطت السرقة بالخطأ",onclick:() => giveBackSteal(t.id)}, "أعيدوا السرقة") : null)
   )));
   state.teams.forEach(t => { shownPts[t.id] = g.scores[t.id] || 0; });
 }
@@ -2433,8 +2468,8 @@ function renderTurn(){
    جاوب جوابين: called by the team answering, before the answer is shown; the team says two answers.
    سرقة السؤال: called by another team once the question is on screen and before the answer is shown; that team
      answers instead. One steal per question. */
-const HELP = {dbl:"دبل", two:"جاوب جوابين", steal:"سرقة السؤال"};
-const HELP_KINDS = ["dbl","two","steal"];
+const HELP = {dbl:"دبل", two:"جاوب جوابين", steal:"سرقة السؤال", opts:"الاختيارات"};
+const HELP_KINDS = ["dbl","two","steal","opts"];
 const helpsOn = () => state.settings.helps !== false;
 const autoOn = () => phonesOn() && state.settings.manage === "auto";
 // with choices on the phones, «جاوب جوابين» becomes «احذف إجابتين»: two wrong choices disappear
@@ -2456,9 +2491,10 @@ function renderHelps(){
   box.setAttribute("aria-label", "وسائل المساعدة، " + tname(t, g.turn));
   box.replaceChildren(h("button",{class:"help" + (on ? " on" : ""),type:"button","aria-pressed":String(on),onclick:() => setArmed(on ? null : "dbl")}, HELP.dbl));
 }
+const helpHere = k => k !== "opts" || !autoOn();
 function helpChips(id){
   if (!helpsOn()) return null;
-  const left = HELP_KINDS.filter(k => hasHelp(id, k));
+  const left = HELP_KINDS.filter(k => helpHere(k) && hasHelp(id, k));
   return left.length ? h("span",{class:"hl",role:"img","aria-label":"باقي له: " + left.map(helpName).join("، ")}, ...left.map(k => h("span",null,helpName(k)))) : null;
 }
 const valFor = id => cur ? cur.value * (cur.dbl && cur.dbl === id ? 2 : 1) : 0;
@@ -2472,7 +2508,7 @@ function useTwo(id){
   bPush(true);
 }
 function steal(id){
-  if (!cur || cur.party || cur.revealed || cur.steal || !id || id === cur.owner || !teamOf(id) || !hasHelp(id, "steal")) return;
+  if (!cur || cur.party || cur.optsBy || cur.revealed || cur.steal || !id || id === cur.owner || !teamOf(id) || !hasHelp(id, "steal")) return;
   spendHelp(id, "steal");
   cur.steal = id; cur.answerer = id;
   // the owner's دبل and جاوب جوابين come back: the question is no longer theirs
@@ -2483,6 +2519,40 @@ function steal(id){
   save(); renderQHelp(); renderScores();
   bPush(true);
 }
+/* a steal pressed by mistake: the question goes back to its owner (with its دبل) and the thief keeps the help */
+function undoSteal(){
+  if (!cur || !cur.steal || cur.revealed || cur.sub || cur.optsBy === cur.steal || cur.two === cur.steal) return;
+  const id = cur.steal;
+  spendHelp(id, "steal", true);
+  cur.steal = null; cur.answerer = cur.owner; cur.unsteal = id;
+  if (cur.dblBack && cur.dblBack === cur.owner && hasHelp(cur.owner, "dbl")){ spendHelp(cur.owner, "dbl"); cur.dbl = cur.owner; cur.used = {team:cur.owner, kind:"dbl"}; cur.dblBack = null; }
+  if (!cur.party) startTimer();
+  save(); renderQHelp(); renderScores(); renderOpts();
+  bPush(true);
+}
+function giveBackSteal(id){
+  const g = state.game; if (!g || !helpsOn() || hasHelp(id, "steal") || (cur && cur.steal === id)) return;
+  spendHelp(id, "steal", true);
+  save(); renderScores(); if (cur) renderQHelp(); bPush(true);
+}
+/* «الاختيارات»: the team answering sees four choices for this one question (when the host runs the game; with the
+   system running it the choices are always there). After the choices are out nobody can steal the question. */
+function canOpts(id){
+  if (!cur || cur.party || cur.revealed || cur.sub || cur.opts || cur.two || autoOn() || id !== cur.answerer || !hasHelp(id, "opts")) return false;
+  const q = cellQ(state.game, cur.ci, cur.ri).q;
+  return Array.isArray(q.opts) && q.opts.length >= 3;
+}
+function useOpts(id){
+  if (!canOpts(id)) return;
+  const q = cellQ(state.game, cur.ci, cur.ri).q;
+  spendHelp(id, "opts");
+  cur.optsBy = id; cur.cut = [];
+  cur.opts = shuffle([{t:q.a, ok:true}].concat(q.opts.slice(0, 3).map(t => ({t, ok:false}))));
+  $("q-swap").hidden = true;
+  beep(1175, .12, .12);
+  save(); renderOpts(); renderQHelp(); renderScores();
+  bPush(true);
+}
 function renderQHelp(){
   if (!cur) return;
   const bits = [];
@@ -2490,6 +2560,9 @@ function renderQHelp(){
   if (cur.dbl) bits.push(tnm(cur.dbl) + " لعب دبل: " + fmt(valFor(cur.dbl)) + " نقطة إن أجاب صح" + (state.settings.deduct ? "، وتُخصم إن أخطأ." : "."));
   if (cur.dblBack) bits.push("رجع الدبل إلى " + tnm(cur.dblBack) + ".");
   if (cur.two) bits.push(cur.opts ? tnm(cur.two) + " حذف إجابتين." : tnm(cur.two) + " يجيب جوابين.");
+  if (cur.optsBy) bits.push(tnm(cur.optsBy) + " استخدم الاختيارات.");
+  if (cur.unsteal && !cur.steal) bits.push("أُلغيت سرقة " + tnm(cur.unsteal) + " ورجعت له.");
+  if (cur.minus) bits.push("خُصم " + fmt(MINUS_PTS) + " نقطة من " + tnm(cur.minus) + ".");
   $("q-help").textContent = bits.join(" ");
   const stamp = $("q-stamp"), so = cur.steal ? teamOf(cur.steal) : null;
   if (!so){ stamp.hidden = true; stamp.replaceChildren(); }
@@ -2501,8 +2574,14 @@ function renderQHelp(){
   $("q-help").hidden = false;
   const who = cur.revealed || cur.two || cur.sub || cur.party ? null : cur.answerer, btn = $("q-two");
   btn.hidden = !(who && hasHelp(who, "two"));
-  if (!btn.hidden) btn.textContent = helpName("two") + "، " + tnm(who);
-  const thieves = cur.revealed || cur.steal || cur.sub || cur.party ? [] : state.teams.map((t,i) => ({t, i})).filter(x => x.t.id !== cur.owner && hasHelp(x.t.id, "steal"));
+  if (!btn.hidden) btn.textContent = (cur.opts ? "احذف إجابتين" : helpName("two")) + "، " + tnm(who);
+  const ch = $("q-ch");
+  ch.hidden = !(cur.answerer && canOpts(cur.answerer));
+  if (!ch.hidden) ch.textContent = HELP.opts + "، " + tnm(cur.answerer);
+  const un = $("q-unsteal"), canUn = !!cur.steal && !cur.revealed && !cur.sub && cur.optsBy !== cur.steal && cur.two !== cur.steal;
+  un.hidden = !canUn;
+  if (canUn) un.textContent = "ألغوا سرقة " + tnm(cur.steal);
+  const thieves = cur.revealed || cur.steal || cur.sub || cur.party || cur.optsBy ? [] : state.teams.map((t,i) => ({t, i})).filter(x => x.t.id !== cur.owner && hasHelp(x.t.id, "steal"));
   $("q-steal").hidden = !thieves.length;
   $("q-steal-teams").replaceChildren(...thieves.map(x => h("button",{class:"help tgt",type:"button",style:"--tc:" + x.t.color,"aria-label":tname(x.t,x.i) + " يسرق السؤال",onclick:() => steal(x.t.id)}, tname(x.t,x.i))));
 }
@@ -2584,14 +2663,22 @@ function openQ(ci, ri){
   g.armed = null;
   if (a) spendHelp(a.team, a.kind);
   const owner = turnTeam() ? turnTeam().id : null;
+  // the hidden -100: taken from the team that picked the cell now (given back if the question is cancelled)
+  const minus = g.minus === key && owner ? owner : null;
+  if (minus) g.scores[minus] = (g.scores[minus] || 0) - MINUS_PTS;
   cur = {ci, ri, key, value: VALUES[ri] * (dd ? 2 : 1), revealed:false, swapped:false, skipped:null,
     owner, answerer:owner, steal:null, used:a || null, dbl:a ? a.team : null, dblBack:null, two:null, opts:null, cut:[], sub:null,
-    party:partyOf(g.cats[ci].cells[ri]), pstart:false, perf:null, pres:null};
+    party:partyOf(g.cats[ci].cells[ri]), pstart:false, perf:null, pres:null, dd, minus, optsBy:null, unsteal:null};
   makeOpts();
   qover.querySelector(".qcard").append($("qflag")); flagCtx = "board"; $("flag-open").textContent = "في السؤال خطأ؟";
   $("q-cat").replaceChildren(iconEl(g.cats[ci].slug), g.cats[ci].name);
   $("q-val").textContent = fmt(cur.value) + " نقطة";
   $("q-dd").hidden = !dd;
+  $("q-minus").hidden = !minus;
+  { const sp = $("q-surprise");
+    sp.hidden = !(dd || minus); sp.classList.toggle("minus", !!minus);
+    if (dd || minus){ sp.style.animation = "none"; void sp.offsetWidth; sp.style.animation = "";
+      sp.replaceChildren(h("b", null, "مفاجأة!"), h("span", null, minus ? "خُصم " + fmt(MINUS_PTS) + " نقطة من " + tnm(minus) : "السؤال مضاعف")); } }
   fillQuestion();
   $("q-answer").hidden = true; $("q-pre").hidden = false; $("q-post").hidden = true;
   $("q-answer").querySelector(".lbl").textContent = cur.party ? "الكلمة" : "الإجابة";
@@ -2605,10 +2692,11 @@ function openQ(ci, ri){
   startAnswering();
   renderQHelp(); renderParty();
   if (dd) beep(988, .18, .12);
+  if (minus){ beep(196, .45, .2); setTimeout(() => beep(147, .5, .18), 180); }
   (cur.party ? $("qp-peek") : $("q-reveal")).focus();
 }
 function swapQ(){
-  if (!cur || cur.revealed || cur.swapped || (cur.party && (cur.pstart || cur.peek))) return;
+  if (!cur || cur.revealed || cur.swapped || cur.optsBy || (cur.party && (cur.pstart || cur.peek))) return;
   const g = state.game, alt = altFor(g, cur.ci, cur.ri);
   if (!alt) return;
   cur.skipped = g.cats[cur.ci].cells[cur.ri];
@@ -2890,6 +2978,8 @@ function cancelQ(){
     else if (cur.dblBack) g.armed = {team:cur.dblBack, kind:"dbl"};
     if (cur.two) spendHelp(cur.two, "two", true);
     if (cur.steal) spendHelp(cur.steal, "steal", true);
+    if (cur.optsBy) spendHelp(cur.optsBy, "opts", true);
+    if (cur.minus) g.scores[cur.minus] = (g.scores[cur.minus] || 0) + MINUS_PTS;
     save();
   }
   clearTimeout(autoT); autoT = 0; partyHide();
@@ -3570,7 +3660,7 @@ function bPublic(){
   const R = state.broom, g = state.game;
   const s = {v:1, hs:HS, seq:++bSeq, rid:R ? R.rid : "", kind:"board", phase:bPhase,
     teams:state.teams.map((t,i) => ({id:t.id, name:tname(t,i), color:t.color, score:g ? (g.scores[t.id] || 0) : 0, won:g ? wonBy(g, t.id) : 0,
-      helps:g ? HELP_KINDS.filter(k => hasHelp(t.id, k)) : []})),
+      helps:g ? HELP_KINDS.filter(k => helpHere(k) && hasHelp(t.id, k)) : []})),
     players:R ? Object.entries(R.players).map(([id,p]) => ({id, name:p.name, team:p.team || null})) : [], last:bLast,
     helps:helpsOn(), armed:armedNow(), kicked:R && R.kicked ? R.kicked : [], roomName:R && R.club && clubOf(R.club) ? clubOf(R.club).name : null};
   if (g){
@@ -3585,7 +3675,8 @@ function bPublic(){
     const left = T ? Math.round(1000 * Math.max(0, T.running ? (T.endAt - performance.now()) / 1000 : T.left)) : PARTY_TIME * 1000;
     s.q = {key:bKey(), cat:g.cats[cur.ci].name, slug:g.cats[cur.ci].slug, val:cur.value, style:"party", party:cur.party,
       owner:cur.owner, answerer:cur.answerer, dbl:cur.dbl || null, dblBack:cur.dblBack || null, type:cur.party === "act" ? ACT_TYPE[q.l] : null,
-      perf:cur.perf ? {pid:cur.perf.pid, name:cur.perf.name} : null, started:!!cur.pstart, run:!!(T && T.running && cur.pstart), left, total:PARTY_TIME * 1000};
+      perf:cur.perf ? {pid:cur.perf.pid, name:cur.perf.name} : null, started:!!cur.pstart, run:!!(T && T.running && cur.pstart), left, total:PARTY_TIME * 1000,
+      dd:!!cur.dd, minus:cur.minus || null};
     if (bPhase === "open" && cur.perf && !cur.revealed) s.q.secret = {to:cur.perf.pid, w:q.w, ban:cur.party === "describe" ? q.ban : []};
     if (bPhase === "reveal"){ s.q.answer = q.w; if (cur.pres) s.q.ok = cur.pres === "ok"; }
   }
@@ -3595,7 +3686,8 @@ function bPublic(){
       dbl:cur.dbl || null, dblBack:cur.dblBack || null, two:cur.two || null,
       // "pick": the answering team picks one of the choices; "type": it can type its answer for the host
       style:cur.opts ? "pick" : "type", opts:cur.opts ? cur.opts.map(o => o.t) : null, cut:cur.cut,
-      sub:cur.sub ? {team:cur.sub.team, c:cur.sub.c != null ? cur.sub.c : null, texts:cur.sub.texts || null, none:!!cur.sub.none} : null};
+      sub:cur.sub ? {team:cur.sub.team, c:cur.sub.c != null ? cur.sub.c : null, texts:cur.sub.texts || null, none:!!cur.sub.none} : null,
+      canOpts:!!(cur.answerer && canOpts(cur.answerer)), optsBy:cur.optsBy || null, dd:!!cur.dd, minus:cur.minus || null};
     if (bPhase === "reveal"){
       s.q.answer = rec.q.a;
       if (cur.opts) s.q.correct = cur.opts.findIndex(o => o.ok);
@@ -3671,9 +3763,9 @@ function onBoardPhone(ev, p){
     const g = state.game, pl = R.players[p.pid];
     if (!g || !helpsOn() || !pl || !pl.team || !teamOf(pl.team)) return;
     seen[p.pid] = Date.now();
-    if (p.kind === "two" || p.kind === "steal"){
+    if (p.kind === "two" || p.kind === "steal" || p.kind === "opts"){
       if (!cur || cur.revealed || p.key !== bKey()) return;
-      if (p.kind === "two") useTwo(pl.team); else steal(pl.team);
+      if (p.kind === "two") useTwo(pl.team); else if (p.kind === "opts") useOpts(pl.team); else steal(pl.team);
       return;
     }
     if (cur || bPhase !== "idle" || scrBoard.hidden || !qover.hidden || !endover.hidden) return;
@@ -3785,7 +3877,7 @@ function hCtx(){
   const g = state.game, R = state.race, F = state.feud;
   if (g && cur && !qover.hidden){
     const q = cellQ(g, cur.ci, cur.ri).q, pk = q.party, nm = tnm(cur.answerer);
-    const c = {head:"لوحة الفئات، " + fmt(cur.dbl ? valFor(cur.dbl) : cur.value) + " نقطة، " + nm + (cur.dbl ? "، دبل" : ""), cat:g.cats[cur.ci].name,
+    const c = {head:"لوحة الفئات، " + fmt(cur.dbl ? valFor(cur.dbl) : cur.value) + " نقطة، " + nm + (cur.dbl ? "، دبل" : "") + (cur.dd ? "، سؤال مضاعف" : "") + (cur.minus ? "، اتخصم ١٠٠" : ""), cat:g.cats[cur.ci].name,
       text:pk ? PARTY_KIND[pk].rule : q.q, alabel:pk ? "الكلمة" : "الإجابة", big:q.a,
       extra:pk === "describe" ? "ممنوع: " + q.ban.join("، ") : pk === "act" ? "النوع: " + ACT_TYPE[q.l] : [q.note || "", Array.isArray(q.alt) && q.alt.length ? "مقبول كمان: " + q.alt.join("، ") : ""].filter(Boolean).join(" "),
       list:cur.opts ? cur.opts.map(o => ({t:o.t, on:o.ok})) : null, status:""};
@@ -3796,7 +3888,7 @@ function hCtx(){
       if (!cur.pres) acts = cur.pstart || cur.revealed ? [["pok","خمّنوها","primary"],["pno","ما خمّنوهاش","ghost"]] : [["pstart","ابدأوا الوقت","primary"]];
     } else {
       c.status = cur.sub ? hSubText() : cur.revealed ? "الإجابة ظاهرة على الشاشة" : "";
-      if (!cur.revealed) acts = [["reveal","أظهِر الإجابة","primary"]];
+      if (!cur.revealed) acts = [["reveal","أظهِر الإجابة","primary"]].concat(!$("q-unsteal").hidden ? [["unsteal","ألغِ السرقة","ghost"]] : []);
       else if (!autoT) acts = [["ok","صحيحة","primary"],["bad","خاطئة","bad"],["none","لم يُجيبوا","ghost"]];
     }
     return {key:"b:" + bKey() + ":" + (cur.revealed ? 1 : 0) + (cur.pstart ? 1 : 0) + (cur.pres || ""), card:c, acts};
@@ -3851,7 +3943,7 @@ function onHostPhone(ev, p){
   if (p.key !== x.key || !x.acts.some(a => a[0] === p.act)) { hPush(true); return; }
   const A = {reveal:() => reveal(), ok:() => award(cur.answerer), bad:wrongAnswer, none:nobody,
     pstart:partyStart, pok:() => partyJudge(true), pno:() => partyJudge(false),
-    rok:() => judgeRace(true), rbad:() => judgeRace(false), rnow:revealRace, next:nextRaceQ};
+    unsteal:undoSteal, rok:() => judgeRace(true), rbad:() => judgeRace(false), rnow:revealRace, next:nextRaceQ};
   if (A[p.act]){ primeAudio(); A[p.act](); }
   hPush(true);
 }
@@ -4120,11 +4212,16 @@ function bind(){
   });
   $("add-team").addEventListener("click", addTeam);
   $("opt-deduct").addEventListener("change", e => { state.settings.deduct = e.target.checked; save(); });
+  // the surprises follow the switches, on this board too (a surprise already played stays as it was)
+  $("opt-dd").addEventListener("change", e => { state.settings.dd = e.target.checked; if (state.game){ placeSurprises(state.game); } save(); });
+  $("opt-minus").addEventListener("change", e => { state.settings.minus = e.target.checked; if (state.game){ placeSurprises(state.game); } save(); });
   $("opt-rdeduct").addEventListener("change", e => { state.raceSettings.deduct = e.target.checked; save(); });
   $("r-ok").addEventListener("click", () => judgeRace(true));
   $("r-bad").addEventListener("click", () => judgeRace(false));
   $("opt-helps").addEventListener("change", e => { state.settings.helps = e.target.checked; save(); renderSetup(); if (state.game) renderBoard(); bPush(true); });
   $("q-two").addEventListener("click", () => { const id = answeringTeam(); if (id) useTwo(id); });
+  $("q-ch").addEventListener("click", () => { const id = answeringTeam(); if (id) useOpts(id); });
+  $("q-unsteal").addEventListener("click", undoSteal);
   $("fb-like").addEventListener("click", () => fbVote("like"));
   $("fb-dislike").addEventListener("click", () => fbVote("dislike"));
   $("go").addEventListener("click", () => { setMsg($("setup-msg"), ""); if (state.mode === "race") openRoom(); else if (state.mode === "feud") startFeud(); else startGame(); });
